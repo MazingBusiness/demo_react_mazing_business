@@ -38,6 +38,14 @@ export const getAllSliders = async () => {
     return response;
 }
 
+//Get Offer Product
+export const getOfferProducts = async () => {
+    const response = await fetch(`${API_BASE_URL}home/get-offer-products`, {
+        method: 'GET'
+    });
+    return response;
+}
+
 // Get Page Content Form Json
 export const getPageContent = async (lang) => {
     const response = await fetch(`${API_BASE_URL}user/page-content-from-json?lang=${lang}`, {

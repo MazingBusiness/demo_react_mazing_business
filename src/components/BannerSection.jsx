@@ -48,7 +48,7 @@ const BannerSection = () => {
         // Set in state
         setBannersDetails(transformedData);
         setBannersText(responseData.banner_below_text ?? ""); // safe fallback
-        console.log(bannersDetails.length);
+        // console.log(bannersDetails.length);
       } else {
         NotificationManager.error(responseData.msg, '', 2000);
       }
