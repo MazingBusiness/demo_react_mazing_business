@@ -284,7 +284,6 @@ const TopDeals = () => {
           <div className="section-header">
             <div className="section-headerLft">
               <h2>Top Deals</h2>
-
               <Link to="/" className="all-link">
                 All Top Deals <FiChevronRight />
               </Link>
