@@ -15,6 +15,7 @@ import { FiChevronRight } from "react-icons/fi";
 import { Link } from "react-router-dom";
 
 import {getOfferProducts} from "../api/apiRequest";
+import { getLoggedInUser, getAuthToken } from '../utils/authUtils';
 
 
 const renderRating = (rating) => {
@@ -53,7 +54,7 @@ const OfferItems = () => {
     try {
       const apiRes = await getOfferProducts();
       const responseData = await apiRes.json();
-
+      const user = getLoggedInUser();
       if (responseData.res) {
         const transformedData = responseData.data.map((item) => {
           const details = item.product_details || {};
@@ -74,6 +75,7 @@ const OfferItems = () => {
             discount: item.offer_discount_percent + "%", // example: "0%"
             fastDeliveryTag: fastDeliveryTag,
             noCredit: noCredit,
+            user_id: user?.id || null,
           };
         });
         setProducts(transformedData);
@@ -174,16 +176,20 @@ const OfferItems = () => {
             <span>No Image</span>
           </div>
         )}
-        <div className="btnGrp">
-          <button className="wishlist-btn" aria-label="Add to wishlist">
-            <img src={HeartIcon} alt="HeartIcon" />
-          </button>
-          <button className="cart-btn" aria-label="Add to cart">
-            <img src={CartIcon} alt="HeartIcon" />
-          </button>
-        </div>
-        {product.noCredit && (
-          <div className="no-credit-tag">No Credit Item</div>
+        {product.user_id != null && (
+          <>
+            <div className="btnGrp">
+              <button className="wishlist-btn" aria-label="Add to wishlist">
+                <img src={HeartIcon} alt="HeartIcon" />
+              </button>
+              <button className="cart-btn" aria-label="Add to cart">
+                <img src={CartIcon} alt="HeartIcon" />
+              </button>
+            </div>
+            {product.noCredit && (
+              <div className="no-credit-tag">No Credit Item</div>
+            )}
+          </>
         )}
       </div>
     );
@@ -305,13 +311,17 @@ const OfferItems = () => {
                   {renderProductImage(product)}
                   <div className="product-info">
                     <h3>{product.name}</h3>
-                    <div className="prices">
-                      <span className="old">{product.oldPrice}</span>
-                      <span className="new">{product.newPrice}</span>
-                    </div>
+                    {product.user_id != null && (
+                      <div className="prices">
+                        <span className="old">{product.oldPrice}</span>
+                        <span className="new">{product.newPrice}</span>
+                      </div>
+                    )}
                     <div className="ratingGrp">
                       <div className="ratingGrpLft">
-                        <div className="discount">OFF {product.discount}</div>
+                        {product.user_id != null && (
+                          <div className="discount">OFF {product.discount}</div>
+                        )}
                         <div className="rating">
                           {renderRating(product.rating)}
                           <span className="rating-count">({product.totalRatings})</span>
@@ -319,13 +329,22 @@ const OfferItems = () => {
                       </div>
                       {fastDeliveryTag(product)}
                     </div>
-                    <div className="progress-bar">
-                      <div
-                        className="progress"
-                        style={{ width: `${Math.random() * 100}%` }}
-                      ></div>
-                    </div>
-                    <div className="sold">Sold: {product.sold}</div>
+                    {product.user_id != null && (
+                      <>
+                        <div className="progress-bar">
+                          <div
+                            className="progress"
+                            style={{ width: `${Math.random() * 100}%` }}
+                          ></div>
+                        </div>                    
+                        <div className="sold">Sold: {product.sold}</div>
+                      </>
+                    )}
+                    {product.user_id == null && (
+                      <div>
+                        <button type="button" className="category-btn">Register to check prices</button>
+                      </div>
+                    )}                    
                   </div>
                 </div>
               </div>
