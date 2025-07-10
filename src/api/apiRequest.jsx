@@ -1,21 +1,32 @@
 import { API_BASE_URL } from "../app_url";
 import axios from 'axios';
 
-let value = JSON.parse(localStorage.getItem("mazingBusinessLoginInfo"));
+// let value = JSON.parse(localStorage.getItem("mazingBusinessLoginInfo"));
 // console.log(value);
-let authorisation = value ? value["authorisation"] : null;
+// let authorisation = value ? value["authorisation"] : null;
 // Check if authorisation is not null before accessing its properties
-let token = authorisation ? authorisation["token"] : null;
+// let token = authorisation ? authorisation["token"] : null;
 // console.log(token);
 
+// Get loged user's info
+export const getLoggedInUser = () => {
+  const loginInfo = JSON.parse(localStorage.getItem("mazingBusinessLoginInfo"));
+  return loginInfo?.user || null;
+};
+
+// Get loged user's auth
+export const getAuthToken = () => {
+  const loginInfo = JSON.parse(localStorage.getItem("mazingBusinessLoginInfo"));
+  return loginInfo?.authorisation?.token || null;
+};
 
 const getHeader = () => {
-    let value = JSON.parse(localStorage.getItem("mazingBusinessLoginInfo"));
+    // let value = JSON.parse(localStorage.getItem("mazingBusinessLoginInfo"));    
     // console.warn(value)
-    let authorisation = value ? value["authorisation"] : null;
-
-    if (authorisation) {
-        let token = authorisation["token"];
+    // let authorisation = value ? value["authorisation"] : null;
+    const token = getAuthToken();
+    if (token) {
+        let token = token;
         let header = {
             headers: {
                 Authorization: `Bearer ${token}`,
@@ -24,11 +35,12 @@ const getHeader = () => {
         return header;
     } else {
         // Handle the case where authorisation is null.
-        console.error("authorisation is missing or null");
+        console.error("Authorization token is missing or null");
         // You might want to return a default header or throw an error here.
         return null; // or return a default header if needed
     }
 };
+
 
 //Get Banners
 export const getAllSliders = async () => {
@@ -40,11 +52,34 @@ export const getAllSliders = async () => {
 
 //Get Offer Product
 export const getOfferProducts = async () => {
-    const response = await fetch(`${API_BASE_URL}home/get-offer-products`, {
-        method: 'GET'
-    });
-    return response;
-}
+  const header = getHeader();
+
+  const response = await fetch(`${API_BASE_URL}home/get-offer-products`, {
+    method: 'GET',
+    headers: {
+      ...(header?.headers || {}),
+      'Content-Type': 'application/json',
+    },
+  });
+
+  return response;
+};
+
+//Get Offer Product
+export const getBestSellerProducts = async () => {
+  const user = getLoggedInUser();
+  const header = getHeader();
+  const url = `${API_BASE_URL}home/get-best-seller-products${user ? `?user_id=${user.id}` : ''}`;
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      ...(header?.headers || {}), // ✅ safely handle null
+      'Content-Type': 'application/json',
+    },
+  });
+  return response;
+};
+
 
 // Get Page Content Form Json
 export const getPageContent = async (lang) => {

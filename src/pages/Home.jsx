@@ -45,7 +45,6 @@ const Home = () => {
       <div className="Endcontainer">
         <PowerToolsSlider />
         <BestSellers />
-
         <div className="maincontainer">
           <div className="promo-section">
             <div className="promo-card style1">

@@ -19,6 +19,8 @@ import { FaStar, FaRegStar, FaStarHalfAlt } from "react-icons/fa";
 import { FiChevronRight } from "react-icons/fi";
 import { Link } from "react-router-dom";
 
+import {getBestSellerProducts} from "../api/apiRequest";
+
 const products = [
   {
     id: 1,
@@ -181,7 +183,45 @@ const renderRating = (rating) => {
 };
 
 const BestSellers = () => {
+  const [products, setProducts] = useState([]);  
   const sliderRef = useRef(null); // Properly define the ref at the component level
+
+  // get all Offer Items
+  const allItems = async () => {
+    try {
+      const apiRes = await getBestSellerProducts();
+      const responseData = await apiRes.json();
+
+      if (responseData.res) {
+        const transformedData = responseData.data.map((item) => {
+          // const details = item || {};
+          const noCredit = item.cash_and_carry_item == 1;
+          const fastDeliveryTag = item.fast_delivery_tag == 1;
+          const rating = item.rating && item.rating !== 0 ? item.rating : 4;
+          const totalRatings = Array.isArray(item.reviews) && item.reviews.length > 0 ? item.reviews.length : 20;
+          return {
+            id: item.id,
+            name: item.name,
+            img: item.thumb_img?.file_name || no_image,
+            oldPrice: item.mrp ? parseFloat(item.mrp.toString().replace(/₹/g, '')).toFixed(2) : "0.00",
+            newPrice: item.discount_price ? parseFloat(item.discount_price.toString().replace(/₹/g, '')).toFixed(2) : "0.00",
+            rating: rating,
+            totalRatings: totalRatings,
+            sold: `${Math.floor(Math.random() * 50 + 1)}/${Math.floor(Math.random() * 200 + 50)}`,
+            fastDeliveryTag: fastDeliveryTag,
+            noCredit: noCredit,
+          };
+        });
+        setProducts(transformedData);
+      } else {
+        NotificationManager.error(responseData.msg || "Something went wrong", "", 2000);
+      }
+    } catch (error) {
+      console.error("Fetch error:", error);
+      NotificationManager.error("Failed to load offers", "", 2000);
+    }
+  };
+
   const [sliderState, setSliderState] = useState({
     currentSlide: 0,
     slideCount: products.length,
