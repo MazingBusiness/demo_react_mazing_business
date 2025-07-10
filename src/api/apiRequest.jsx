@@ -1,5 +1,6 @@
 import { API_BASE_URL } from "../app_url";
 import axios from 'axios';
+import { getLoggedInUser, getAuthToken } from '../utils/authUtils';
 
 // let value = JSON.parse(localStorage.getItem("mazingBusinessLoginInfo"));
 // console.log(value);
@@ -8,17 +9,6 @@ import axios from 'axios';
 // let token = authorisation ? authorisation["token"] : null;
 // console.log(token);
 
-// Get loged user's info
-export const getLoggedInUser = () => {
-  const loginInfo = JSON.parse(localStorage.getItem("mazingBusinessLoginInfo"));
-  return loginInfo?.user || null;
-};
-
-// Get loged user's auth
-export const getAuthToken = () => {
-  const loginInfo = JSON.parse(localStorage.getItem("mazingBusinessLoginInfo"));
-  return loginInfo?.authorisation?.token || null;
-};
 
 const getHeader = () => {
     // let value = JSON.parse(localStorage.getItem("mazingBusinessLoginInfo"));    
@@ -52,17 +42,17 @@ export const getAllSliders = async () => {
 
 //Get Offer Product
 export const getOfferProducts = async () => {
-  const header = getHeader();
-
-  const response = await fetch(`${API_BASE_URL}home/get-offer-products`, {
-    method: 'GET',
-    headers: {
-      ...(header?.headers || {}),
-      'Content-Type': 'application/json',
-    },
-  });
-
-  return response;
+    const user = getLoggedInUser();
+    const header = getHeader();
+    const url = `${API_BASE_URL}home/get-offer-products${user ? `?user_id=${user.id}` : ''}`;
+    const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+        ...(header?.headers || {}),
+        'Content-Type': 'application/json',
+        },
+    });
+    return response;
 };
 
 //Get Offer Product
@@ -73,7 +63,7 @@ export const getBestSellerProducts = async () => {
   const response = await fetch(url, {
     method: 'GET',
     headers: {
-      ...(header?.headers || {}), // ✅ safely handle null
+      ...(header?.headers || {}),
       'Content-Type': 'application/json',
     },
   });
