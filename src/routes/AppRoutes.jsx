@@ -6,6 +6,9 @@ import ProductListing from "../pages/ProductListing";
 import Login from "../pages/Login";
 import ForgotPassword from "../pages/ForgotPassword";
 import Register from "../pages/Register";
+import ProfileDashbord from "../pages/user-profile/ProfileDashbord";
+import ProfileOrder from "../pages/user-profile/ProfileOrder";
+import ProfileOrderDetails from "../pages/user-profile/ProfileOrderDetails";
 
 const AppRoutes = () => (
   <Routes>
@@ -14,6 +17,10 @@ const AppRoutes = () => (
     <Route path="/login" element={<Login />} />
     <Route path="/forgotpassword" element={<ForgotPassword />} />
     <Route path="/register" element={<Register />} />
+    <Route path="/profileDashbord" element={<ProfileDashbord />} />
+    <Route path="/profileOrder" element={<ProfileOrder />} />
+    <Route path="/profileOrderDetails" element={<ProfileOrderDetails />} />
   </Routes>
 );
+
 export default AppRoutes;

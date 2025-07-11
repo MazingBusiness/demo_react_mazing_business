@@ -4,6 +4,7 @@ import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 
 // Import local images (create these imports at the top)
+import no_image from "../assets/images/no-image.png";
 import hilti from "../assets/images/hilti.png";
 import multivolt from "../assets/images/multivolt.png";
 import bosch from "../assets/images/bosch.png";
@@ -13,53 +14,40 @@ import { FaStar, FaRegStar, FaStarHalfAlt } from "react-icons/fa";
 import { FiChevronRight } from "react-icons/fi";
 import { Link } from "react-router-dom";
 
-const products = [
-  {
-    id: 1,
-    name: "Product Name",
-    img: hilti,
-    count: "250 Products",
-  },
-  {
-    id: 2,
-    name: "Product Name",
-    img: multivolt,
-    count: "250 Products",
-  },
-  {
-    id: 3,
-    name: "Product Name",
-    img: bosch,
-    count: "4721 Products",
-  },
-  {
-    id: 4,
-    name: "Product Name",
-    img: dca,
-    count: "4721 Products",
-  },
-  {
-    id: 5,
-    name: "Product Name",
-    img: hilti,
-    count: "250 Products",
-  },
-  {
-    id: 6,
-    name: "Product Name",
-    img: multivolt,
-    count: "250 Products",
-  },
-  {
-    id: 7,
-    name: "Product Name",
-    img: bosch,
-    count: "250 Products",
-  },
-];
+import {getTopBrand} from "../api/apiRequest";
+import { getLoggedInUser, getAuthToken } from '../utils/authUtils';
 
 const BrandCarousel = () => {
+  const [products, setProducts] = useState([]);  
   const sliderRef = useRef(null); // Properly define the ref at the component level
+
+  const allBrands = async () => {
+    try {
+      const apiRes = await getTopBrand();
+      const responseData = await apiRes.json();
+      if (responseData.res) {
+        const transformedData = responseData.data.map((item) => {
+          // const details = item || {};
+          const noCredit = item.cash_and_carry_item == 1;
+          const fastDeliveryTag = item.fast_delivery_tag == 1;
+          const rating = item.rating && item.rating !== 0 ? item.rating : 4;
+          const totalRatings = Array.isArray(item.reviews) && item.reviews.length > 0 ? item.reviews.length : 20;
+          return {
+            id: item.id,
+            name: item.name,
+            img: item.banner_image?.file_name || no_image,
+          };
+        });
+        setProducts(transformedData);
+      } else {
+        NotificationManager.error(responseData.msg || "Something went wrong", "", 2000);
+      }
+    } catch (error) {
+      console.error("Fetch error:", error);
+      NotificationManager.error("Failed to load offers", "", 2000);
+    }
+  };
+
   const [sliderState, setSliderState] = useState({
     currentSlide: 0,
     slideCount: products.length,
@@ -67,21 +55,12 @@ const BrandCarousel = () => {
   });
 
   useEffect(() => {
-    const handleResize = () => {
-      setSliderState((prev) => ({
-        ...prev,
-        isMobile: window.innerWidth < 768,
-      }));
-    };
-
-    handleResize();
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
+    allBrands();
   }, []);
 
   const settings = {
     dots: false,
-    infinite: false,
+    infinite: true,
     speed: 500,
     autoplay: true,
     autoplaySpeed: 3000,
@@ -121,9 +100,12 @@ const BrandCarousel = () => {
     ],
   };
 
-  const isPrevDisabled = sliderState.currentSlide === 0;
-  const isNextDisabled =
-    sliderState.currentSlide >= sliderState.slideCount - settings.slidesToShow;
+  // const isPrevDisabled = sliderState.currentSlide === 0;
+  // const isNextDisabled =
+  //   sliderState.currentSlide >= sliderState.slideCount - settings.slidesToShow;
+
+  const isPrevDisabled = false;
+  const isNextDisabled = false;
 
   const renderProductImage = (product) => {
     return (

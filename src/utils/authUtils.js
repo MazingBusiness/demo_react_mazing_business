@@ -1,7 +1,7 @@
 // Get loged user's info
 export const getLoggedInUser = () => {
   const loginInfo = JSON.parse(localStorage.getItem("mazingBusinessLoginInfo"));
-  return loginInfo?.user || null;
+  return loginInfo || null;
 };
 
 // Get loged user's auth

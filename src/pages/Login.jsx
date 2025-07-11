@@ -28,6 +28,12 @@ const Login = () => {
     setDropdownOpen(false);
   };
 
+  const navigate = useNavigate();
+
+  const handleLoginClick = () => {
+    navigate("/profileDashbord"); // Replace with your actual route
+  };
+
   return (
     <>
       <LoginHeader />
@@ -128,7 +134,9 @@ const Login = () => {
                     <Link to="/forgotpassword">Forgot Password?</Link>
                   </div>
 
-                  <button className="login-btn">Login</button>
+                  <button className="login-btn" onClick={handleLoginClick}>
+                    Login
+                  </button>
 
                   <p className="register-text">
                     Don’t have an account?

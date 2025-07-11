@@ -342,7 +342,7 @@ const OfferItems = () => {
                     )}
                     {product.user_id == null && (
                       <div>
-                        <button type="button" className="category-btn">Register to check prices</button>
+                        <button type="button" className="before-reg-btn">Register to check prices</button>
                       </div>
                     )}                    
                   </div>

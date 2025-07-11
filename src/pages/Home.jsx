@@ -6,7 +6,6 @@ import BannerSection from "../components/BannerSection";
 import BrandCarousel from "../components/BrandCarousel";
 import OfferItems from "../components/OfferItems";
 import BestSellers from "../components/BestSellers";
-import TopDeals from "../components/TopDeals";
 import HandTools from "../components/HandTools";
 
 import promo1 from "../assets/images/promo1.jpg";
@@ -25,7 +24,7 @@ const Home = () => {
       <div className="maincontainer">
         <div className="hand-tools-wrapper">
           <div className="hand-tools-content">
-            <TopDeals />
+            <HandTools />
           </div>
 
           <div className="app-banner">
@@ -36,15 +35,17 @@ const Home = () => {
         </div>
       </div>
 
-      <div className="maincontainer">
+      {/* <div className="maincontainer">
         <div className="brand-carousel-container">
           <BrandCarousel />
         </div>
-      </div>
+      </div> */}
 
       <div className="Endcontainer">
+        <BrandCarousel />
         <PowerToolsSlider />
         <BestSellers />
+
         <div className="maincontainer">
           <div className="promo-section">
             <div className="promo-card style1">

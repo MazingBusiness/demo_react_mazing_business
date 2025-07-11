@@ -70,6 +70,14 @@ export const getBestSellerProducts = async () => {
   return response;
 };
 
+//Get Top Brand
+export const getTopBrand = async (lang) => {
+    const response = await fetch(`${API_BASE_URL}home/get-top-brand`, {
+        method: 'GET'
+    });
+    return response;
+}
+
 
 // Get Page Content Form Json
 export const getPageContent = async (lang) => {
