@@ -90,7 +90,7 @@ const OrderTable = () => {
           <tbody>
             <tr>
               <td>
-                <Link to="/profileOrderDetails" className="order-link">
+                <Link to="/orderDetails" className="order-link">
                   20250610-14033430
                 </Link>
               </td>
@@ -113,7 +113,7 @@ const OrderTable = () => {
             </tr>
             <tr>
               <td>
-                <Link to="/profileOrderDetails" className="order-link">
+                <Link to="/orderDetails" className="order-link">
                   20250610-14033430
                 </Link>
               </td>
@@ -136,7 +136,7 @@ const OrderTable = () => {
             </tr>
             <tr>
               <td>
-                <Link to="/profileOrderDetails" className="order-link">
+                <Link to="/orderDetails" className="order-link">
                   20250610-14033430
                 </Link>
               </td>
