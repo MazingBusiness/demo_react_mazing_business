@@ -17,7 +17,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
   // </React.StrictMode>
   
   // <React.StrictMode>
-    <HashRouter basename="/demo_react_mazing_business/">
+    <HashRouter>
       <AppRoutes />
     </HashRouter>
   // </React.StrictMode>
