@@ -37,6 +37,9 @@ const AppRoutes = () => (
     <Route path="/support-ticket" element={<ProfileSupportTicket />} />
     <Route path="/wallet" element={<ProfileWallet />} />
     <Route path="/ticketDetails" element={<TicketDetails />} />
+
+    {/* Add fallback to catch non-matching routes */}
+    <Route path="*" element={<Login />} />
   </Routes>
 );
 
