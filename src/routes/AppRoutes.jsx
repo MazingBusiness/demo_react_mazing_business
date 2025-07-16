@@ -38,6 +38,9 @@ const AppRoutes = () => (
     <Route path="/wallet" element={<ProfileWallet />} />
     <Route path="/ticketDetails" element={<TicketDetails />} />
 
+    {/* Optional fallback route */}
+    <Route path="*" element={<div>Page not found</div>} />
+
   </Routes>
 );
 
