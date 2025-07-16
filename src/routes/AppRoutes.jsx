@@ -1,6 +1,7 @@
 // src/routes/AppRoutes.jsx
 import React from "react";
 import { Routes, Route } from "react-router-dom";
+import { HashRouter } from "react-router-dom";
 import Home from "../pages/Home";
 import ProductListing from "../pages/ProductListing";
 import Login from "../pages/Login";
@@ -19,29 +20,31 @@ import ProfileWallet from "../pages/user-profile/ProfileWallet";
 import TicketDetails from "../pages/user-profile/TicketDetails";
 
 const AppRoutes = () => (
-  <Routes>
-    <Route path="/" element={<Home />} />
-    <Route path="/productListing" element={<ProductListing />} />
-    <Route path="/login" element={<Login />} />
-    <Route path="/forgotpassword" element={<ForgotPassword />} />
-    <Route path="/register" element={<Register />} />
+  <HashRouter>
+    <Routes>
+      <Route path="/" element={<Home />} />
+      <Route path="/productListing" element={<ProductListing />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/forgotpassword" element={<ForgotPassword />} />
+      <Route path="/register" element={<Register />} />
 
-    <Route path="/profileDashbord" element={<ProfileDashbord />} />
-    <Route path="/profileOrder" element={<ProfileOrder />} />
-    <Route path="/orderDetails" element={<ProfileOrderDetails />} />
-    <Route path="/manage-Profile" element={<ManageProfile />} />
-    <Route path="/statement" element={<ProfileStatement />} />
-    <Route path="/statementDetails" element={<ProfileStatementDetails />}/>    
-    <Route path="/rewards" element={<ProfileRewards />} />
-    <Route path="/wishlist" element={<ProfileWishlist />} />
-    <Route path="/support-ticket" element={<ProfileSupportTicket />} />
-    <Route path="/wallet" element={<ProfileWallet />} />
-    <Route path="/ticketDetails" element={<TicketDetails />} />
+      <Route path="/profileDashbord" element={<ProfileDashbord />} />
+      <Route path="/profileOrder" element={<ProfileOrder />} />
+      <Route path="/orderDetails" element={<ProfileOrderDetails />} />
+      <Route path="/manage-Profile" element={<ManageProfile />} />
+      <Route path="/statement" element={<ProfileStatement />} />
+      <Route path="/statementDetails" element={<ProfileStatementDetails />}/>    
+      <Route path="/rewards" element={<ProfileRewards />} />
+      <Route path="/wishlist" element={<ProfileWishlist />} />
+      <Route path="/support-ticket" element={<ProfileSupportTicket />} />
+      <Route path="/wallet" element={<ProfileWallet />} />
+      <Route path="/ticketDetails" element={<TicketDetails />} />
 
-    {/* Optional fallback route */}
-    <Route path="*" element={<div>Page not found</div>} />
+      {/* Optional fallback route */}
+      <Route path="*" element={<div>Page not found</div>} />
 
-  </Routes>
+    </Routes>
+  </HashRouter>
 );
 
 export default AppRoutes;
