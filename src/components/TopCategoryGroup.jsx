@@ -4,23 +4,16 @@ import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 
 // Import local images (create these imports at the top)
-// import product1 from "../assets/images/product.jpg";
-// import product2 from "../assets/images/product.jpg";
-// import product3 from "../assets/images/product.jpg";
-// import product4 from "../assets/images/product.jpg";
-// import product5 from "../assets/images/product.jpg";
-// import product6 from "../assets/images/product.jpg";
-// import product7 from "../assets/images/product.jpg";
-// import fastDeliveryIcon from "../assets/icons/fast-delivery.svg";
+import no_image from "../assets/images/no-image.png";
+import fastDeliveryIcon from "../assets/icons/fast-delivery.svg";
 import HeartIcon from "../assets/icons/HeartIcon.svg";
 import CartIcon from "../assets/icons/CartIcon.svg";
-import no_image from "../assets/images/no-image.png";
 
 import { FaStar, FaRegStar, FaStarHalfAlt } from "react-icons/fa";
 import { FiChevronRight } from "react-icons/fi";
 import { Link } from "react-router-dom";
 
-import {getCategory} from "../api/apiRequest";
+import {getTopCategoryGroup} from "../api/apiRequest";
 import { getLoggedInUser, getAuthToken } from '../utils/authUtils';
 
 
@@ -51,27 +44,22 @@ const renderRating = (rating) => {
   return stars;
 };
 
-const HandTools = () => {
+const TopCatGroups = () => {
   const sliderRef = useRef(null); // Properly define the ref at the component level
-
   const [products, setProducts] = useState([]);
-  const allHandToolsCategoryItems = async () => {
+
+  const getTopCategoryGroups = async () => {
     try {
-      const apiRes = await getCategory(14);
+      const apiRes = await getTopCategoryGroup();
       const responseData = await apiRes.json();
-      const user = getLoggedInUser();
-
+      console.log("API Raw Data:", responseData);
       if (responseData.res) {
-        // Flatten all child categories from all parent categories
-        const transformedData = responseData.data.flatMap((category) => {
-          return category.child_category.map((child) => ({
-            id: child.id,
-            name: child.name,
-            img: child.photo || no_image,
-            slug: child.slug,
-          }));
-        });
-
+        const transformedData = responseData.data.map(item => ({
+          id: item.id,
+          name: item.name,
+          img: item.photo || no_image,
+          slug: item.slug,
+        }));
         setProducts(transformedData);
       } else {
         NotificationManager.error(responseData.msg || "Something went wrong", "", 2000);
@@ -81,7 +69,7 @@ const HandTools = () => {
       NotificationManager.error("Failed to load offers", "", 2000);
     }
   };
-
+  
   const [sliderState, setSliderState] = useState({
     currentSlide: 0,
     slideCount: products.length,
@@ -89,8 +77,12 @@ const HandTools = () => {
   });
 
   useEffect(() => {
-    allHandToolsCategoryItems();
-    }, []);
+    getTopCategoryGroups();
+  }, []);
+
+   useEffect(() => {
+    console.log("Updated products:", products);
+  }, [products]);
 
   const settings = {
     dots: false,
@@ -177,11 +169,11 @@ const HandTools = () => {
         <div className="power-tools-section-inner">
           <div className="section-header">
             <div className="section-headerLft">
-              <h2>Hand Tools</h2>
+              <h2>Top Category Group</h2>
 
-              <Link to="/" className="all-link">
+              {/* <Link to="/" className="all-link">
                 All Hand Tools <FiChevronRight />
-              </Link>
+              </Link> */}
             </div>
 
             <div className="section-headerRgt">
@@ -267,4 +259,4 @@ const HandTools = () => {
   );
 };
 
-export default HandTools;
+export default TopCatGroups;

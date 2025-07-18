@@ -7,6 +7,7 @@ import BrandCarousel from "../components/BrandCarousel";
 import OfferItems from "../components/OfferItems";
 import BestSellers from "../components/BestSellers";
 import HandTools from "../components/HandTools";
+import TopCategoryGroup from "../components/TopCategoryGroup";
 
 import promo1 from "../assets/images/promo1.jpg";
 import promo2 from "../assets/images/promo2.jpg";
@@ -24,7 +25,7 @@ const Home = () => {
       <div className="maincontainer">
         <div className="hand-tools-wrapper">
           <div className="hand-tools-content">
-            <HandTools />
+            <TopCategoryGroup />
           </div>
 
           <div className="app-banner">

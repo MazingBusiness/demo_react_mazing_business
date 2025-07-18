@@ -2,6 +2,11 @@ import React, { useState } from "react";
 import UserProfileLayout from "../../layouts/UserProfileLayout";
 import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
+import dIcon1 from "../../assets/icons/dIcon1.svg";
+import dIcon2 from "../../assets/icons/dIcon2.svg";
+import dIcon3 from "../../assets/icons/dIcon3.svg";
+import Shape from "../../assets/icons/Shape.svg";
+
 import {
   LineChart,
   Line,
@@ -63,25 +68,43 @@ const ProfileDashbord = () => {
   return (
     <UserProfileLayout>
       <div className="dashboard-container">
-        <div className="dashboard-cards">
-          <div className="card products">
-            <h5>Products</h5>
-            <span>In your cart</span>
-            <h2>03</h2>
+        <div className="dashboard-container-Lft">
+          <div className="dashboard-cards">
+            <div className="card products">
+              <h5>Products</h5>
+              <span>In your cart</span>
+              <h2>03</h2>
+              <div className="card-Shape">
+                <img src={Shape} alt="Shape" />
+              </div>
+              <div className="card-icon">
+                <img src={dIcon1} alt="dIcon1" />
+              </div>
+            </div>
+            <div className="card orders">
+              <h5>Orders</h5>
+              <span>Total order placed</span>
+              <h2>530</h2>
+              <div className="card-Shape">
+                <img src={Shape} alt="Shape" />
+              </div>
+              <div className="card-icon">
+                <img src={dIcon2} alt="dIcon2" />
+              </div>
+            </div>
+            <div className="card pending">
+              <h5>Pending</h5>
+              <span>Total pending order</span>
+              <h2>250</h2>
+              <div className="card-Shape">
+                <img src={Shape} alt="Shape" />
+              </div>
+              <div className="card-icon">
+                <img src={dIcon3} alt="dIcon3" />
+              </div>
+            </div>
           </div>
-          <div className="card orders">
-            <h5>Orders</h5>
-            <span>Total order placed</span>
-            <h2>530</h2>
-          </div>
-          <div className="card pending">
-            <h5>Pending</h5>
-            <span>Total pending order</span>
-            <h2>250</h2>
-          </div>
-        </div>
 
-        <div className="dashboard-main">
           <div className="chart-section">
             <div className="chart-header">
               <h4>Order Graph Representation</h4>
@@ -97,7 +120,7 @@ const ProfileDashbord = () => {
                 ))}
               </div>
             </div>
-            <ResponsiveContainer width="100%" height={250}>
+            <ResponsiveContainer width="100%" height={350}>
               <LineChart data={getChartData()}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="date" />
@@ -113,15 +136,17 @@ const ProfileDashbord = () => {
               </LineChart>
             </ResponsiveContainer>
           </div>
+        </div>
 
+        <div className="dashboard-container-Rgt">
           <div className="calendar-section">
             <div className="calendar-header">
-              <h4>
+              {/* <h4>
                 {date.toLocaleDateString("default", {
                   month: "long",
                   year: "numeric",
                 })}
-              </h4>
+              </h4> */}
             </div>
             <Calendar onChange={setDate} value={date} />
 
@@ -129,11 +154,12 @@ const ProfileDashbord = () => {
               {orders.map((order, idx) => (
                 <div key={idx} className="order-item">
                   <span className="order-date">
-                    {order.date} {order.time}
+                    <em>{order.date}</em>
+                    <br /> {order.time}
                   </span>
-                  <div>
+                  <div className="order-info">
                     <span className="order-code">
-                      <strong>Order Code :</strong> {order.code}
+                      <label> Order Code :</label> {order.code}
                     </span>
                     <div className="order-status">Has been placed</div>
                   </div>

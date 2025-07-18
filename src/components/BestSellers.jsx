@@ -194,6 +194,7 @@ const BestSellers = () => {
       const apiRes = await getBestSellerProducts();
       const responseData = await apiRes.json();
       const user = getLoggedInUser();
+      console.log(user);
       if (responseData.res) {
         const transformedData = responseData.data.map((item) => {
           // const details = item || {};
@@ -230,20 +231,7 @@ const BestSellers = () => {
     slideCount: products.length,
     isMobile: false,
   });
-
-  // useEffect(() => {
-  //   const handleResize = () => {
-  //     setSliderState((prev) => ({
-  //       ...prev,
-  //       isMobile: window.innerWidth < 768,
-  //     }));
-  //   };
-
-  //   handleResize();
-  //   window.addEventListener("resize", handleResize);
-  //   return () => window.removeEventListener("resize", handleResize);
-  // }, []);
-
+  
   useEffect(() => {
       allBestSellerItems();
     }, []);

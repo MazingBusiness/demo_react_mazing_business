@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { FiX, FiChevronDown } from "react-icons/fi";
-import { useNavigate, Link } from "react-router-dom";
+import { NavLink,useNavigate, Link } from "react-router-dom";
 
 import searchIcon from "../assets/icons/SearchIcon.svg";
 import userIcon from "../assets/icons/HrIcon1.svg";
@@ -22,14 +22,25 @@ import SearchModal from "../components/SearchModal";
 
 import CartSlide from "../components/CartSlide"; // adjust path if needed
 
+
 const Header = () => {
   const [searchText, setSearchText] = useState("");
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [showMegaMenu, setShowMegaMenu] = useState(false);
   const [isLangOpen, setIsLangOpen] = useState(false);
 
+  {/** store login credentials */}
+  const [userInfo, setUserInfo] = useState(null);
+
   const [isCartVisible, setIsCartVisible] = useState(false);
   const toggleCart = () => setIsCartVisible(!isCartVisible);
+
+  {/** User Logout */}
+  const handleLogout = () => {
+    localStorage.removeItem("mazingBusinessLoginInfo");
+    setUserInfo(null);
+    navigate("/login");
+  };
 
   const [selectedLang, setSelectedLang] = useState({
     code: "en",
@@ -48,6 +59,20 @@ const Header = () => {
 
   const handleSearchChange = (e) => setSearchText(e.target.value);
   const handleClear = () => setSearchText("");
+  
+  useEffect(() => {
+    const stored = localStorage.getItem("mazingBusinessLoginInfo");
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        if (parsed?.first_name) {
+          setUserInfo(parsed);
+        }
+      } catch (e) {
+        console.error("Invalid login info in localStorage.");
+      }
+    }
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -80,13 +105,17 @@ const Header = () => {
     };
   }, [showMegaMenu, isSearchOpen, isCartVisible]);
 
+
+    
+
+
   return (
     <header className="main-header">
       <div className="top-header">
         <div className="maincontainer">
           <div className="top-headerLft">
             <div className="logo">
-              <img src={Logo} alt="Logo" />
+              <NavLink to="/" ><img src={Logo} alt="Logo" /></NavLink>
             </div>
           </div>
 
@@ -119,9 +148,13 @@ const Header = () => {
 
           <div className="top-headerRgt">
             <div className="header-icons">
-              <button className="icon-btn">
-                <img src={userIcon} alt="User" />
-              </button>
+              
+                  <Link to="/profileDashbord">
+                  <button className="icon-btn">
+                    <img src={userIcon} alt="User" />
+                  </button>
+                  </Link>
+
               <button className="icon-btn badge-container">
                 <img src={wishlistIcon} alt="Wishlist" />
                 <span className="badge">5</span>

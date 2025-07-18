@@ -78,6 +78,22 @@ export const getTopBrand = async (lang) => {
     return response;
 }
 
+//Get Category by cat group
+export const getCategory = async (id) => {
+    const response = await fetch(`${API_BASE_URL}product/cetrgory-groups?id=${id}`, {
+        method: 'GET'
+    });
+    return response;
+}
+
+//Get Top Category group
+export const getTopCategoryGroup = async () => {
+    const response = await fetch(`${API_BASE_URL}home/get-top-category-groups`, {
+        method: 'GET'
+    });
+    return response;
+}
+
 
 // Get Page Content Form Json
 export const getPageContent = async (lang) => {

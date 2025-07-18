@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { FiX, FiChevronDown } from "react-icons/fi";
-import { useNavigate, Link } from "react-router-dom";
+import { NavLink, useNavigate, Link } from "react-router-dom";
 
 import Logo from "../assets/images/Logo.svg";
 
@@ -13,7 +13,7 @@ const LoginHeader = () => {
         <div className="maincontainer">
           <div className="top-headerLft">
             <div className="logo">
-              <img src={Logo} alt="Logo" />
+              <NavLink to="/" ><img src={Logo} alt="Logo" /></NavLink>
             </div>
           </div>
 

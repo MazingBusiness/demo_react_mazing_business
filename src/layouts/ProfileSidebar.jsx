@@ -1,6 +1,6 @@
 import React from "react";
-import { NavLink, useLocation } from "react-router-dom";
-import userImage from "../assets/images/ProfilePic.jpg";
+import { NavLink, useLocation, useNavigate  } from "react-router-dom";
+import userImage from "../assets/images/pic2.png";
 import icon1 from "../assets/icons/sidemenuIcon1.svg";
 import icon2 from "../assets/icons/sidemenuIcon2.svg";
 import icon3 from "../assets/icons/sidemenuIcon3.svg";
@@ -10,14 +10,24 @@ import icon6 from "../assets/icons/sidemenuIcon6.svg";
 import icon7 from "../assets/icons/sidemenuIcon7.svg";
 import icon8 from "../assets/icons/sidemenuIcon8.svg";
 import icon9 from "../assets/icons/sidemenuIcon9.svg";
+import { getLoggedInUser } from "../utils/authUtils";
 
 const ProfileSidebar = () => {
+  const navigate = useNavigate();
   const location = useLocation();
   const currentPath = location.pathname;
+  const user = getLoggedInUser();
+  console.log("✅ Logged In User:", user);
 
   // ✅ Define aliases: key = currentPath, value = base route to activate
   const routeAliases = {
     "/profileOrderDetails": "/profileOrder",
+  };
+
+  // Handle Logout
+  const handleLogout = () => {
+    localStorage.removeItem("mazingBusinessLoginInfo"); // Clear token
+    navigate("/login"); // Redirect to login
   };
 
   // Get the active path from aliases, or fallback to current path
@@ -31,11 +41,11 @@ const ProfileSidebar = () => {
       <div className="profile-card">
         <img src={userImage} alt="User" className="user-image" />
         <div className="user-info">
-          <h3>Robert Johnson</h3>
+          <h3>{user?.first_name || "Guest User"}</h3>
           <p className="party-code">
-            Party Code: <span>OPEL0100087</span>
+            Party Code: <span>{user?.party_code || ""}</span>
           </p>
-          <p className="user-phone">+91 123456789</p>
+          <p className="user-phone">{user?.phone || ""}</p>
         </div>
       </div>
 
@@ -136,7 +146,7 @@ const ProfileSidebar = () => {
       </nav>
 
       <div className="logout-section">
-        <button className="logout-btn">
+        <button style={{ cursor: "pointer" }} className="logout-btn" onClick={handleLogout}>
           <span className="menu-icon">
             <img src={icon9} alt="Logout" />
           </span>

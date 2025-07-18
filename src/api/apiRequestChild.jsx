@@ -1,5 +1,7 @@
 import { API_BASE_URL } from "../app_url";
 import axios from 'axios';
+import { getLoggedInUser, getAuthToken } from '../utils/authUtils';
+
 
 let value = JSON.parse(localStorage.getItem("mazingBusinessLoginInfo"));
 // console.log(value);
@@ -10,12 +12,13 @@ let token = authorisation ? authorisation["token"] : null;
 
 
 const getHeader = () => {
-    let value = JSON.parse(localStorage.getItem("mazingBusinessLoginInfo"));
+   // let value = JSON.parse(localStorage.getItem("mazingBusinessLoginInfo"));
     // console.warn(value)
-    let authorisation = value ? value["authorisation"] : null;
+   // let authorisation = value ? value["authorisation"] : null;
+     const token = getAuthToken();
 
-    if (authorisation) {
-        let token = authorisation["token"];
+    if (token) {
+        // let token = token;
         let header = {
             headers: {
                 Authorization: `Bearer ${token}`,
@@ -84,7 +87,47 @@ export const login = async (login_info) => {
     });
     return response;
 }
+
+// Send OTP for login
+export const sendOtpForLogin = async (phone) => {
+  const response = await fetch(`${API_BASE_URL}user/send-otp-for-login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ phone }),
+  });
+  return response;
+};
+
+//  Send OTP for Forgot Password
+export const sendForgotPasswordOtp = async (phone) => {
+  const response = await fetch(`${API_BASE_URL}user/send-otp-for-forget-password`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ phone }),
+  });
+
+  return response;
+};
 // --Login API end--
+
+// Get My Orders
+export const getMyOrders = async () => {
+  try {
+    
+    const response = await fetch(`${API_BASE_URL}user/my-order/`, {
+      method: 'GET',
+      headers: {
+         ...getHeader().headers,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    return response;
+  } catch (error) {
+    console.error("Error fetching orders:", error);
+    throw error;
+  }
+};
 
 // fetching Product list
 export const getProduct = async (lang) => {

@@ -3,185 +3,49 @@ import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 
-// Import local images (create these imports at the top)
-import product1 from "../assets/images/product.jpg";
-import product2 from "../assets/images/product.jpg";
-import product3 from "../assets/images/product.jpg";
-import product4 from "../assets/images/product.jpg";
-import product5 from "../assets/images/product.jpg";
-import product6 from "../assets/images/product.jpg";
-import product7 from "../assets/images/product.jpg";
-import fastDeliveryIcon from "../assets/icons/fast-delivery.svg";
-import HeartIcon from "../assets/icons/HeartIcon.svg";
-import CartIcon from "../assets/icons/CartIcon.svg";
+// import fastDeliveryIcon from "../assets/icons/fast-delivery.svg";
+// import HeartIcon from "../assets/icons/HeartIcon.svg";
+// import CartIcon from "../assets/icons/CartIcon.svg";
+import no_image from "../assets/images/no-image.png";
 
 import { FaStar, FaRegStar, FaStarHalfAlt } from "react-icons/fa";
 import { FiChevronRight } from "react-icons/fi";
 import { Link } from "react-router-dom";
 
-const products = [
-  {
-    id: 1,
-    name: "Drill Machine",
-    img: product1, // Use imported image
-    oldPrice: "₹2,000",
-    newPrice: "₹1,800",
-    rating: 4,
-    totalRatings: 300,
-    sold: "250/531",
-    discount: "20%",
-  },
-  {
-    id: 2,
-    name: "Cutting Tool",
-    img: product2, // Use imported image
-    oldPrice: "₹2,000",
-    newPrice: "₹1,800",
-    rating: 4,
-    totalRatings: 19,
-    sold: "26/90",
-    discount: "20%",
-  },
-  {
-    id: 3,
-    name: "Cutting Tool",
-    img: product2, // Use imported image
-    oldPrice: "₹2,000",
-    newPrice: "₹1,800",
-    rating: 4,
-    totalRatings: 19,
-    sold: "26/90",
-    discount: "20%",
-  },
-  {
-    id: 4,
-    name: "Cutting Tool",
-    img: product2, // Use imported image
-    oldPrice: "₹2,000",
-    newPrice: "₹1,800",
-    rating: 4,
-    totalRatings: 19,
-    sold: "26/90",
-    discount: "20%",
-  },
-  {
-    id: 5,
-    name: "Cutting Tool",
-    img: product2, // Use imported image
-    oldPrice: "₹2,000",
-    newPrice: "₹1,800",
-    rating: 4,
-    totalRatings: 19,
-    sold: "26/90",
-    discount: "20%",
-  },
-  {
-    id: 6,
-    name: "Cutting Tool",
-    img: product2, // Use imported image
-    oldPrice: "₹2,000",
-    newPrice: "₹1,800",
-    rating: 4,
-    totalRatings: 19,
-    sold: "26/90",
-    discount: "20%",
-  },
-  {
-    id: 7,
-    name: "Cutting Tool",
-    img: product2, // Use imported image
-    oldPrice: "₹2,000",
-    newPrice: "₹1,800",
-    rating: 4,
-    totalRatings: 19,
-    sold: "26/90",
-    discount: "20%",
-  },
-  {
-    id: 8,
-    name: "Cutting Tool",
-    img: product2, // Use imported image
-    oldPrice: "₹2,000",
-    newPrice: "₹1,800",
-    rating: 4,
-    totalRatings: 19,
-    sold: "26/90",
-    discount: "20%",
-  },
-  {
-    id: 9,
-    name: "Cutting Tool",
-    img: product2, // Use imported image
-    oldPrice: "₹2,000",
-    newPrice: "₹1,800",
-    rating: 4,
-    totalRatings: 19,
-    sold: "26/90",
-    discount: "20%",
-  },
-  {
-    id: 10,
-    name: "Cutting Tool",
-    img: product2, // Use imported image
-    oldPrice: "₹2,000",
-    newPrice: "₹1,800",
-    rating: 4,
-    totalRatings: 19,
-    sold: "26/90",
-    discount: "20%",
-  },
-  {
-    id: 11,
-    name: "Cutting Tool",
-    img: product2, // Use imported image
-    oldPrice: "₹2,000",
-    newPrice: "₹1,800",
-    rating: 4,
-    totalRatings: 19,
-    sold: "26/90",
-    discount: "20%",
-  },
-  {
-    id: 12,
-    name: "Cutting Tool",
-    img: product2, // Use imported image
-    oldPrice: "₹2,000",
-    newPrice: "₹1,800",
-    rating: 4,
-    totalRatings: 19,
-    sold: "26/90",
-    discount: "20%",
-  },
-];
-
-const renderRating = (rating) => {
-  const stars = [];
-  const fullStars = Math.floor(rating);
-  const hasHalfStar = rating % 1 >= 0.5;
-
-  // Full stars
-  for (let i = 0; i < fullStars; i++) {
-    stars.push(<FaStar key={`full-${i}`} className="star-icon full-star" />);
-  }
-
-  // Half star
-  if (hasHalfStar) {
-    stars.push(<FaStarHalfAlt key="half" className="star-icon half-star" />);
-  }
-
-  // Empty stars
-  const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
-  for (let i = 0; i < emptyStars; i++) {
-    stars.push(
-      <FaRegStar key={`empty-${i}`} className="star-icon empty-star" />
-    );
-  }
-
-  return stars;
-};
+import {getCategory} from "../api/apiRequest";
+import { getLoggedInUser, getAuthToken } from '../utils/authUtils';
 
 const PowerToolsSlider = () => {
+  const [products, setProducts] = useState([]);
   const sliderRef = useRef(null); // Properly define the ref at the component level
+
+  const allPowerToolsCategoryItems = async () => {
+    try {
+      const apiRes = await getCategory(1);
+      const responseData = await apiRes.json();
+      const user = getLoggedInUser();
+
+      if (responseData.res) {
+        // Flatten all child categories from all parent categories
+        const transformedData = responseData.data.flatMap((category) => {
+          return category.child_category.map((child) => ({
+            id: child.id,
+            name: child.name,
+            img: child.photo || no_image,
+            slug: child.slug,
+          }));
+        });
+
+        setProducts(transformedData);
+      } else {
+        NotificationManager.error(responseData.msg || "Something went wrong", "", 2000);
+      }
+    } catch (error) {
+      console.error("Fetch error:", error);
+      NotificationManager.error("Failed to load offers", "", 2000);
+    }
+  };
+  
   const [sliderState, setSliderState] = useState({
     currentSlide: 0,
     slideCount: products.length,
@@ -189,21 +53,12 @@ const PowerToolsSlider = () => {
   });
 
   useEffect(() => {
-    const handleResize = () => {
-      setSliderState((prev) => ({
-        ...prev,
-        isMobile: window.innerWidth < 768,
-      }));
-    };
-
-    handleResize();
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
+    allPowerToolsCategoryItems();
+    }, []);
 
   const settings = {
     dots: false,
-    infinite: false,
+    infinite: true,
     speed: 500,
     autoplay: true,
     autoplaySpeed: 3000,
@@ -243,10 +98,13 @@ const PowerToolsSlider = () => {
     ],
   };
 
-  const isPrevDisabled = sliderState.currentSlide === 0;
-  const isNextDisabled =
-    sliderState.currentSlide >= sliderState.slideCount - settings.slidesToShow;
+  // const isPrevDisabled = sliderState.currentSlide === 0;
+  // const isNextDisabled =
+  //   sliderState.currentSlide >= sliderState.slideCount - settings.slidesToShow;
 
+  const isPrevDisabled = false;
+  const isNextDisabled = false;
+  
   const renderProductImage = (product) => {
     return (
       <div className="product-img">
@@ -265,14 +123,14 @@ const PowerToolsSlider = () => {
             <span>No Image</span>
           </div>
         )}
-        <div className="btnGrp">
+        {/* <div className="btnGrp">
           <button className="wishlist-btn" aria-label="Add to wishlist">
             <img src={HeartIcon} alt="HeartIcon" />
           </button>
           <button className="cart-btn" aria-label="Add to cart">
             <img src={CartIcon} alt="HeartIcon" />
           </button>
-        </div>
+        </div> */}
       </div>
     );
   };
@@ -326,13 +184,13 @@ const PowerToolsSlider = () => {
                 <div className="product-card">
                   {renderProductImage(product)}
                   <div className="product-info">
-                    <h3>{product.name}</h3>
-                    <div className="prices">
+                    <h4>{product.name}</h4>
+                    {/* <div className="prices">
                       <span className="old">{product.oldPrice}</span>
                       <span className="new">{product.newPrice}</span>
-                    </div>
+                    </div> */}
 
-                    <div className="ratingGrp">
+                    {/* <div className="ratingGrp">
                       <div className="ratingGrpLft">
                         <div className="discount">OFF {product.discount}</div>
                         <div className="rating">
@@ -361,7 +219,7 @@ const PowerToolsSlider = () => {
                         style={{ width: `${Math.random() * 100}%` }}
                       ></div>
                     </div>
-                    <div className="sold">Sold: {product.sold}</div>
+                    <div className="sold">Sold: {product.sold}</div> */}
                   </div>
                 </div>
               </div>
