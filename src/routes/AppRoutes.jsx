@@ -1,7 +1,7 @@
 // src/routes/AppRoutes.jsx
 
 import React from "react";
-import { Routes, Route /*, HashRouter */ } from "react-router-dom";
+import { Routes, Route, HashRouter } from "react-router-dom";
 import PrivateRoute from "./PrivateRoute";
 
 import Home from "../pages/Home";
