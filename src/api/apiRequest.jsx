@@ -10,24 +10,39 @@ import { getLoggedInUser, getAuthToken } from '../utils/authUtils';
 // console.log(token);
 
 
+// const getHeader = () => {
+//     // let value = JSON.parse(localStorage.getItem("mazingBusinessLoginInfo"));    
+//     // console.warn(value)
+//     // let authorisation = value ? value["authorisation"] : null;
+//     const token = getAuthToken();
+//     if (token) {
+//         let token = token;
+//         let header = {
+//             headers: {
+//                 Authorization: `Bearer ${token}`,
+//             },
+//         };
+//         return header;
+//     } else {
+//         // Handle the case where authorisation is null.
+//         console.error("Authorization token is missing or null");
+//         // You might want to return a default header or throw an error here.
+//         return null; // or return a default header if needed
+//     }
+// };
+
 const getHeader = () => {
-    // let value = JSON.parse(localStorage.getItem("mazingBusinessLoginInfo"));    
-    // console.warn(value)
-    // let authorisation = value ? value["authorisation"] : null;
     const token = getAuthToken();
+    console.log(token);
     if (token) {
-        let token = token;
-        let header = {
+        return {
             headers: {
                 Authorization: `Bearer ${token}`,
             },
         };
-        return header;
     } else {
-        // Handle the case where authorisation is null.
         console.error("Authorization token is missing or null");
-        // You might want to return a default header or throw an error here.
-        return null; // or return a default header if needed
+        return null;
     }
 };
 

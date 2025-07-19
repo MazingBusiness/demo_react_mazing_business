@@ -771,6 +771,23 @@ a.right-link {
   font-weight: 600;
 }
 
+.before-reg-btn {
+  background-color: #004d84;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  width: 170px;
+  height: 40px;
+  font-family: "Roboto", sans-serif;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
 .nav-links {
   list-style: none;
   display: flex;

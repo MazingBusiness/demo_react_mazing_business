@@ -52,7 +52,7 @@ const TopCatGroups = () => {
     try {
       const apiRes = await getTopCategoryGroup();
       const responseData = await apiRes.json();
-      console.log("API Raw Data:", responseData);
+      // console.log("API Raw Data:", responseData);
       if (responseData.res) {
         const transformedData = responseData.data.map(item => ({
           id: item.id,
@@ -80,9 +80,9 @@ const TopCatGroups = () => {
     getTopCategoryGroups();
   }, []);
 
-   useEffect(() => {
-    console.log("Updated products:", products);
-  }, [products]);
+  // useEffect(() => {
+  //   console.log("Updated products:", products);
+  // }, [products]);
 
   const settings = {
     dots: false,

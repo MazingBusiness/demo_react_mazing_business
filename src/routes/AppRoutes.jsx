@@ -24,7 +24,7 @@ import ProfileWallet from "../pages/user-profile/ProfileWallet";
 import TicketDetails from "../pages/user-profile/TicketDetails";
 
 const AppRoutes = () => (
-  <HashRouter>  // ✅ Use this if you're facing refresh issues on hosting
+  <HashRouter>
     <Routes>
       {/* Public Routes */}
       <Route path="/" element={<Home />} />

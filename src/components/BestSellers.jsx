@@ -194,6 +194,7 @@ const BestSellers = () => {
       const apiRes = await getBestSellerProducts();
       const responseData = await apiRes.json();
       const user = getLoggedInUser();
+      // console.log(user);
       console.log(user);
       if (responseData.res) {
         const transformedData = responseData.data.map((item) => {
@@ -206,8 +207,10 @@ const BestSellers = () => {
             id: item.id,
             name: item.name,
             img: item.thumb_img?.file_name || no_image,
-            oldPrice: item.mrp ? parseFloat(item.mrp.toString().replace(/₹/g, '')).toFixed(2) : "0.00",
-            newPrice: item.discount_price ? parseFloat(item.discount_price.toString().replace(/₹/g, '')).toFixed(2) : "0.00",
+            oldPrice: item.mrp ? `₹${parseFloat(item.mrp.toString()).toFixed(2)}` : "₹0.00",
+            newPrice: item.discount_price ? `₹${parseFloat(item.discount_price.toString().replace(/₹/g, '')).toFixed(2)}` : "₹0.00",
+            // oldPrice: item.mrp ? parseFloat(item.mrp).replace(/₹/g, '').toFixed(2) : "0.00",            
+            // newPrice: item.discount_price ? parseFloat(item.discount_price.toString().replace(/₹/g, '')).toFixed(2) : "0.00",
             rating: rating,
             totalRatings: totalRatings,
             sold: `${Math.floor(Math.random() * 50 + 1)}/${Math.floor(Math.random() * 200 + 50)}`,
