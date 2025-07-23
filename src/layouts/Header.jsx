@@ -105,10 +105,6 @@ const Header = () => {
     };
   }, [showMegaMenu, isSearchOpen, isCartVisible]);
 
-
-    
-
-
   return (
     <header className="main-header">
       <div className="top-header">
@@ -284,5 +280,4 @@ const Header = () => {
     </header>
   );
 };
-
 export default Header;

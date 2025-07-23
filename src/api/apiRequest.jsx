@@ -46,6 +46,13 @@ const getHeader = () => {
     }
 };
 
+//Get Banners
+export const getMegaMenu = async () => {
+    const response = await fetch(`${API_BASE_URL}home/get-top-category-groups`, {
+        method: 'GET'
+    });
+    return response;
+}
 
 //Get Banners
 export const getAllSliders = async () => {
