@@ -1,16 +1,20 @@
 import React from "react";
 import { FaStar, FaStarHalfAlt, FaRegStar } from "react-icons/fa";
+import { useLocation } from "react-router-dom";
 
 // Assets
 import HeartIcon from "../assets/icons/HeartIcon.svg";
 import CartIcon from "../assets/icons/CartIcon.svg";
 import product1 from "../assets/images/product.jpg";
 
+import {getCatProduct} from "../api/apiRequest";
+import { getLoggedInUser, getAuthToken } from '../utils/authUtils';
+
 // Products Array
 export const products = [
   {
     id: 1,
-    name: "Drill Machine",
+    name: "Drill1212 Machine",
     img: product1,
     oldPrice: "₹2,000",
     newPrice: "₹1,800",

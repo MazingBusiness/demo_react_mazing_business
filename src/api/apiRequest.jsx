@@ -2,38 +2,10 @@ import { API_BASE_URL } from "../app_url";
 import axios from 'axios';
 import { getLoggedInUser, getAuthToken } from '../utils/authUtils';
 
-// let value = JSON.parse(localStorage.getItem("mazingBusinessLoginInfo"));
-// console.log(value);
-// let authorisation = value ? value["authorisation"] : null;
-// Check if authorisation is not null before accessing its properties
-// let token = authorisation ? authorisation["token"] : null;
-// console.log(token);
-
-
-// const getHeader = () => {
-//     // let value = JSON.parse(localStorage.getItem("mazingBusinessLoginInfo"));    
-//     // console.warn(value)
-//     // let authorisation = value ? value["authorisation"] : null;
-//     const token = getAuthToken();
-//     if (token) {
-//         let token = token;
-//         let header = {
-//             headers: {
-//                 Authorization: `Bearer ${token}`,
-//             },
-//         };
-//         return header;
-//     } else {
-//         // Handle the case where authorisation is null.
-//         console.error("Authorization token is missing or null");
-//         // You might want to return a default header or throw an error here.
-//         return null; // or return a default header if needed
-//     }
-// };
 
 const getHeader = () => {
     const token = getAuthToken();
-    console.log(token);
+    // console.log(token);
     if (token) {
         return {
             headers: {
@@ -116,7 +88,6 @@ export const getTopCategoryGroup = async () => {
     return response;
 }
 
-
 // Get Page Content Form Json
 export const getPageContent = async (lang) => {
     const response = await fetch(`${API_BASE_URL}user/page-content-from-json?lang=${lang}`, {
@@ -124,55 +95,23 @@ export const getPageContent = async (lang) => {
     });
     return response;
 }
-// --Registraton Process APIs start--
-
-// Verify Email
-export const sendVerifyEmail = async (data) =>
-{
-    const response = await fetch(`${API_BASE_URL}user/send-verify-email`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-    });
-    return response;
-}
-
-export const registerUser = async (userData) => {
-    const response = await fetch(`${API_BASE_URL}user/sign-up`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(userData),
-    });
-    return response;
-}
-
-// --Registraton Process APIs end--
-
-// --Login API start--
-export const login = async (login_info) => {
-    const response = await fetch(`${API_BASE_URL}user/login`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(login_info),
-    });
-    return response;
-}
-// --Login API end--
 
 // fetching Product list
-export const getProduct = async (lang) => {
-    const response = await fetch(`${API_BASE_URL}product/get-products?lang=${lang}`,{
-         method: 'GET',
-         headers: {
-            ...getHeader().headers,
-           'Content-Type': 'application/json',
-        },
-    });
-    return response;
-}
+export const getCatProduct = async (id, page = 1) => {
+  const user = getLoggedInUser();
+  const header = getHeader();
+  // Build query params
+  const queryParams = new URLSearchParams();
+  if (id) queryParams.append('category_id', id);
+  if (user?.id) queryParams.append('user_id', user.id);
+  queryParams.append('page', page); // ✅ add page with default = 1
+  const url = `${API_BASE_URL}product/cetrgory-products?${queryParams.toString()}`;
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      ...(header?.headers || {}),
+      'Content-Type': 'application/json',
+    },
+  });
+  return response;
+};

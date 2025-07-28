@@ -194,8 +194,6 @@ const BestSellers = () => {
       const apiRes = await getBestSellerProducts();
       const responseData = await apiRes.json();
       const user = getLoggedInUser();
-      // console.log(user);
-      console.log(user);
       if (responseData.res) {
         const transformedData = responseData.data.map((item) => {
           // const details = item || {};

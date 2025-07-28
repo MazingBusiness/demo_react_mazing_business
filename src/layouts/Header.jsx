@@ -261,7 +261,8 @@ const Header = () => {
           />
         )}
         <div className={`mega-menu-wrapper ${showMegaMenu ? "open" : ""}`}>
-          <MegaMenu />
+          {/* <MegaMenu /> */}
+          <MegaMenu setShowMegaMenu={setShowMegaMenu} />
         </div>
       </div>
 

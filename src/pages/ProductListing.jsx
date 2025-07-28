@@ -1,7 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import MainLayout from "../layouts/MainLayout";
 import { FaAngleDown, FaAngleUp } from "react-icons/fa";
 import ProductGrid from "../components/ProductGrid";
+import { useLocation } from "react-router-dom";
+
+import {getCatProduct} from "../api/apiRequest";
 
 const allBrands = [
   "HIKOKI (15)",
@@ -22,17 +25,94 @@ const deliveryOptions = [
 ];
 
 const ProductListing = () => {
-  const [selectedBrands, setSelectedBrands] = useState(["HIKOKI (15)"]);
-  const [selectedDelivery, setSelectedDelivery] = useState(
-    "Delivery in 3 - 4 Days"
-  );
-  const [priceRange, setPriceRange] = useState([1000, 7500]);
+
+  const { state } = useLocation();
+  const initialSlug = state?.slug || "";
+  const initialCatId = state?.cat_id || "";
+  const [slug, setSlug] = useState(initialSlug);
+  const [cat_id, setCatId] = useState(initialCatId);
+
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const [allBrands, setBrand] = useState([]);
+
+  const getallBrands = async () => {
+    try {
+      // setLoading(true); // 👈 Show loader before API call
+      const apiRes = await getCatProduct(cat_id, currentPage);
+      const responseData = await apiRes.json();
+      if (responseData.res) {
+        const allBrands = responseData.allBrands;  
+        setBrand(allBrands);
+      } else {
+        NotificationManager.error(responseData.msg || "Something went wrong", "", 2000);
+      }
+    } catch (error) {
+      console.error("Fetch error:", error);
+      NotificationManager.error("Failed to load offers", "", 2000);
+    } finally {
+      // setLoading(false); // 👈 Hide loader after response or error
+    }
+  };
+  useEffect(() => {
+    if (cat_id) {
+      getallBrands();
+    }
+  }, [cat_id,currentPage]);
+
+  // const [selectedBrands, setSelectedBrands] = useState(["HIKOKI (15)"]);
+  // const [selectedDelivery, setSelectedDelivery] = useState("Delivery in 3 - 4 Days");
+
+  const [selectedBrands, setSelectedBrands] = useState([]);
+  const [selectedDelivery, setSelectedDelivery] = useState();
+  
+
+  const min = 1000;
+  const max = 7500;
+  const minValueBetween = 500;
+
+  const [currentMin, setCurrentMin] = useState(1500);
+  const [currentMax, setCurrentMax] = useState(6000);
+  const [inputMin, setInputMin] = useState(1500);
+  const [inputMax, setInputMax] = useState(6000);
+
+  const sliderRef = useRef(null);
+  const minValueRef = useRef(null);
+  const maxValueRef = useRef(null);
+
+  const [sliderWidth, setSliderWidth] = useState(0);
+  const [sliderOffset, setSliderOffset] = useState(0);
+
   const [showMoreBrands, setShowMoreBrands] = useState(5);
   const [showMoreDelivery, setShowMoreDelivery] = useState(2);
 
+  useEffect(() => {
+    if (sliderRef.current) {
+      setSliderWidth(sliderRef.current.offsetWidth);
+      setSliderOffset(sliderRef.current.offsetLeft);
+    }
+    updateSliderWidths();
+  }, []);
+
+  const updateSliderWidths = () => {
+    if (minValueRef.current) {
+      minValueRef.current.style.width = `${(currentMin * 100) / max}%`;
+    }
+    if (maxValueRef.current) {
+      maxValueRef.current.style.width = `${(currentMax * 100) / max}%`;
+    }
+  };
+
   const clearBrand = () => setSelectedBrands([]);
   const clearDelivery = () => setSelectedDelivery(null);
-  const clearPrice = () => setPriceRange([1000, 7500]);
+  const clearPrice = () => {
+    setCurrentMin(1500);
+    setCurrentMax(6000);
+    setInputMin(1500);
+    setInputMax(6000);
+    updateSliderWidths();
+  };
+
   const clearAll = () => {
     clearBrand();
     clearDelivery();
@@ -55,6 +135,83 @@ const ProductListing = () => {
     );
   };
 
+  const handleMinChange = (e) => {
+    const val = parseInt(e.target.value);
+    setInputMin(val);
+    if (val >= min && val <= currentMax - minValueBetween) {
+      setCurrentMin(val);
+      updateSliderWidths();
+    }
+  };
+
+  const handleMaxChange = (e) => {
+    const val = parseInt(e.target.value);
+    setInputMax(val);
+    if (val <= max && val >= currentMin + minValueBetween) {
+      setCurrentMax(val);
+      updateSliderWidths();
+    }
+  };
+
+  const startMinDrag = (e) => {
+    e.preventDefault();
+    document.addEventListener("mousemove", onMinDrag);
+    document.addEventListener("mouseup", stopMinDrag);
+    document.addEventListener("touchmove", onMinDrag);
+    document.addEventListener("touchend", stopMinDrag);
+  };
+
+  const startMaxDrag = (e) => {
+    e.preventDefault();
+    document.addEventListener("mousemove", onMaxDrag);
+    document.addEventListener("mouseup", stopMaxDrag);
+    document.addEventListener("touchmove", onMaxDrag);
+    document.addEventListener("touchend", stopMaxDrag);
+  };
+
+  const onMinDrag = (e) => {
+    const pageX = e.touches ? e.touches[0].clientX : e.clientX;
+    const draggedWidth = pageX - sliderOffset;
+    const percent = (draggedWidth * 100) / sliderWidth;
+    const val = Math.round((max * percent) / 100);
+
+    if (val >= min && val <= currentMax - minValueBetween) {
+      setCurrentMin(val);
+      setInputMin(val);
+      if (minValueRef.current) minValueRef.current.style.width = `${percent}%`;
+    }
+  };
+
+  const onMaxDrag = (e) => {
+    const pageX = e.touches ? e.touches[0].clientX : e.clientX;
+    const draggedWidth = pageX - sliderOffset;
+    const percent = (draggedWidth * 100) / sliderWidth;
+    const val = Math.round((max * percent) / 100);
+
+    if (val <= max && val >= currentMin + minValueBetween) {
+      setCurrentMax(val);
+      setInputMax(val);
+      if (maxValueRef.current) maxValueRef.current.style.width = `${percent}%`;
+    }
+  };
+
+  const stopMinDrag = () => {
+    document.removeEventListener("mousemove", onMinDrag);
+    document.removeEventListener("mouseup", stopMinDrag);
+    document.removeEventListener("touchmove", onMinDrag);
+    document.removeEventListener("touchend", stopMinDrag);
+  };
+
+  const stopMaxDrag = () => {
+    document.removeEventListener("mousemove", onMaxDrag);
+    document.removeEventListener("mouseup", stopMaxDrag);
+    document.removeEventListener("touchmove", onMaxDrag);
+    document.removeEventListener("touchend", stopMaxDrag);
+  };
+
+  const maxForMin = () => currentMax - minValueBetween;
+  const minForMax = () => currentMin + minValueBetween;
+
   return (
     <MainLayout>
       <div className="maincontainer">
@@ -62,20 +219,17 @@ const ProductListing = () => {
           <div className="sidebarFilters">
             {(selectedBrands.length > 0 ||
               selectedDelivery ||
-              priceRange[0] > 1000 ||
-              priceRange[1] < 7500) && (
+              currentMin !== 1500 ||
+              currentMax !== 6000) && (
               <div className="active-filters">
                 {selectedBrands.length > 0 && (
                   <div className="active-part">
                     <label>Brands:</label>
-
                     <div className="active-tag">
                       {selectedBrands.map((brand, index) => (
                         <span key={index}>
                           {brand}
-                          <button onClick={() => toggleBrand(brand)}>
-                            ✕
-                          </button>{" "}
+                          <button onClick={() => toggleBrand(brand)}>✕</button>
                         </span>
                       ))}
                     </div>
@@ -83,20 +237,24 @@ const ProductListing = () => {
                 )}
                 {selectedDelivery && (
                   <div className="active-part">
-                    <label> Delivery: </label>
-
+                    <label>Delivery:</label>
                     <div className="active-tag">
                       <span>
                         {selectedDelivery}
-                        <button onClick={clearDelivery}>✕</button>{" "}
+                        <button onClick={clearDelivery}>✕</button>
                       </span>
                     </div>
                   </div>
                 )}
-                {(priceRange[0] > 1000 || priceRange[1] < 7500) && (
-                  <div className="active-tag">
-                    Price: ₹{priceRange[0]} - ₹{priceRange[1]}
-                    <button onClick={clearPrice}>✕</button>
+                {(currentMin !== 1500 || currentMax !== 6000) && (
+                  <div className="active-part">
+                    <label>Price:</label>
+                    <div className="active-tag">
+                      <span>
+                        ₹{currentMin} - ₹{currentMax}
+                        <button onClick={clearPrice}>✕</button>
+                      </span>
+                    </div>
                   </div>
                 )}
                 <button className="clear-all-btn" onClick={clearAll}>
@@ -106,6 +264,7 @@ const ProductListing = () => {
             )}
 
             <div className="filters">
+              {/* Brands Filter */}
               <div className="filter-section">
                 <h4>
                   Brands{" "}
@@ -114,7 +273,7 @@ const ProductListing = () => {
                   </button>
                 </h4>
                 <div className="checkbox-group brand-group fade-in">
-                  {allBrands.slice(0, showMoreBrands).map((brand, index) => (
+                  {/* {allBrands.slice(0, showMoreBrands).map((brand, index) => (
                     <label
                       key={index}
                       className={`animated-checkbox ${
@@ -129,7 +288,24 @@ const ProductListing = () => {
                       <span className="custom-check"></span>
                       {brand}
                     </label>
+                  ))} */}
+
+                  {Array.isArray(allBrands) && allBrands.slice(0, showMoreBrands).map((brand, index) => (
+                    <label
+                      key={brand.id}
+                      className={`animated-checkbox ${selectedBrands.includes(brand.id) ? "checked" : ""}`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedBrands.includes(brand.name)}
+                        onChange={() => toggleBrand(brand.name)}
+                        value={brand.id}
+                      />
+                      <span className="custom-check"></span>
+                      {brand.name}
+                    </label>
                   ))}
+
                 </div>
                 <button onClick={toggleBrands} className="show-more">
                   {showMoreBrands >= allBrands.length ? (
@@ -144,6 +320,7 @@ const ProductListing = () => {
                 </button>
               </div>
 
+              {/* Delivery Filter */}
               <div className="filter-section">
                 <h4>
                   Delivery Option{" "}
@@ -155,12 +332,18 @@ const ProductListing = () => {
                   {deliveryOptions
                     .slice(0, showMoreDelivery)
                     .map((option, index) => (
-                      <label key={index}>
+                      <label
+                        key={index}
+                        className={`animated-checkbox ${
+                          selectedDelivery === option ? "checked" : ""
+                        }`}
+                      >
                         <input
                           type="checkbox"
                           checked={selectedDelivery === option}
                           onChange={() => setSelectedDelivery(option)}
                         />
+                        <span className="custom-check"></span>
                         {option}
                       </label>
                     ))}
@@ -178,6 +361,7 @@ const ProductListing = () => {
                 </button>
               </div>
 
+              {/* ✅ Price Range */}
               <div className="filter-section">
                 <h4>
                   Price Range{" "}
@@ -185,28 +369,47 @@ const ProductListing = () => {
                     ✕ CLEAR
                   </button>
                 </h4>
-                <input
-                  type="range"
-                  min="1000"
-                  max="7500"
-                  step="100"
-                  value={priceRange[0]}
-                  onChange={(e) =>
-                    setPriceRange([+e.target.value, priceRange[1]])
-                  }
-                />
-                <input
-                  type="range"
-                  min="1000"
-                  max="7500"
-                  step="100"
-                  value={priceRange[1]}
-                  onChange={(e) =>
-                    setPriceRange([priceRange[0], +e.target.value])
-                  }
-                />
-                <div className="price-display">
-                  ₹{priceRange[0]} - ₹{priceRange[1]}
+
+                <div className="PriceRange">
+                  {/* <div className="current-value">
+                  <label>Min:</label>
+                  <input
+                    type="number"
+                    value={inputMin}
+                    min={min}
+                    max={maxForMin()}
+                    onChange={handleMinChange}
+                  />
+                  <br />
+                  <label>Max:</label>
+                  <input
+                    type="number"
+                    value={inputMax}
+                    min={minForMax()}
+                    max={max}
+                    onChange={handleMaxChange}
+                  />
+                </div> */}
+                  <div className="values">
+                    <div>{min}</div>
+                    <div>{max}</div>
+                  </div>
+                  <div ref={sliderRef} id="slider">
+                    <div ref={minValueRef} id="min" data-content={currentMin}>
+                      <div
+                        id="min-drag"
+                        onMouseDown={startMinDrag}
+                        onTouchStart={startMinDrag}
+                      ></div>
+                    </div>
+                    <div ref={maxValueRef} id="max" data-content={currentMax}>
+                      <div
+                        id="max-drag"
+                        onMouseDown={startMaxDrag}
+                        onTouchStart={startMaxDrag}
+                      ></div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>

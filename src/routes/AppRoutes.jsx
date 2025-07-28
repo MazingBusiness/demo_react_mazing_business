@@ -28,7 +28,7 @@ const AppRoutes = () => (
     <Routes>
       {/* Public Routes */}
       <Route path="/" element={<Home />} />
-      <Route path="/productListing" element={<ProductListing />} />
+      <Route path="/product-listing" element={<ProductListing />} />
       <Route path="/login" element={<Login />} />
       <Route path="/forgotpassword" element={<ForgotPassword />} />
       <Route path="/register" element={<Register />} />      
