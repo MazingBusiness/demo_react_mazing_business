@@ -1655,7 +1655,7 @@ a.all-link svg {
 .discount {
   color: #000000;
   font-size: 12px;
-  font-weight: 400;
+  font-weight: 800;
   margin-bottom: 6px;
 }
 
@@ -2258,6 +2258,9 @@ a.all-link svg {
 
 .product-box {
   width: calc(25% - 15px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+  transform: translateY(-5px) scale(1.02);
+  border-radius: 12px;
 }
 
 .product-card:hover {

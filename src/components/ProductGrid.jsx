@@ -95,6 +95,7 @@ const ProductGrid = () => {
             sold: `${Math.floor(Math.random() * 50 + 1)}/${Math.floor(Math.random() * 200 + 50)}`,
             fastDeliveryTag: fastDeliveryTag,
             noCredit: noCredit,
+            discount: item.discount ? `${item.discount.toString()}%` : "20%",
             user_id: user?.id || null,
           };
         });
@@ -200,7 +201,10 @@ const ProductGrid = () => {
             <div className="product-card">
               {renderProductImage(product, openModal)}
               <div className="product-info">
-                <h3>{product.name}</h3>
+                {/* <h3>{product.name}</h3> */}
+                <h3>
+                  {product.name.length > 30 ? `${product.name.substring(0, 30)}...` : product.name}
+                </h3>
                 {product.user_id != null && (
                   <div className="prices">
                     <span className="old">{product.oldPrice}</span>
@@ -229,12 +233,16 @@ const ProductGrid = () => {
                   </div>
                 </div>
                 <div className="progress-bar">
-                  <div
+                  {/* <div
                     className="progress"
                     style={{ width: `${Math.random() * 100}%` }}
+                  ></div> */}
+                  <div
+                    className="progress"
+                    style={{ width: `100%` }}
                   ></div>
                 </div>
-                <div className="sold">Sold: {product.sold}</div>
+                {/* <div className="sold">Sold: {product.sold}</div> */}
               </div>
             </div>
           </div>
