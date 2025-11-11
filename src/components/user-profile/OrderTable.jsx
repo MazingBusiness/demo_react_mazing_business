@@ -4,6 +4,8 @@ import SaveLater from "../../assets/icons/SaveLater.svg";
 import Delete from "../../assets/icons/Delete.svg";
 import { useNavigate, Link } from "react-router-dom";
 import { FiChevronDown, FiCheck } from "react-icons/fi";
+import { getMyOrders  } from "../../api/apiRequestChild";
+
 
 const OrderTable = () => {
   const [selectedEntries, setSelectedEntries] = useState("5");
@@ -11,6 +13,21 @@ const OrderTable = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
 
+
+  useEffect(() => {
+      const fetchOrders = async () => {
+        try {
+          const response = await getMyOrders();
+          
+          const data = await response.json();
+          console.log("Fetched Orders:", data);
+        } catch (error) {
+          console.error("Error fetching orders:", error);
+        }
+      };
+
+      fetchOrders();
+  }, []);
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -90,7 +107,7 @@ const OrderTable = () => {
           <tbody>
             <tr>
               <td>
-                <Link to="/orderDetails" className="order-link">
+                <Link to="/profileOrderDetails" className="order-link">
                   20250610-14033430
                 </Link>
               </td>
@@ -113,7 +130,7 @@ const OrderTable = () => {
             </tr>
             <tr>
               <td>
-                <Link to="/orderDetails" className="order-link">
+                <Link to="/profileOrderDetails" className="order-link">
                   20250610-14033430
                 </Link>
               </td>
@@ -136,7 +153,7 @@ const OrderTable = () => {
             </tr>
             <tr>
               <td>
-                <Link to="/orderDetails" className="order-link">
+                <Link to="/profileOrderDetails" className="order-link">
                   20250610-14033430
                 </Link>
               </td>

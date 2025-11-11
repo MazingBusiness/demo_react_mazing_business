@@ -157,7 +157,7 @@ const ManageProfile = () => {
             <h3>Basic Info</h3>
           </div>
           <div className="manageProfileFrmBoxInner">
-            <form class="manage-profile-form">
+            <form className="manage-profile-form">
               <div className="form-row">
                 <div className="form-group">
                   <label>Full Name</label>
@@ -220,7 +220,7 @@ const ManageProfile = () => {
             <h3>Change Password</h3>
           </div>
           <div className="manageProfileFrmBoxInner">
-            <form class="manage-profile-form">
+            <form className="manage-profile-form">
               <div className="form-row">
                 <div className="form-group">
                   <label>Your Password</label>
@@ -246,7 +246,7 @@ const ManageProfile = () => {
             <h3>Change your Email</h3>
           </div>
           <div className="manageProfileFrmBoxInner">
-            <form class="manage-profile-form">
+            <form className="manage-profile-form">
               <div className="form-row">
                 <div className="form-group">
                   <label>Email</label>
@@ -276,7 +276,7 @@ const ManageProfile = () => {
             <h3>Active to order your OWN brand</h3>
           </div>
           <div className="manageProfileFrmBoxInner">
-            <form class="manage-profile-form">
+            <form className="manage-profile-form">
               <div className="form-row">
                 <div className="form-group">
                   <label>Send Request</label>

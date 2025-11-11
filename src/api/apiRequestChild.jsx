@@ -12,24 +12,16 @@ let token = authorisation ? authorisation["token"] : null;
 
 
 const getHeader = () => {
-   // let value = JSON.parse(localStorage.getItem("mazingBusinessLoginInfo"));
-    // console.warn(value)
-   // let authorisation = value ? value["authorisation"] : null;
-     const token = getAuthToken();
-
+    const token = getAuthToken();
     if (token) {
-        // let token = token;
-        let header = {
+        return {
             headers: {
                 Authorization: `Bearer ${token}`,
             },
         };
-        return header;
     } else {
-        // Handle the case where authorisation is null.
-        console.error("authorisation is missing or null");
-        // You might want to return a default header or throw an error here.
-        return null; // or return a default header if needed
+        console.error("Authorization token is missing or null");
+        return null;
     }
 };
 
@@ -74,6 +66,39 @@ export const registerUser = async (userData) => {
     return response;
 }
 
+export const verifyGstinForRegistration = async (gst_number) => {
+  return fetch(`${API_BASE_URL}user/verify-gst-for-registration`, {
+    method: 'POST',
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ gst_number }),
+  });
+};
+
+export const getAllStates = async () => {
+  const response = await fetch(`${API_BASE_URL}user/state`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+  return response;
+};
+
+// Get cities by state_id
+export const getCitiesByState = async (stateId) => {
+  const response = await fetch(`${API_BASE_URL}user/city?state_id=${stateId}`);
+  return await response.json();
+};
+
+export const verifyPhoneForRegistration = async (phone) => {
+  const response = await fetch(`${API_BASE_URL}user/verify-phone-for-registration`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ phone }),
+  });
+  return response;
+};
+
 // --Registraton Process APIs end--
 
 // --Login API start--
@@ -110,11 +135,14 @@ export const sendForgotPasswordOtp = async (phone) => {
 };
 // --Login API end--
 
+
+
 // Get My Orders
 export const getMyOrders = async () => {
   try {
     
     const response = await fetch(`${API_BASE_URL}user/my-order/`, {
+      
       method: 'GET',
       headers: {
          ...getHeader().headers,

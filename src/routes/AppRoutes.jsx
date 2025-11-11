@@ -1,5 +1,4 @@
 // src/routes/AppRoutes.jsx
-
 import React from "react";
 import { Routes, Route, HashRouter } from "react-router-dom";
 import PrivateRoute from "./PrivateRoute";
@@ -24,7 +23,7 @@ import ProfileWallet from "../pages/user-profile/ProfileWallet";
 import TicketDetails from "../pages/user-profile/TicketDetails";
 
 const AppRoutes = () => (
-  <HashRouter>
+  // <HashRouter>
     <Routes>
       {/* Public Routes */}
       <Route path="/" element={<Home />} />
@@ -46,7 +45,6 @@ const AppRoutes = () => (
       <Route path="/wallet" element={<PrivateRoute><ProfileWallet /></PrivateRoute>} />
       <Route path="/ticketDetails" element={<PrivateRoute><TicketDetails /></PrivateRoute>} />
     </Routes>
-  </HashRouter>
+  // </HashRouter>
 );
-
 export default AppRoutes;
