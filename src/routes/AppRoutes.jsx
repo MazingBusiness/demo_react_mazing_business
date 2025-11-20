@@ -35,7 +35,7 @@ const AppRoutes = () => (
 
       {/* Protected Profile Routes */}
       <Route path="/profile-dashbord" element={<PrivateRoute><ProfileDashbord /></PrivateRoute>} />
-      <Route path="/profileOrder" element={<PrivateRoute><ProfileOrder /></PrivateRoute>} />
+      <Route path="/profile-order" element={<PrivateRoute><ProfileOrder /></PrivateRoute>} />
       <Route path="/profileOrderDetails" element={<PrivateRoute><ProfileOrderDetails /></PrivateRoute>} />
       <Route path="/manage-profile" element={<PrivateRoute><ManageProfile /></PrivateRoute>} />
       <Route path="/statement" element={<PrivateRoute><ProfileStatement /></PrivateRoute>} />
