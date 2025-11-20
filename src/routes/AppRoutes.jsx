@@ -34,7 +34,6 @@ const AppRoutes = () => (
       <Route path="/forgotpassword" element={<ForgotPassword />} />
       <Route path="/register" element={<Register />} />      
 
-
       {/* Protected Profile Routes */}
       <Route path="/profile-dashbord" element={<PrivateRoute><ProfileDashbord /></PrivateRoute>} />
       <Route path="/profileOrder" element={<PrivateRoute><ProfileOrder /></PrivateRoute>} />
