@@ -32,9 +32,7 @@ const AppRoutes = () => (
       <Route path="/productListing" element={<ProductListing />} />
       <Route path="/login" element={<Login />} />
       <Route path="/forgotpassword" element={<ForgotPassword />} />
-      <Route path="/register" element={<Register />} />
-
-      
+      <Route path="/register" element={<Register />} />      
 
 
       {/* Protected Profile Routes */}
