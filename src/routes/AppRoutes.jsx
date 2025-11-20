@@ -44,7 +44,7 @@ const AppRoutes = () => (
       <Route path="/wishlist" element={<PrivateRoute><ProfileWishlist /></PrivateRoute>} />
       <Route path="/support-ticket" element={<PrivateRoute><ProfileSupportTicket /></PrivateRoute>} />
       <Route path="/wallet" element={<PrivateRoute><ProfileWallet /></PrivateRoute>} />
-      <Route path="/ticketDetails" element={<PrivateRoute><TicketDetails /></PrivateRoute>} />
+      <Route path="/ticket-details" element={<PrivateRoute><TicketDetails /></PrivateRoute>} />
     </Routes>
   </HashRouter>
 );
