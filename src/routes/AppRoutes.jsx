@@ -42,7 +42,7 @@ const AppRoutes = () => (
       <Route path="/profileStatementDetails" element={<PrivateRoute><ProfileStatementDetails /></PrivateRoute>} />
       <Route path="/rewards" element={<PrivateRoute><ProfileRewards /></PrivateRoute>} />
       <Route path="/wishlist" element={<PrivateRoute><ProfileWishlist /></PrivateRoute>} />
-      <Route path="/support-ticket" element={<PrivateRoute><ProfileSupportTicket /></PrivateRoute>} />
+      <Route path="/support-tickets" element={<PrivateRoute><ProfileSupportTicket /></PrivateRoute>} />
       <Route path="/wallet" element={<PrivateRoute><ProfileWallet /></PrivateRoute>} />
       <Route path="/ticket-details" element={<PrivateRoute><TicketDetails /></PrivateRoute>} />
     </Routes>
