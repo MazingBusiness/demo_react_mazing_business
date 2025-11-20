@@ -24,6 +24,7 @@ import ProfileWallet from "../pages/user-profile/ProfileWallet";
 import TicketDetails from "../pages/user-profile/TicketDetails";
 
 
+
 const AppRoutes = () => (
    <HashRouter> 
     <Routes>
