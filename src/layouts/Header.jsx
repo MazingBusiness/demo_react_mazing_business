@@ -145,7 +145,7 @@ const Header = () => {
           <div className="top-headerRgt">
             <div className="header-icons">
               
-                  <Link to="/profileDashbord">
+                  <Link to="/profile-dashbord">
                   <button className="icon-btn">
                     <img src={userIcon} alt="User" />
                   </button>

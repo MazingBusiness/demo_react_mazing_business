@@ -51,9 +51,9 @@ const ProfileSidebar = () => {
 
       <nav className="sidebar-menu">
         <NavLink
-          to="/profileDashbord"
+          to="/profile-dashbord"
           className={`sidebar-menu-item ${
-            isActive("/profileDashbord") ? "active" : ""
+            isActive("/profile-dashbord") ? "active" : ""
           }`}
         >
           <span className="menu-icon">

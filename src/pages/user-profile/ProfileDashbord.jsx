@@ -82,7 +82,7 @@ const ProfileDashbord = () => {
               </div>
             </div>
             <div className="card orders">
-              <h5>Orders</h5>
+              <h5>Order</h5>
               <span>Total order placed</span>
               <h2>530</h2>
               <div className="card-Shape">
