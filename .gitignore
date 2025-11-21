@@ -24,3 +24,5 @@ dist-ssr
 *.sw?
 main-merged/
 junior_app/
+vite.config.js
+src/main.jsx
