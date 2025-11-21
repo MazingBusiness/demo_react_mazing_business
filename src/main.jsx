@@ -9,8 +9,8 @@ import "./styles/mainStyle.css";
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     {/* <BrowserRouter basename="/mazing_react_website/"> */}
-    <BrowserRouter basename="/demo_react_mazing_business/">
-    {/* <BrowserRouter> */}
+    {/* <BrowserRouter basename="/demo_react_mazing_business/"> */}
+    <BrowserRouter>
       <AppRoutes />
     </BrowserRouter>
   </React.StrictMode>
