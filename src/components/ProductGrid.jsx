@@ -249,17 +249,6 @@ const ProductGrid = () => {
         ))}
       </div>
 
-      {/* Pagination */}
-      {/* <div className="pagination-wrapper">
-        <button className="pagination-btn nav disabled">Previous</button>
-        <button className="pagination-btn active">1</button>
-        <button className="pagination-btn">2</button>
-        <span className="pagination-btn dots">...</span>
-        <button className="pagination-btn">4</button>
-        <button className="pagination-btn">5</button>
-        <button className="pagination-btn nav">Next</button>
-      </div> */}
-      {/* Pagination */}
       <div className="pagination-wrapper">
         <button
           className={`pagination-btn nav ${

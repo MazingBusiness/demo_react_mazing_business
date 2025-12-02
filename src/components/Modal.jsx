@@ -16,6 +16,8 @@ const Modal = ({
   children,
   showFooter = false,
   size = "lg",
+  closeButtonClass = "ba-modal-close",
+  className = "", // ✅ NEW
 }) => {
   const [visible, setVisible] = useState(false);
   const [shouldRender, setShouldRender] = useState(false);
@@ -35,11 +37,11 @@ const Modal = ({
   return (
     <div className="ba-modal-overlay" onClick={onClose}>
       <div
-        className={`ba-modal-container ${visible ? "show" : ""}`}
+        className={`ba-modal-container ${className} ${visible ? "show" : ""}`} // ✅ HERE
         onClick={(e) => e.stopPropagation()}
         style={{ maxWidth: sizeMap[size] || sizeMap.lg }}
       >
-        <button className="ba-modal-close" onClick={onClose}>
+        <button className={closeButtonClass} onClick={onClose}>
           <FiX />
         </button>
 

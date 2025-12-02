@@ -1,10 +1,21 @@
 import React, { useState, useEffect, useRef } from "react";
 import MainLayout from "../layouts/MainLayout";
-import { FaAngleDown, FaAngleUp } from "react-icons/fa";
+
+import { FaAngleDown, FaAngleUp, FaFilter } from "react-icons/fa";
 import ProductGrid from "../components/ProductGrid";
-import { useLocation } from "react-router-dom";
-import { getCatProduct } from "../api/apiRequest";
-// import { NotificationManager } from "react-notifications"; // if you use this
+import QuickOrderGid from "../components/QuickOrderGid";
+
+const allBrands = [
+  "HIKOKI (15)",
+  "Bosch (24)",
+  "DeWalt (18)",
+  "Makita (10)",
+  "Black+Decker (8)",
+  "Stanley (6)",
+  "Ferm (4)",
+  "iBell (3)",
+  "Cheston (2)",
+];
 
 const deliveryOptions = [
   "Delivery in 3 - 4 Days",
@@ -12,56 +23,12 @@ const deliveryOptions = [
   "Delivery in 9 - 10 Days",
 ];
 
-const ProductListing = () => {
-  const location = useLocation();
-  const { state } = location || {};
+const QuickOrder = () => {
+  const [selectedBrands, setSelectedBrands] = useState(["HIKOKI (15)"]);
+  const [selectedDelivery, setSelectedDelivery] = useState(
+    "Delivery in 3 - 4 Days"
+  );
 
-  // 👇 derive from router state every render
-  const slug = state?.slug || "";
-  const cat_id = state?.cat_id || "";
-  const brand_id = state?.brand_id || "";
-
-  const [currentPage, setCurrentPage] = useState(1);
-
-  const [brands, setBrands] = useState([]); // renamed to avoid confusion
-
-  const getAllBrands = async () => {
-    try {
-      if (!cat_id) return;
-
-      const apiRes = await getCatProduct(cat_id, currentPage, brand_id);
-      const responseData = await apiRes.json();
-
-      if (responseData.res) {
-        const allBrands = responseData.allBrands || [];
-        setBrands(allBrands);
-      } else {
-        NotificationManager.error(
-          responseData.msg || "Something went wrong",
-          "",
-          2000
-        );
-      }
-    } catch (error) {
-      console.error("Fetch error:", error);
-      NotificationManager.error("Failed to load brands", "", 2000);
-    }
-  };
-
-  // 👇 whenever cat_id OR currentPage changes, fetch brands again
-  useEffect(() => {
-    if (cat_id) {
-      getAllBrands();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cat_id, currentPage]);
-
-  // Filters state
-  const [selectedBrands, setSelectedBrands] = useState([]);
-  const [selectedDelivery, setSelectedDelivery] = useState();
-  const brandsParam = selectedBrands.join(",");
-
-  // Price slider state
   const min = 1000;
   const max = 7500;
   const minValueBetween = 500;
@@ -81,28 +48,13 @@ const ProductListing = () => {
   const [showMoreBrands, setShowMoreBrands] = useState(5);
   const [showMoreDelivery, setShowMoreDelivery] = useState(2);
 
-  // 👇 Recalculate slider sizes on mount
   useEffect(() => {
     if (sliderRef.current) {
       setSliderWidth(sliderRef.current.offsetWidth);
       setSliderOffset(sliderRef.current.offsetLeft);
     }
     updateSliderWidths();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  // 👇 Also: reset filters when category changes (optional but usually desired)
-  useEffect(() => {
-    setSelectedBrands([]);
-    setSelectedDelivery(undefined);
-    setCurrentMin(1500);
-    setCurrentMax(6000);
-    setInputMin(1500);
-    setInputMax(6000);
-    setShowMoreBrands(5);
-    setShowMoreDelivery(2);
-    setCurrentPage(1);
-  }, [cat_id]);
 
   const updateSliderWidths = () => {
     if (minValueRef.current) {
@@ -130,9 +82,7 @@ const ProductListing = () => {
   };
 
   const toggleBrands = () => {
-    setShowMoreBrands((prev) =>
-      prev >= brands.length ? 5 : prev + 5
-    );
+    setShowMoreBrands((prev) => (prev >= allBrands.length ? 5 : prev + 5));
   };
 
   const toggleDelivery = () => {
@@ -141,16 +91,14 @@ const ProductListing = () => {
     );
   };
 
-  const toggleBrand = (brandId) => {
+  const toggleBrand = (brand) => {
     setSelectedBrands((prev) =>
-      prev.includes(brandId)
-        ? prev.filter((b) => b !== brandId)
-        : [...prev, brandId]
+      prev.includes(brand) ? prev.filter((b) => b !== brand) : [...prev, brand]
     );
   };
 
   const handleMinChange = (e) => {
-    const val = parseInt(e.target.value, 10);
+    const val = parseInt(e.target.value);
     setInputMin(val);
     if (val >= min && val <= currentMax - minValueBetween) {
       setCurrentMin(val);
@@ -159,7 +107,7 @@ const ProductListing = () => {
   };
 
   const handleMaxChange = (e) => {
-    const val = parseInt(e.target.value, 10);
+    const val = parseInt(e.target.value);
     setInputMax(val);
     if (val <= max && val >= currentMin + minValueBetween) {
       setCurrentMax(val);
@@ -226,11 +174,32 @@ const ProductListing = () => {
   const maxForMin = () => currentMax - minValueBetween;
   const minForMax = () => currentMin + minValueBetween;
 
+  // Toggle mobile filters
+  const toggleMobileFilters = () => {
+    setShowMobileFilters(!showMobileFilters);
+  };
+
+  // New state for mobile filter visibility
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
+
   return (
     <MainLayout>
       <div className="maincontainer">
         <div className="productListingwrapper">
-          <div className="sidebarFilters">
+          {/* Mobile Filter Button */}
+          <button
+            className="mobile-filter-btn"
+            onClick={toggleMobileFilters}
+            aria-label="Toggle filters"
+          >
+            <FaFilter />
+            Filters
+          </button>
+          <div
+            className={`filters-section sidebarFilters ${
+              showMobileFilters ? "mobile-visible" : ""
+            }`}
+          >
             {(selectedBrands.length > 0 ||
               selectedDelivery ||
               currentMin !== 1500 ||
@@ -240,18 +209,15 @@ const ProductListing = () => {
                   <div className="active-part">
                     <label>Brands:</label>
                     <div className="active-tag">
-                      {brands
-                        .filter((b) => selectedBrands.includes(b.id))
-                        .map((brand) => (
-                          <span key={brand.id}>
-                            {brand.name}
-                            <button onClick={() => toggleBrand(brand.id)}>✕</button>
-                          </span>
-                        ))}
+                      {selectedBrands.map((brand, index) => (
+                        <span key={index}>
+                          {brand}
+                          <button onClick={() => toggleBrand(brand)}>✕</button>
+                        </span>
+                      ))}
                     </div>
                   </div>
                 )}
-
                 {selectedDelivery && (
                   <div className="active-part">
                     <label>Delivery:</label>
@@ -263,7 +229,6 @@ const ProductListing = () => {
                     </div>
                   </div>
                 )}
-
                 {(currentMin !== 1500 || currentMax !== 6000) && (
                   <div className="active-part">
                     <label>Price:</label>
@@ -275,7 +240,6 @@ const ProductListing = () => {
                     </div>
                   </div>
                 )}
-
                 <button className="clear-all-btn" onClick={clearAll}>
                   Remove All Filters
                 </button>
@@ -292,38 +256,34 @@ const ProductListing = () => {
                   </button>
                 </h4>
                 <div className="checkbox-group brand-group fade-in">
-                  {Array.isArray(brands) &&
-                    brands.slice(0, showMoreBrands).map((brand) => (
-                      <label
-                        key={brand.id}
-                        className={`animated-checkbox ${
-                          selectedBrands.includes(brand.id) ? "checked" : ""
-                        }`}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={selectedBrands.includes(brand.id)}
-                          onChange={() => toggleBrand(brand.id)}
-                          value={brand.id}
-                        />
-                        <span className="custom-check"></span>
-                        {brand.name}
-                      </label>
-                    ))}
+                  {allBrands.slice(0, showMoreBrands).map((brand, index) => (
+                    <label
+                      key={index}
+                      className={`animated-checkbox ${
+                        selectedBrands.includes(brand) ? "checked" : ""
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedBrands.includes(brand)}
+                        onChange={() => toggleBrand(brand)}
+                      />
+                      <span className="custom-check"></span>
+                      {brand}
+                    </label>
+                  ))}
                 </div>
-                {brands.length > 5 && (
-                  <button onClick={toggleBrands} className="show-more">
-                    {showMoreBrands >= brands.length ? (
-                      <>
-                        <FaAngleUp /> SHOW LESS
-                      </>
-                    ) : (
-                      <>
-                        <FaAngleDown /> SHOW MORE
-                      </>
-                    )}
-                  </button>
-                )}
+                <button onClick={toggleBrands} className="show-more">
+                  {showMoreBrands >= allBrands.length ? (
+                    <>
+                      <FaAngleUp /> SHOW LESS
+                    </>
+                  ) : (
+                    <>
+                      <FaAngleDown /> SHOW MORE
+                    </>
+                  )}
+                </button>
               </div>
 
               {/* Delivery Filter */}
@@ -367,7 +327,7 @@ const ProductListing = () => {
                 </button>
               </div>
 
-              {/* Price Range */}
+              {/* ✅ Price Range */}
               <div className="filter-section">
                 <h4>
                   Price Range{" "}
@@ -377,6 +337,25 @@ const ProductListing = () => {
                 </h4>
 
                 <div className="PriceRange">
+                  {/* <div className="current-value">
+                  <label>Min:</label>
+                  <input
+                    type="number"
+                    value={inputMin}
+                    min={min}
+                    max={maxForMin()}
+                    onChange={handleMinChange}
+                  />
+                  <br />
+                  <label>Max:</label>
+                  <input
+                    type="number"
+                    value={inputMax}
+                    min={minForMax()}
+                    max={max}
+                    onChange={handleMaxChange}
+                  />
+                </div> */}
                   <div className="values">
                     <div>{min}</div>
                     <div>{max}</div>
@@ -402,19 +381,8 @@ const ProductListing = () => {
             </div>
           </div>
 
-          {/* You probably want to pass filters to ProductGrid later */}
           <div className="productGrid">
-            <ProductGrid
-              catId={cat_id}
-              slug={slug}
-              currentPage={currentPage}
-              setCurrentPage={setCurrentPage}
-              selectedBrands={selectedBrands}      // still pass array if you want
-              brandsParam={brandsParam}            // 👈 add this
-              selectedDelivery={selectedDelivery}
-              priceMin={currentMin}
-              priceMax={currentMax}
-            />
+            <QuickOrderGid />
           </div>
         </div>
       </div>
@@ -422,4 +390,4 @@ const ProductListing = () => {
   );
 };
 
-export default ProductListing;
+export default QuickOrder;

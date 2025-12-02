@@ -1,6 +1,17 @@
 import { useState, useEffect } from "react";
 import { FiX } from "react-icons/fi";
 import cartIcon from "../assets/images/product.jpg";
+import { MdArrowBackIos } from "react-icons/md";
+import { BsCloudArrowDownFill } from "react-icons/bs";
+import { BiSolidCart } from "react-icons/bi";
+
+import SaveLatericon from "../assets/icons/SaveLatericon.svg";
+import SaveLatericon1 from "../assets/icons/SaveLatericon1.svg";
+import Deleteicon from "../assets/icons/Deleteicon.svg";
+
+import OfferModal from "../components/OfferModal.jsx";
+
+import { useNavigate } from "react-router-dom";
 
 const initialCartItems = [
   { id: 1, name: "Bosch Rexroth Hydraulic Pump", price: 15800, qty: 1 },
@@ -37,6 +48,28 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [selectedCartIds, setSelectedCartIds] = useState([]);
   const [selectedSavedIds, setSelectedSavedIds] = useState([]);
+
+  const [isOfferModalOpen, setOfferModalOpen] = useState(false);
+
+  const navigate = useNavigate();
+
+  const handleCheckout = () => {
+    navigate("/company");
+  };
+
+  // 🔧 Fix: cart subtotal (use qty instead of quantity)
+  const calculateCartSubtotal = () => {
+    return cartItems
+      .reduce((sum, item) => sum + item.price * item.qty, 0)
+      .toFixed(2);
+  };
+
+  // 🔧 Add: calculate subtotal for saved items
+  const calculateSavedSubtotal = () => {
+    return savedItems
+      .reduce((sum, item) => sum + item.price * (item.qty || 1), 0)
+      .toFixed(2);
+  };
 
   useEffect(() => {
     document.body.style.overflow = isCartVisible ? "hidden" : "auto";
@@ -129,151 +162,248 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
       <div className={`cart-panel ${isCartVisible ? "slide-in" : "slide-out"}`}>
         <div className="cart-wrapper">
           <div className="cart-left">
+            <div className="backSec">
+              <button>
+                <MdArrowBackIos /> BACK TO STORE
+              </button>
+            </div>
             {/* Shopping Cart */}
             {cartItems.length > 0 && (
               <div className="cart-section">
-                <h2>Shopping Cart</h2>
-                <table>
-                  <thead>
-                    <tr>
-                      <th>
-                        <input
-                          type="checkbox"
-                          onChange={toggleSelectAllCart}
-                          checked={selectedCartIds.length === cartItems.length}
-                        />
-                      </th>
-                      <th>Product</th>
-                      <th>Price</th>
-                      <th>Qty</th>
-                      <th>Total</th>
-                      <th>Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {cartItems.map((item) => (
-                      <tr key={item.id}>
-                        <td>
-                          <input
-                            type="checkbox"
-                            checked={selectedCartIds.includes(item.id)}
-                            onChange={() => handleCartCheckbox(item.id)}
-                          />
-                        </td>
-                        <td>
-                          <img src={cartIcon} alt="" width="40" /> {item.name}{" "}
-                          {item.noCredit && (
-                            <span className="no-credit">No Credit Item</span>
-                          )}
-                        </td>
-                        <td>₹ {item.price}</td>
-                        <td>
-                          <input
-                            type="number"
-                            min="1"
-                            value={item.qty}
-                            onChange={(e) =>
-                              setCartItems((prev) =>
-                                prev.map((i) =>
-                                  i.id === item.id
-                                    ? { ...i, qty: +e.target.value }
-                                    : i
-                                )
-                              )
-                            }
-                          />
-                        </td>
-                        <td>₹ {item.qty * item.price}</td>
-                        <td>
-                          <button onClick={() => moveToSaved(item)}>🔍</button>
-                          <button onClick={() => deleteFromCart(item.id)}>
-                            ❌
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
+                <h2>
+                  <span>
+                    Shopping Cart <BiSolidCart />
+                  </span>
+                  <span className="Cartitem">{cartItems.length} Items</span>
+                </h2>
 
-            {/* Saved For Later */}
-            {savedItems.length > 0 && (
-              <div className="cart-section">
-                <h2>Saved For Later</h2>
-
-                {/* Category Tabs */}
-                {Object.keys(categoryCounts).length > 0 && (
-                  <div className="category-tabs">
-                    <span
-                      className={`tab ${
-                        selectedCategory === "All" ? "active" : ""
-                      }`}
-                      onClick={() => setSelectedCategory("All")}
-                    >
-                      All ({savedItems.length})
-                    </span>
-                    {Object.entries(categoryCounts).map(([cat, count]) => (
-                      <span
-                        key={cat}
-                        className={`tab ${
-                          selectedCategory === cat ? "active" : ""
-                        }`}
-                        onClick={() => setSelectedCategory(cat)}
-                      >
-                        {cat} ({count})
-                      </span>
-                    ))}
-                  </div>
-                )}
-
-                {/* Filtered Table */}
-                {filteredSavedItems.length > 0 && (
-                  <table>
+                <div className="cart-table-container">
+                  <table className="order-table">
                     <thead>
                       <tr>
                         <th>
-                          <input
-                            type="checkbox"
-                            onChange={toggleSelectAllSaved}
-                            checked={
-                              filteredSavedItems.length > 0 &&
-                              filteredSavedItems.every((item) =>
-                                selectedSavedIds.includes(item.id)
-                              )
-                            }
-                          />
+                          <label class="animated-checkbox">
+                            <input
+                              type="checkbox"
+                              onChange={toggleSelectAllCart}
+                              checked={
+                                selectedCartIds.length === cartItems.length
+                              }
+                            />
+                            <span className="custom-check"></span>
+                          </label>
                         </th>
-                        <th>Product</th>
+                        <th className="narrow1">Product</th>
                         <th>Price</th>
+                        <th className="narrow3">Quantity</th>
+                        <th>Total</th>
                         <th>Action</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {filteredSavedItems.map((item) => (
+                      {cartItems.map((item) => (
                         <tr key={item.id}>
-                          <td>
+                          <td data-label="">
+                            <label class="animated-checkbox">
+                              <input
+                                type="checkbox"
+                                checked={selectedCartIds.includes(item.id)}
+                                onChange={() => handleCartCheckbox(item.id)}
+                              />
+                              <span className="custom-check"></span>
+                            </label>
+                          </td>
+                          <td className="narrow1" data-label="Product">
+                            <div className="cartproduct">
+                              <img src={cartIcon} alt="" width="70" />{" "}
+                              {item.name}
+                              {item.noCredit && (
+                                <span className="no-credit">
+                                  No Credit Item
+                                </span>
+                              )}
+                            </div>
+                          </td>
+                          <td className="cartprice" data-label="Price">
+                            ₹ {item.price}
+                          </td>
+                          <td className="narrow3" data-label="Quantity">
                             <input
-                              type="checkbox"
-                              checked={selectedSavedIds.includes(item.id)}
-                              onChange={() => handleSavedCheckbox(item.id)}
+                              type="number"
+                              min="1"
+                              value={item.qty}
+                              onChange={(e) =>
+                                setCartItems((prev) =>
+                                  prev.map((i) =>
+                                    i.id === item.id
+                                      ? { ...i, qty: +e.target.value }
+                                      : i
+                                  )
+                                )
+                              }
                             />
                           </td>
-                          <td>
-                            <img src={cartIcon} alt="" width="40" /> {item.name}
+                          <td className="cartprice" data-label="Total">
+                            ₹ {item.qty * item.price}
                           </td>
-                          <td>₹ {item.price}</td>
-                          <td>
-                            <button onClick={() => moveToCart(item)}>⬆️</button>
-                            <button onClick={() => deleteFromSaved(item.id)}>
-                              ❌
+                          <td data-label="Action">
+                            <button onClick={() => moveToSaved(item)}>
+                              {" "}
+                              <img src={SaveLatericon} alt="SaveLatericon" />
+                            </button>
+                            <button onClick={() => deleteFromCart(item.id)}>
+                              <img src={Deleteicon} alt="Deleteicon" />
                             </button>
                           </td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
+                </div>
+
+                <div className="cartSubtotal">
+                  <label>
+                    Subtotal:
+                    <span>₹{calculateCartSubtotal()}</span>
+                  </label>
+
+                  <div className="section-buttons">
+                    <button className="greenbtn">
+                      Save all checked item for later
+                    </button>
+                    <button className="bluebtn">
+                      Save all no credit item for later
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Saved For Later */}
+            {savedItems.length > 0 && (
+              <div className="cart-section">
+                <h2>
+                  <span>Saved For Later</span>
+                  <span className="Cartitem">{savedItems.length} Items</span>
+                </h2>
+
+                {/* Category Tabs */}
+                <div className="cart-Category-Tabs">
+                  <h3>Selected Categories</h3>
+
+                  {Object.keys(categoryCounts).length > 0 && (
+                    <div className="category-tabs">
+                      <span
+                        className={`tab ${
+                          selectedCategory === "All" ? "active" : ""
+                        }`}
+                        onClick={() => setSelectedCategory("All")}
+                      >
+                        All ({savedItems.length})
+                      </span>
+                      {Object.entries(categoryCounts).map(([cat, count]) => (
+                        <span
+                          key={cat}
+                          className={`tab ${
+                            selectedCategory === cat ? "active" : ""
+                          }`}
+                          onClick={() => setSelectedCategory(cat)}
+                        >
+                          {cat} ({count})
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Filtered Table */}
+                {filteredSavedItems.length > 0 && (
+                  <div className="cart-table-container">
+                    <table className="order-table">
+                      <thead>
+                        <tr>
+                          <th>
+                            <label class="animated-checkbox">
+                              <input
+                                type="checkbox"
+                                onChange={toggleSelectAllSaved}
+                                checked={
+                                  filteredSavedItems.length > 0 &&
+                                  filteredSavedItems.every((item) =>
+                                    selectedSavedIds.includes(item.id)
+                                  )
+                                }
+                              />
+                              <span className="custom-check"></span>
+                            </label>
+                          </th>
+                          <th>Product</th>
+                          <th>Price</th>
+                          <th className="narrow5">Added Quantity</th>
+                          <th>Total</th>
+                          <th>Action</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filteredSavedItems.map((item) => (
+                          <tr key={item.id}>
+                            <td data-label="">
+                              <label class="animated-checkbox">
+                                <input
+                                  type="checkbox"
+                                  checked={selectedSavedIds.includes(item.id)}
+                                  onChange={() => handleSavedCheckbox(item.id)}
+                                />
+                                <span className="custom-check"></span>
+                              </label>
+                            </td>
+
+                            <td className="narrow1" data-label="Product">
+                              <div className="cartproduct">
+                                <img src={cartIcon} alt="" width="70" />{" "}
+                                {item.name}
+                              </div>
+                            </td>
+
+                            <td className="cartprice" data-label="Price">
+                              ₹ {item.price}
+                            </td>
+
+                            <td className="narrow5" data-label="Added Quantity">
+                              <span>{item.qty || 1}</span>
+                            </td>
+                            <td className="cartprice" data-label="Total">
+                              ₹ {(item.price * (item.qty || 1)).toFixed(2)}
+                            </td>
+                            <td data-label="Action">
+                              <button onClick={() => moveToCart(item)}>
+                                {" "}
+                                <img
+                                  src={SaveLatericon1}
+                                  alt="SaveLatericon1"
+                                />
+                              </button>
+                              <button onClick={() => deleteFromSaved(item.id)}>
+                                <img src={Deleteicon} alt="Deleteicon" />
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 )}
+
+                <div className="cartSubtotal">
+                  <div className="section-buttons">
+                    <button className="greenbtn">
+                      Move all checked item for cart
+                    </button>
+                    <button className="bluebtn">
+                      Move all no credit item for cart
+                    </button>
+                  </div>
+                </div>
               </div>
             )}
           </div>
@@ -298,19 +428,35 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
                 Overdue Amount:<span>₹ 9000</span>
               </label>
 
-              <button className="download-pdf">Download Pdf</button>
+              <button className="download-pdf">
+                <BsCloudArrowDownFill /> Download Pdf
+              </button>
             </div>
 
             {/* Cart Footer */}
             <div className="cart-panel-footer">
               <div className="subtotal">
-                <p className="payable">Total Payable: ₹ {total + 9000}</p>
+                Total Payable: <span>₹ {total + 9000}</span>
               </div>
-              <button className="checkout-btn">Go to Checkout</button>
+              <button
+                className="checkout-btn Offer-btn"
+                onClick={() => setOfferModalOpen(true)}
+              >
+                Apply Offer
+              </button>
+              <button className="checkout-btn" onClick={handleCheckout}>
+                Checkout
+              </button>
             </div>
           </div>
         </div>
       </div>
+
+      {/* 🟢 Offer Modal */}
+      <OfferModal
+        isOpen={isOfferModalOpen}
+        onClose={() => setOfferModalOpen(false)}
+      />
     </>
   );
 };

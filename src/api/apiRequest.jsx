@@ -97,12 +97,13 @@ export const getPageContent = async (lang) => {
 }
 
 // fetching Product list
-export const getCatProduct = async (id, page = 1) => {
+export const getCatProduct = async (id, page = 1, brand_id) => {
   const user = getLoggedInUser();
   const header = getHeader();
   // Build query params
   const queryParams = new URLSearchParams();
   if (id) queryParams.append('category_id', id);
+  if (brand_id) queryParams.append('brand_id', brand_id);
   if (user?.id) queryParams.append('user_id', user.id);
   queryParams.append('page', page); // ✅ add page with default = 1
   const url = `${API_BASE_URL}product/cetrgory-products?${queryParams.toString()}`;
@@ -115,3 +116,24 @@ export const getCatProduct = async (id, page = 1) => {
   });
   return response;
 };
+// Quick Order Product
+export const getQuickOrderProduct = async (cat_groups, categories, brands, search_text, min_price, max_price, location_id, inhouse_product, page = 1) => {
+  const user = getLoggedInUser();
+  const header = getHeader();
+  // Build query params
+  const queryParams = new URLSearchParams();
+  if (id) queryParams.append('category_id', id);
+  if (brand_id) queryParams.append('brand_id', brand_id);
+  if (user?.id) queryParams.append('user_id', user.id);
+  queryParams.append('page', page); // ✅ add page with default = 1
+  const url = `${API_BASE_URL}product/cetrgory-products?${queryParams.toString()}`;
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      ...(header?.headers || {}),
+      'Content-Type': 'application/json',
+    },
+  });
+  return response;
+};
+

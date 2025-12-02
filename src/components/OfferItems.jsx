@@ -4,9 +4,14 @@ import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 
 // Import local images (create these imports at the top)
-import no_image from "../assets/images/no-image.png";
+import product1 from "../assets/images/product.jpg";
+import product2 from "../assets/images/product.jpg";
+import product3 from "../assets/images/product.jpg";
+import product4 from "../assets/images/product.jpg";
+import product5 from "../assets/images/product.jpg";
+import product6 from "../assets/images/product.jpg";
+import product7 from "../assets/images/product.jpg";
 import fastDeliveryIcon from "../assets/icons/fast-delivery.svg";
-
 import HeartIcon from "../assets/icons/HeartIcon.svg";
 import CartIcon from "../assets/icons/CartIcon.svg";
 
@@ -14,9 +19,152 @@ import { FaStar, FaRegStar, FaStarHalfAlt } from "react-icons/fa";
 import { FiChevronRight } from "react-icons/fi";
 import { Link } from "react-router-dom";
 
-import {getOfferProducts} from "../api/apiRequest";
-import { getLoggedInUser, getAuthToken } from '../utils/authUtils';
-
+const products = [
+  {
+    id: 1,
+    name: "Drill Machine",
+    img: product1, // Use imported image
+    oldPrice: "₹2,000",
+    newPrice: "₹1,800",
+    rating: 4,
+    totalRatings: 300,
+    sold: "250/531",
+    discount: "20%",
+    noCredit: true, // Add this flag
+  },
+  {
+    id: 2,
+    name: "Cutting Tool",
+    img: product2, // Use imported image
+    oldPrice: "₹2,000",
+    newPrice: "₹1,800",
+    rating: 4,
+    totalRatings: 19,
+    sold: "26/90",
+    discount: "20%",
+    noCredit: false, // This product won't show the tag
+  },
+  {
+    id: 3,
+    name: "Cutting Tool",
+    img: product2, // Use imported image
+    oldPrice: "₹2,000",
+    newPrice: "₹1,800",
+    rating: 4,
+    totalRatings: 19,
+    sold: "26/90",
+    discount: "20%",
+    noCredit: false, // This product won't show the tag
+  },
+  {
+    id: 4,
+    name: "Cutting Tool",
+    img: product2, // Use imported image
+    oldPrice: "₹2,000",
+    newPrice: "₹1,800",
+    rating: 4,
+    totalRatings: 19,
+    sold: "26/90",
+    discount: "20%",
+    noCredit: false, // This product won't show the tag
+  },
+  {
+    id: 5,
+    name: "Cutting Tool",
+    img: product2, // Use imported image
+    oldPrice: "₹2,000",
+    newPrice: "₹1,800",
+    rating: 4,
+    totalRatings: 19,
+    sold: "26/90",
+    discount: "20%",
+    noCredit: false, // This product won't show the tag
+  },
+  {
+    id: 6,
+    name: "Cutting Tool",
+    img: product2, // Use imported image
+    oldPrice: "₹2,000",
+    newPrice: "₹1,800",
+    rating: 4,
+    totalRatings: 19,
+    sold: "26/90",
+    discount: "20%",
+    noCredit: false, // This product won't show the tag
+  },
+  {
+    id: 7,
+    name: "Cutting Tool",
+    img: product2, // Use imported image
+    oldPrice: "₹2,000",
+    newPrice: "₹1,800",
+    rating: 4,
+    totalRatings: 19,
+    sold: "26/90",
+    discount: "20%",
+    noCredit: false, // This product won't show the tag
+  },
+  {
+    id: 8,
+    name: "Cutting Tool",
+    img: product2, // Use imported image
+    oldPrice: "₹2,000",
+    newPrice: "₹1,800",
+    rating: 4,
+    totalRatings: 19,
+    sold: "26/90",
+    discount: "20%",
+    noCredit: false, // This product won't show the tag
+  },
+  {
+    id: 9,
+    name: "Cutting Tool",
+    img: product2, // Use imported image
+    oldPrice: "₹2,000",
+    newPrice: "₹1,800",
+    rating: 4,
+    totalRatings: 19,
+    sold: "26/90",
+    discount: "20%",
+    noCredit: false, // This product won't show the tag
+  },
+  {
+    id: 10,
+    name: "Cutting Tool",
+    img: product2, // Use imported image
+    oldPrice: "₹2,000",
+    newPrice: "₹1,800",
+    rating: 4,
+    totalRatings: 19,
+    sold: "26/90",
+    discount: "20%",
+    noCredit: false, // This product won't show the tag
+  },
+  {
+    id: 11,
+    name: "Cutting Tool",
+    img: product2, // Use imported image
+    oldPrice: "₹2,000",
+    newPrice: "₹1,800",
+    rating: 4,
+    totalRatings: 19,
+    sold: "26/90",
+    discount: "20%",
+    noCredit: false, // This product won't show the tag
+  },
+  {
+    id: 12,
+    name: "Cutting Tool",
+    img: product2, // Use imported image
+    oldPrice: "₹2,000",
+    newPrice: "₹1,800",
+    rating: 4,
+    totalRatings: 19,
+    sold: "26/90",
+    discount: "20%",
+    noCredit: false, // This product won't show the tag
+  },
+];
 
 const renderRating = (rating) => {
   const stars = [];
@@ -45,77 +193,29 @@ const renderRating = (rating) => {
 };
 
 const OfferItems = () => {
-
-  const [products, setProducts] = useState([]);
-  const sliderRef = useRef();
-
-  // get all Offer Items
-  const allOfferItems = async () => {
-    try {
-      const apiRes = await getOfferProducts();
-      const responseData = await apiRes.json();
-      const user = getLoggedInUser();
-      if (responseData.res) {
-        const transformedData = responseData.data.map((item) => {
-          const details = item.product_details || {};
-
-          const noCredit = details.cash_and_carry_item == 1;
-          const fastDeliveryTag = item.fast_delivery_tag == 1;
-          const rating = details.rating && details.rating !== 0 ? details.rating : 4;
-          const totalRatings = Array.isArray(item.reviews) && item.reviews.length > 0 ? item.reviews.length : 20;
-          return {
-            id: details.id,
-            name: details.name,
-            img: details.thumb_img?.file_name || no_image, // fallback if null
-            oldPrice: details.mrp ? `₹${parseFloat(details.mrp).toFixed(2)}` : "₹0.00",
-            newPrice: item.discount_price ? `₹${parseFloat(item.discount_price).toFixed(2)}` : "₹0.00",
-            rating: rating,
-            totalRatings: totalRatings, // optional fallback
-            sold: `${Math.floor(Math.random() * 50 + 1)}/${Math.floor(Math.random() * 200 + 50)}`, // simulate
-            discount: item.offer_discount_percent + "%", // example: "0%"
-            fastDeliveryTag: fastDeliveryTag,
-            noCredit: noCredit,
-            user_id: user?.id || null,
-          };
-        });
-        setProducts(transformedData);
-      } else {
-        NotificationManager.error(responseData.msg || "Something went wrong", "", 2000);
-      }
-    } catch (error) {
-      console.error("Fetch error:", error);
-      NotificationManager.error("Failed to load offers", "", 2000);
-    }
-  };
-
-  // const sliderRef = useRef(null); // Properly define the ref at the component level
+  const sliderRef = useRef(null); // Properly define the ref at the component level
   const [sliderState, setSliderState] = useState({
     currentSlide: 0,
     slideCount: products.length,
     isMobile: false,
   });
 
-  // useEffect(() => {
-  //   const handleResize = () => {
-  //     setSliderState((prev) => ({
-  //       ...prev,
-  //       isMobile: window.innerWidth < 768,
-  //     }));
-  //   };
-
-  //   handleResize();
-  //   window.addEventListener("resize", handleResize);
-  //   return () => window.removeEventListener("resize", handleResize);
-  // }, []);
-
   useEffect(() => {
-    allOfferItems();
-  }, []);
+    const handleResize = () => {
+      setSliderState((prev) => ({
+        ...prev,
+        isMobile: window.innerWidth < 768,
+      }));
+    };
 
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   const settings = {
     dots: false,
-    infinite: products.length > 6,
+    infinite: false,
     speed: 500,
     autoplay: false,
     autoplaySpeed: 3000,
@@ -155,8 +255,9 @@ const OfferItems = () => {
     ],
   };
 
-  const isPrevDisabled = false;
-  const isNextDisabled = false;
+  const isPrevDisabled = sliderState.currentSlide === 0;
+  const isNextDisabled =
+    sliderState.currentSlide >= sliderState.slideCount - settings.slidesToShow;
 
   const renderProductImage = (product) => {
     return (
@@ -168,7 +269,7 @@ const OfferItems = () => {
             loading="lazy"
             onError={(e) => {
               e.target.onerror = null;
-              e.target.src = no_image;
+              e.target.src = "/placeholder-product.jpg";
             }}
           />
         ) : (
@@ -176,43 +277,19 @@ const OfferItems = () => {
             <span>No Image</span>
           </div>
         )}
-        {product.user_id != null && (
-          <>
-            <div className="btnGrp">
-              <button className="wishlist-btn" aria-label="Add to wishlist">
-                <img src={HeartIcon} alt="HeartIcon" />
-              </button>
-              <button className="cart-btn" aria-label="Add to cart">
-                <img src={CartIcon} alt="HeartIcon" />
-              </button>
-            </div>
-            {product.noCredit && (
-              <div className="no-credit-tag">No Credit Item</div>
-            )}
-          </>
+        <div className="btnGrp">
+          <button className="wishlist-btn" aria-label="Add to wishlist">
+            <img src={HeartIcon} alt="HeartIcon" />
+          </button>
+          <button className="cart-btn" aria-label="Add to cart">
+            <img src={CartIcon} alt="HeartIcon" />
+          </button>
+        </div>
+        {product.noCredit && (
+          <div className="no-credit-tag">No Credit Item</div>
         )}
       </div>
     );
-  };
-
-  const fastDeliveryTag = (product) => {
-    if (!product.fastDeliveryTag) return null;
-    return (
-      <div className="delivery">
-        <img
-          src={fastDeliveryIcon}
-          alt="Fast Delivery"
-          loading="lazy"
-          onError={(e) => {
-            e.target.style.display = "none";
-          }}
-        />
-      </div>
-    );
-  };
-
-  const renderRating = (rating) => {
-    return "★".repeat(rating) + "☆".repeat(5 - rating); // simple star rating
   };
 
   return (
@@ -222,10 +299,12 @@ const OfferItems = () => {
           <div className="section-header">
             <div className="section-headerLft">
               <h2>Offer Price Items</h2>
+
               <Link to="/" className="all-link">
                 All Offer <FiChevronRight />
               </Link>
             </div>
+
             <div className="section-headerRgt">
               <div className="arrow-controls">
                 <button
@@ -256,7 +335,7 @@ const OfferItems = () => {
             </div>
           </div>
 
-          {/* <Slider ref={sliderRef} {...settings}>
+          <Slider ref={sliderRef} {...settings}>
             {products.map((product) => (
               <div key={product.id} className="product-slide">
                 <div className="product-card">
@@ -298,53 +377,6 @@ const OfferItems = () => {
                       ></div>
                     </div>
                     <div className="sold">Sold: {product.sold}</div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </Slider> */}
-
-          <Slider ref={sliderRef} {...settings}>
-            {products.map((product) => (
-              <div key={product.id} className="product-slide">
-                <div className="product-card">
-                  {renderProductImage(product)}
-                  <div className="product-info">
-                    <h3>{product.name}</h3>
-                    {product.user_id != null && (
-                      <div className="prices">
-                        <span className="old">{product.oldPrice}</span>
-                        <span className="new">{product.newPrice}</span>
-                      </div>
-                    )}
-                    <div className="ratingGrp">
-                      <div className="ratingGrpLft">
-                        {product.user_id != null && (
-                          <div className="discount">OFF {product.discount}</div>
-                        )}
-                        <div className="rating">
-                          {renderRating(product.rating)}
-                          <span className="rating-count">({product.totalRatings})</span>
-                        </div>
-                      </div>
-                      {fastDeliveryTag(product)}
-                    </div>
-                    {product.user_id != null && (
-                      <>
-                        <div className="progress-bar">
-                          <div
-                            className="progress"
-                            style={{ width: `${Math.random() * 100}%` }}
-                          ></div>
-                        </div>                    
-                        <div className="sold">Sold: {product.sold}</div>
-                      </>
-                    )}
-                    {product.user_id == null && (
-                      <div>
-                        <button type="button" className="before-reg-btn">Register to check prices</button>
-                      </div>
-                    )}                    
                   </div>
                 </div>
               </div>

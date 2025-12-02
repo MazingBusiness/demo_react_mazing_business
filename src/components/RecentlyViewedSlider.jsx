@@ -180,7 +180,7 @@ const renderRating = (rating) => {
   return stars;
 };
 
-const BestSellers = () => {
+const RecentlyViewedSlider = () => {
   const sliderRef = useRef(null); // Properly define the ref at the component level
   const [sliderState, setSliderState] = useState({
     currentSlide: 0,
@@ -207,7 +207,7 @@ const BestSellers = () => {
     speed: 500,
     autoplay: true,
     autoplaySpeed: 3000,
-    slidesToShow: 6,
+    slidesToShow: 4,
     slidesToScroll: 1,
     arrows: false,
     beforeChange: (current, next) => {
@@ -279,98 +279,88 @@ const BestSellers = () => {
 
   return (
     <div className="power-tools-section">
-      <div className="maincontainer">
-        <div className="power-tools-section-inner">
-          <div className="section-header">
-            <div className="section-headerLft">
-              <h2>Best Sellers</h2>
-
-              <Link to="/" className="all-link">
-                All Best Sellers <FiChevronRight />
-              </Link>
-            </div>
-
-            <div className="section-headerRgt">
-              <div className="arrow-controls">
-                <button
-                  className={`custom-arrow prev-arrow ${
-                    isPrevDisabled ? "disabled" : ""
-                  }`}
-                  onClick={() =>
-                    !isPrevDisabled && sliderRef.current.slickPrev()
-                  }
-                  disabled={isPrevDisabled}
-                  aria-label="Previous"
-                >
-                  ❮
-                </button>
-                <button
-                  className={`custom-arrow next-arrow ${
-                    isNextDisabled ? "disabled" : ""
-                  }`}
-                  onClick={() =>
-                    !isNextDisabled && sliderRef.current.slickNext()
-                  }
-                  disabled={isNextDisabled}
-                  aria-label="Next"
-                >
-                  ❯
-                </button>
-              </div>
-            </div>
+      <div className="power-tools-section-inner">
+        <div className="section-header">
+          <div className="section-headerLft">
+            <h2>Recently Viewed</h2>
           </div>
 
-          <Slider ref={sliderRef} {...settings}>
-            {products.map((product) => (
-              <div key={product.id} className="product-slide">
-                <div className="product-card">
-                  {renderProductImage(product)}
-                  <div className="product-info">
-                    <h3>{product.name}</h3>
-                    <div className="prices">
-                      <span className="old">{product.oldPrice}</span>
-                      <span className="new">{product.newPrice}</span>
-                    </div>
+          <div className="section-headerRgt">
+            <div className="arrow-controls">
+              <button
+                className={`custom-arrow prev-arrow ${
+                  isPrevDisabled ? "disabled" : ""
+                }`}
+                onClick={() => !isPrevDisabled && sliderRef.current.slickPrev()}
+                disabled={isPrevDisabled}
+                aria-label="Previous"
+              >
+                ❮
+              </button>
+              <button
+                className={`custom-arrow next-arrow ${
+                  isNextDisabled ? "disabled" : ""
+                }`}
+                onClick={() => !isNextDisabled && sliderRef.current.slickNext()}
+                disabled={isNextDisabled}
+                aria-label="Next"
+              >
+                ❯
+              </button>
+            </div>
+          </div>
+        </div>
 
-                    <div className="ratingGrp">
-                      <div className="ratingGrpLft">
-                        <div className="discount">OFF {product.discount}</div>
-                        <div className="rating">
-                          {renderRating(product.rating)}
-                          <span className="rating-count">
-                            ({product.totalRatings})
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="delivery">
-                        <img
-                          src={fastDeliveryIcon}
-                          alt="Fast Delivery"
-                          loading="lazy"
-                          onError={(e) => {
-                            e.target.style.display = "none";
-                          }}
-                        />
-                      </div>
-                    </div>
-
-                    <div className="progress-bar">
-                      <div
-                        className="progress"
-                        style={{ width: `${Math.random() * 100}%` }}
-                      ></div>
-                    </div>
-                    <div className="sold">Sold: {product.sold}</div>
+        <Slider ref={sliderRef} {...settings}>
+          {products.map((product) => (
+            <div key={product.id} className="product-slide">
+              <div className="product-card">
+                {renderProductImage(product)}
+                <div className="product-info">
+                  <h3>{product.name}</h3>
+                  <div className="prices">
+                    <span className="old">{product.oldPrice}</span>
+                    <span className="new">{product.newPrice}</span>
                   </div>
+
+                  <div className="ratingGrp">
+                    <div className="ratingGrpLft">
+                      <div className="discount">OFF {product.discount}</div>
+                      <div className="rating">
+                        {renderRating(product.rating)}
+                        <span className="rating-count">
+                          ({product.totalRatings})
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="delivery">
+                      <img
+                        src={fastDeliveryIcon}
+                        alt="Fast Delivery"
+                        loading="lazy"
+                        onError={(e) => {
+                          e.target.style.display = "none";
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="progress-bar">
+                    <div
+                      className="progress"
+                      style={{ width: `${Math.random() * 100}%` }}
+                    ></div>
+                  </div>
+                  <div className="sold">Sold: {product.sold}</div>
                 </div>
               </div>
-            ))}
-          </Slider>
-        </div>
+            </div>
+          ))}
+        </Slider>
       </div>
     </div>
   );
 };
 
-export default BestSellers;
+export default RecentlyViewedSlider;

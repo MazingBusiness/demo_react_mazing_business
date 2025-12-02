@@ -4,8 +4,6 @@ import SaveLater from "../../assets/icons/SaveLater.svg";
 import Delete from "../../assets/icons/Delete.svg";
 import { useNavigate, Link } from "react-router-dom";
 import { FiChevronDown, FiCheck } from "react-icons/fi";
-import { getMyOrders  } from "../../api/apiRequestChild";
-
 
 const OrderTable = () => {
   const [selectedEntries, setSelectedEntries] = useState("5");
@@ -13,21 +11,6 @@ const OrderTable = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
 
-
-  useEffect(() => {
-      const fetchOrders = async () => {
-        try {
-          const response = await getMyOrders();
-          
-          const data = await response.json();
-          console.log("Fetched Orders:", data);
-        } catch (error) {
-          console.error("Error fetching orders:", error);
-        }
-      };
-
-      fetchOrders();
-  }, []);
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -106,17 +89,17 @@ const OrderTable = () => {
           </thead>
           <tbody>
             <tr>
-              <td>
+              <td data-label="Order Id">
                 <Link to="/profileOrderDetails" className="order-link">
                   20250610-14033430
                 </Link>
               </td>
-              <td>10-06-2025</td>
-              <td>₹7440.00</td>
-              <td>
+              <td data-label="Date">10-06-2025</td>
+              <td data-label="Amount">₹7440.00</td>
+              <td data-label="Delivery Status">
                 <span className="status-badge pending">Pending</span>
               </td>
-              <td className="actions">
+              <td data-label="Options" className="actions">
                 <button className="ordertbl-icon-btn view" title="View">
                   <img src={View} alt="Logo" />
                 </button>
@@ -129,17 +112,17 @@ const OrderTable = () => {
               </td>
             </tr>
             <tr>
-              <td>
+              <td data-label="Order Id">
                 <Link to="/profileOrderDetails" className="order-link">
                   20250610-14033430
                 </Link>
               </td>
-              <td>10-06-2025</td>
-              <td>₹7440.00</td>
-              <td>
+              <td data-label="Date">10-06-2025</td>
+              <td data-label="Amount">₹7440.00</td>
+              <td data-label="Delivery Status">
                 <span className="status-badge delivered ">Delivered </span>
               </td>
-              <td className="actions">
+              <td data-label="Options" className="actions">
                 <button className="ordertbl-icon-btn view" title="View">
                   <img src={View} alt="Logo" />
                 </button>
@@ -152,17 +135,17 @@ const OrderTable = () => {
               </td>
             </tr>
             <tr>
-              <td>
+              <td data-label="Order Id">
                 <Link to="/profileOrderDetails" className="order-link">
                   20250610-14033430
                 </Link>
               </td>
-              <td>10-06-2025</td>
-              <td>₹7440.00</td>
-              <td>
+              <td data-label="Date">10-06-2025</td>
+              <td data-label="Amount">₹7440.00</td>
+              <td data-label="Delivery Status">
                 <span className="status-badge cancelled">Cancelled</span>
               </td>
-              <td className="actions">
+              <td data-label="Options" className="actions">
                 <button className="ordertbl-icon-btn view" title="View">
                   <img src={View} alt="Logo" />
                 </button>
