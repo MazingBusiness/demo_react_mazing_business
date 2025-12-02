@@ -1,5 +1,8 @@
 
-import { Routes, Route } from "react-router-dom";
+import React from "react";
+import { Routes, Route , HashRouter  } from "react-router-dom";
+import PrivateRoute from "./PrivateRoute";
+
 import Home from "../pages/Home";
 import ProductListing from "../pages/ProductListing";
 import Login from "../pages/Login";
@@ -58,17 +61,17 @@ const AppRoutes = () => (
       <Route path="/login" element={<Login />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/register" element={<Register />} /> 
-      <Route path="/profile-dashbord" element={<ProfileDashbord />} />
-      <Route path="/profileOrder" element={<ProfileOrder />} />
-      <Route path="/profileOrderDetails" element={<ProfileOrderDetails />} />
-      <Route path="/manageProfile" element={<ManageProfile />} />
-      <Route path="/profileStatement" element={<ProfileStatement />} />
-      <Route path="/profileStatementDetails" element={<ProfileStatementDetails />} />
-      <Route path="/profileRewards" element={<ProfileRewards />} />
-      <Route path="/profileWishlist" element={<ProfileWishlist />} />
-      <Route path="/profileSupportTicket" element={<ProfileSupportTicket />} />
-      <Route path="/profileWallet" element={<ProfileWallet />} />
-      <Route path="/ticketDetails" element={<TicketDetails />} />
+      <Route path="/profile-dashbord" element={<PrivateRoute><ProfileDashbord /></PrivateRoute>} />
+      <Route path="/profile-order" element={<PrivateRoute><ProfileOrder /></PrivateRoute>} />
+      <Route path="/profile-order-details" element={<PrivateRoute><ProfileOrderDetails /></PrivateRoute>} />
+      <Route path="/manage-profile" element={<PrivateRoute><ManageProfile /></PrivateRoute>} />
+      <Route path="/statement" element={<PrivateRoute><ProfileStatement /></PrivateRoute>} />
+      <Route path="/profileStatementDetails" element={<PrivateRoute><ProfileStatementDetails /></PrivateRoute>} />
+      <Route path="/rewards" element={<PrivateRoute><ProfileRewards /></PrivateRoute>} />
+      <Route path="/wishlist" element={<PrivateRoute><ProfileWishlist /></PrivateRoute>} />
+      <Route path="/support-tickets" element={<PrivateRoute><ProfileSupportTicket /></PrivateRoute>} />
+      <Route path="/wallet" element={<PrivateRoute><ProfileWallet /></PrivateRoute>} />
+      <Route path="/ticket-details" element={<PrivateRoute><TicketDetails /></PrivateRoute>} />
       
     </Routes>
   </HashRouter>
