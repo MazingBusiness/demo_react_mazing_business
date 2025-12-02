@@ -11,9 +11,21 @@ const MainLayout = ({ children }) => (
     <Footer />
 
     <div className="floating-buttons">
-      <a href="/quick-order" className="quick-order-btn"><img src={quickButton} alt="Side Box" /></a>
+      <Link
+          to="/product-listing"
+          className="quick-order-btn"
+          onClick={() => setShowMegaMenu(false)}
+        ><img src={quickButton} alt="Side Box" /></Link>
+      {/* <a href="/" target="_blank" className="quick-order-btn">
+        <img src={quickButton} alt="Side Box" />
+      </a> */}
 
-      <a href="https://wa.me/your-number" target="_blank" rel="noopener noreferrer" className="whatsapp-btn" >
+      <a
+        href="https://wa.me/your-number"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="whatsapp-btn"
+      >
         <img src={whatsappButton} alt="Side Box" />
       </a>
     </div>
