@@ -7,15 +7,15 @@ import "./styles/mainStyle.css";
 
 
 // For local server
-ReactDOM.createRoot(document.getElementById("root")).render(
-  <React.StrictMode>
-    {/* <BrowserRouter basename="/mazing_react_website/"> */}
-    <BrowserRouter basename="/demo_react_mazing_business/">
-    {/* <BrowserRouter> */}
-      <AppRoutes />
-    </BrowserRouter>
-  </React.StrictMode>
-);
+// ReactDOM.createRoot(document.getElementById("root")).render(
+//   <React.StrictMode>
+//     {/* <BrowserRouter basename="/mazing_react_website/"> */}
+//     {/* <BrowserRouter basename="/demo_react_mazing_business/"> */}
+//     <BrowserRouter>
+//       <AppRoutes />
+//     </BrowserRouter>
+//   </React.StrictMode>
+// );
 
 // For Git
 const root = ReactDOM.createRoot(document.getElementById("root"));

@@ -32,7 +32,7 @@ import NewWarrentyClaim from "../pages/NewWarrentyClaim";
 import WarrentyClaimFull from "../pages/WarrentyClaimFull";
 
 const AppRoutes = () => (
-  // <HashRouter>
+  <HashRouter>
     <Routes>
       {/* Public Routes */}
       <Route path="/" element={<Home />} />
@@ -71,6 +71,6 @@ const AppRoutes = () => (
       <Route path="/ticketDetails" element={<TicketDetails />} />
       
     </Routes>
-  //  </HashRouter>
+  </HashRouter>
 );
 export default AppRoutes;
