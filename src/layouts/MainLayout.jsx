@@ -13,7 +13,7 @@ const MainLayout = ({ children }) => (
 
     <div className="floating-buttons">
       <Link
-          to="/product-listing"
+          to="/quick-order"
           className="quick-order-btn"
           onClick={() => setShowMegaMenu(false)}
         ><img src={quickButton} alt="Side Box" /></Link>
