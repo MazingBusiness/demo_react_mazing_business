@@ -117,16 +117,24 @@ export const getCatProduct = async (id, page = 1, brand_id) => {
   return response;
 };
 // Quick Order Product
-export const getQuickOrderProduct = async (cat_groups, categories, brands, search_text, min_price, max_price, location_id, inhouse_product, page = 1) => {
+export const getQuickOrderProduct = async (cat_groups, categories, brands, search_text, min_price, max_price, location_id, inhouse_product, page = 1, pagination = 16) => {
   const user = getLoggedInUser();
   const header = getHeader();
   // Build query params
   const queryParams = new URLSearchParams();
-  if (id) queryParams.append('category_id', id);
-  if (brand_id) queryParams.append('brand_id', brand_id);
+  if (cat_groups) queryParams.append('cat_groups', cat_groups);
+  if (categories) queryParams.append('categories', categories);
+  if (brands) queryParams.append('brands', brands);
+  if (search_text) queryParams.append('search_text', search_text);
+  if (min_price) queryParams.append('min_price', min_price);
+  if (max_price) queryParams.append('max_price', max_price);
+  if (location_id) queryParams.append('location_id', location_id);
+  if (inhouse_product) queryParams.append('inhouse_product', inhouse_product);
+  if (page) queryParams.append('page', page);
+  if (pagination) queryParams.append('pagination', pagination);
   if (user?.id) queryParams.append('user_id', user.id);
   queryParams.append('page', page); // ✅ add page with default = 1
-  const url = `${API_BASE_URL}product/cetrgory-products?${queryParams.toString()}`;
+  const url = `${API_BASE_URL}product/quick-order?${queryParams.toString()}`;
   const response = await fetch(url, {
     method: 'GET',
     headers: {
