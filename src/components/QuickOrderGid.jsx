@@ -173,19 +173,34 @@ const QuickOrderGrid = () => {
         )}
 
         {product.user_id != null && (
+          // <div className="btnGrp">
+          //   <button className="wishlist-btn" aria-label="Add to wishlist">
+          //     <img src={HeartIcon} alt="HeartIcon" />
+          //   </button>
+          //   <button
+          //     className="cart-btn"
+          //     aria-label="Add to cart"
+          //     onClick={(e) => {
+          //       e.stopPropagation();
+          //       onCartClick(product);
+          //     }}
+          //   >
+          //     <img src={CartIcon} alt="CartIcon" />
+          //   </button>
+          // </div>
           <div className="btnGrp">
-            <button className="wishlist-btn" aria-label="Add to wishlist">
+            {/* <button className="wishlist-btn" aria-label="Add to wishlist">
               <img src={HeartIcon} alt="HeartIcon" />
-            </button>
+            </button> */}
             <button
               className="cart-btn"
               aria-label="Add to cart"
               onClick={(e) => {
-                e.stopPropagation();
-                onCartClick(product);
+                e.stopPropagation(); // prevent click bubbling
+                onCartClick(product); // call the modal open function
               }}
             >
-              <img src={CartIcon} alt="CartIcon" />
+              <img src={CartIcon} alt="CartIcon" /> Add to Cart
             </button>
           </div>
         )}
