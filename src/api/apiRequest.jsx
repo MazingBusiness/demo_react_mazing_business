@@ -116,6 +116,7 @@ export const getCatProduct = async (id, page = 1, brand_id) => {
   });
   return response;
 };
+
 // Quick Order Product
 export const getQuickOrderProduct = async (cat_groups, categories, brands, search_text, min_price, max_price, location_id, inhouse_product, page = 1, pagination = 16) => {
   const user = getLoggedInUser();
@@ -135,6 +136,25 @@ export const getQuickOrderProduct = async (cat_groups, categories, brands, searc
   if (user?.id) queryParams.append('user_id', user.id);
   queryParams.append('page', page); // ✅ add page with default = 1
   const url = `${API_BASE_URL}product/quick-order?${queryParams.toString()}`;
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      ...(header?.headers || {}),
+      'Content-Type': 'application/json',
+    },
+  });
+  return response;
+};
+
+// Product Details
+export const getProductDetails = async (id) => {
+  const user = getLoggedInUser();
+  const header = getHeader();
+  // Build query params
+  const queryParams = new URLSearchParams();
+  if (id) queryParams.append('product_id', id);
+  if (user?.id) queryParams.append('user_id', user.id); // For Loged User
+  const url = `${API_BASE_URL}product/product-details?${queryParams.toString()}`;
   const response = await fetch(url, {
     method: 'GET',
     headers: {

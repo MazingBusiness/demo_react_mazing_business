@@ -182,7 +182,7 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
                     <thead>
                       <tr>
                         <th>
-                          <label class="animated-checkbox">
+                          <label className="animated-checkbox">
                             <input
                               type="checkbox"
                               onChange={toggleSelectAllCart}
@@ -204,7 +204,7 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
                       {cartItems.map((item) => (
                         <tr key={item.id}>
                           <td data-label="">
-                            <label class="animated-checkbox">
+                            <label className="animated-checkbox">
                               <input
                                 type="checkbox"
                                 checked={selectedCartIds.includes(item.id)}
@@ -323,7 +323,7 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
                       <thead>
                         <tr>
                           <th>
-                            <label class="animated-checkbox">
+                            <label className="animated-checkbox">
                               <input
                                 type="checkbox"
                                 onChange={toggleSelectAllSaved}
@@ -348,7 +348,7 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
                         {filteredSavedItems.map((item) => (
                           <tr key={item.id}>
                             <td data-label="">
-                              <label class="animated-checkbox">
+                              <label className="animated-checkbox">
                                 <input
                                   type="checkbox"
                                   checked={selectedSavedIds.includes(item.id)}

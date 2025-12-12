@@ -1,26 +1,59 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useState, useRef, useMemo } from "react";
 import { FaStar, FaStarHalfAlt, FaRegStar } from "react-icons/fa";
 import "react-responsive-carousel/lib/styles/carousel.min.css";
 import { Carousel } from "react-responsive-carousel";
 
 import fastDeliveryIcon from "../assets/icons/fast-delivery.svg";
+import warrantyIcon from "../assets/icons/warranty.jpeg";
 
 import { FiHeart, FiX } from "react-icons/fi";
-
-import product1 from "../assets/images/Image.png";
-import image2 from "../assets/images/Image.png";
-import image3 from "../assets/images/Image.png";
-import image4 from "../assets/images/Image.png";
-import image5 from "../assets/images/Image.png";
 
 import CartbtnIcon from "../assets/icons/cartbtnIcon.svg";
 
 import { GoDotFill } from "react-icons/go";
 
-const ProductModal = ({ isOpen, onClose }) => {
-  const modalRef = useRef(null);
+import { getProductDetails } from "../api/apiRequest";
+import { getLoggedInUser, getAuthToken } from '../utils/authUtils';
 
-  const images = [product1, image2, image3, image4, image5];
+const ProductModal = ({ product, isOpen, onClose }) => {
+  const modalRef = useRef(null);
+  const [productDetails, setProductDetails] = useState(null);
+  const [productImages, setProductImages] = useState([]);
+  const [productThumbImages, setProductThumbImages] = useState([]);
+
+  // total price calculation
+  const [quantity, setQuantity] = useState("");
+  const bulkQty = productDetails?.piece_by_carton ?? 0;
+  const normalPrice = productDetails?.discount_price ?? 0;
+  const bulkPrice = productDetails?.bulk_discount_price ?? normalPrice;
+  const { totalPrice, type, unitPrice } = useMemo(() => {
+    const qtyNum = Number(quantity) || 0;
+    if (qtyNum <= 0) {
+      return {
+        totalPrice: "",
+        type: "pice",
+        unitPrice: normalPrice,
+      };
+    }
+
+    // Decide which price to use
+    const useBulk = bulkQty > 0 && qtyNum >= bulkQty;
+    const chosenType = useBulk ? "bulk" : "pice";
+    const chosenPrice = useBulk ? bulkPrice : normalPrice;
+
+    return {
+      totalPrice: (qtyNum * chosenPrice).toFixed(2),
+      type: chosenType,
+      unitPrice: chosenPrice,
+    };
+  }, [quantity, bulkQty, normalPrice, bulkPrice]);
+   const handleQuantityChange = (e) => {
+    setQuantity(e.target.value);
+  };
+
+
+
+  // const images = [product1, image2, image3, image4, image5];
   const rating = 3.5;
   const totalRatings = 12;
 
@@ -47,6 +80,27 @@ const ProductModal = ({ isOpen, onClose }) => {
     return stars;
   };
 
+  const productId = product?.id;
+  useEffect(() => {
+    if (!isOpen || !productId) return;
+    const fetchDetails = async () => {
+      try {
+        const proDetailsapiRes = await getProductDetails(productId);
+        const apiResponseData = await proDetailsapiRes.json();
+        if (apiResponseData.res) {
+          const list = apiResponseData?.data || [];
+          const firstProduct = Array.isArray(list) ? list[0] : list;
+          setProductDetails(firstProduct);
+          setProductImages(firstProduct.images || []);
+          setProductThumbImages(firstProduct.thumb_img);
+        }
+      } catch (error) {
+        console.error("Fetch error:", error);
+      }
+    };
+    fetchDetails();
+  }, [isOpen, productId]);
+  
   // Handle outside click
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -54,7 +108,6 @@ const ProductModal = ({ isOpen, onClose }) => {
         onClose();
       }
     };
-
     if (isOpen) {
       document.addEventListener("mousedown", handleClickOutside);
     }
@@ -77,7 +130,10 @@ const ProductModal = ({ isOpen, onClose }) => {
     };
   }, [isOpen]);
 
-  if (!isOpen) return null;
+  // 🛡️ If closed OR no product, render nothing
+  if (!isOpen || !product) return null;
+
+  // if (!isOpen) return null;
 
   return (
     <div className={`product-modal-overlay ${isOpen ? "open" : ""}`}>
@@ -95,15 +151,15 @@ const ProductModal = ({ isOpen, onClose }) => {
             <div className="product-modal-carousel">
               {/* Breadcrumb */}
               <div className="breadcrumb">
-                Offer Price Items
+                {productDetails?.category_group?.name}
                 <em>
                   <GoDotFill />
                 </em>
-                Power Tools
-                <em>
+                {productDetails?.category?.name}
+                {/* <em>
                   <GoDotFill />
                 </em>
-                <span className="current">HiKOKI</span>
+                <span className="current">HiKOKI</span> */}
               </div>
 
               <Carousel
@@ -137,16 +193,16 @@ const ProductModal = ({ isOpen, onClose }) => {
                   )
                 }
                 renderThumbs={() =>
-                  images.map((img, idx) => (
+                  productImages.map((img, idx) => (
                     <div className="custom-thumb" key={idx}>
-                      <img src={img} alt={`thumb-${idx}`} />
+                      <img src={img.file_name} alt={`thumb-${idx}`} />
                     </div>
                   ))
                 }
               >
-                {images.map((img, idx) => (
+                {productImages.map((thumbImg, idx) => (
                   <div key={idx}>
-                    <img src={img} alt={`Slide ${idx}`} />
+                    <img src={thumbImg.file_name} alt={`Slide ${idx}`} />
                   </div>
                 ))}
               </Carousel>
@@ -156,52 +212,62 @@ const ProductModal = ({ isOpen, onClose }) => {
             <div className="product-modal-info">
               <div className="product-modal-info-top">
                 <div className="product-modal-info-top-lft">
-                  <h2>Product Name</h2>
-
+                  <h2>{productDetails?.name}</h2>
                   <div className="product-rating">
                     {renderRating(rating)}
                     <span className="rating-count">{totalRatings} Reviews</span>
                   </div>
                 </div>
-                <div className="delivery">
-                  <img
-                    src={fastDeliveryIcon}
-                    alt="Fast Delivery"
-                    loading="lazy"
-                    onError={(e) => {
-                      e.target.style.display = "none";
-                    }}
-                  />
-                  <p>
-                    Estimate Shipping Time <span>5-6 Days</span>
-                  </p>
-                </div>
+                {productDetails?.fast_delivery_tag == 1 && (
+                  <div className="delivery">
+                    <img
+                      src={fastDeliveryIcon}
+                      alt="Fast Delivery"
+                      loading="lazy"
+                      onError={(e) => {
+                        e.target.style.display = "none";
+                      }}
+                    />
+                    <p>
+                      Estimate Shipping Time <span>5-6 Days</span>
+                    </p>
+                  </div>
+                )}
               </div>
 
               <div className="product-price">
-                <span className="old-price">₹2,000</span>
-                <span className="new-price">₹1,800</span>
+                <span className="old-price">₹{parseFloat(productDetails?.mrp).toFixed(2)}</span>
+                <span className="new-price">₹{parseFloat(productDetails?.discount_price).toFixed(2)}</span>
                 <span className="unit">/Pc</span>
               </div>
-
-              <div className="product-stock">
-                <div className="stock-item">
-                  Mumbai <span>20</span>
+              {productDetails?.stocks != null && (
+                <div className="product-stock">
+                  {product.stocks.map((warehouse) => (
+                    <div className="stock-item" key={warehouse.warehouse_id} // 👈 unique key
+                    >
+                      {warehouse.warehouse_name} <span>{warehouse.qty}</span>
+                    </div>
+                  ))}
                 </div>
-                <div className="stock-item">
-                  Kolkata <span>10</span>
-                </div>
-                <div className="stock-item">
-                  Gujarat <span>05</span>
-                </div>
+              )}
+              {productDetails?.is_warranty == 1 && (
+              <div className="warranty-div">
+                <p className="warranty-text">
+                  <img src={warrantyIcon} alt="Warranty" loading="lazy"
+                      onError={(e) => {
+                        e.target.style.display = "none";
+                      }}
+                    />
+                  <span className="highlight">{"    "}{productDetails?.warranty_duration} Months Warranty</span>
+                </p>
               </div>
-
+              )}
               <div className="bulk-discount">
                 <p>
-                  <span className="red">Bulk Quantity Discount:</span> Purchase
-                  13 or more and get each for{" "}
-                  <span className="highlight">₹1,700</span> instead of{" "}
-                  <span className="highlight">₹1,800</span>
+                  <span className="red">Bulk Quantity Discount:</span> Purchase{" "}
+                  {productDetails?.piece_by_carton} or more and get each for{" "}
+                  <span className="highlight">₹{productDetails?.discount_price}</span> instead of{" "}
+                  <span className="highlight">₹{productDetails?.bulk_discount_price}</span>
                 </p>
                 <button className="discount-btn">Get Discount</button>
               </div>
@@ -209,11 +275,16 @@ const ProductModal = ({ isOpen, onClose }) => {
               <div className="quantity-section">
                 <div>
                   <label>Quantity</label>
-                  <input type="number" placeholder="Enter quantity" />
+                  <input type="number" name="quantity" id="quantity" placeholder="Enter quantity" value={quantity} onChange={handleQuantityChange} />
                 </div>
                 <div>
                   <label>Total Price</label>
-                  <input type="text" placeholder="Amount" disabled />
+                  <input type="text" id="total_price" name="total_price" placeholder="Amount" value={totalPrice}  disabled />
+                  <input type="hidden" name="bulk_qty" id="bulk_qty" value={bulkQty} />
+                  <input type="hidden" name="bulk_price" id="bulk_price" value={bulkPrice} />
+                  <input type="hidden" name="price" id="price" value={unitPrice} />
+                  <input type="hidden" name="type" id="type" value={type} />
+                  <input type="hidden" name="product_id" id="product_id" value={productDetails?.id} />
                 </div>
               </div>
 

@@ -5,6 +5,7 @@ import no_image from "../assets/images/no-image.png";
 import fastDeliveryIcon from "../assets/icons/fast-delivery.svg";
 import HeartIcon from "../assets/icons/HeartIcon.svg";
 import CartIcon from "../assets/icons/CartIcon.svg";
+import warrantyIcon from "../assets/icons/warranty.jpeg";
 
 import ProductModal from "../components/ProductModal.jsx";
 import { GoDotFill } from "react-icons/go";
@@ -85,10 +86,10 @@ const QuickOrderGrid = () => {
       if (responseData.res) {
         const productList = responseData.data?.data || [];
         setTotalRecord(responseData.data?.total || 0);
-
         const transformedData = productList.map((item) => {
           const noCredit        = item.cash_and_carry_item === 1;
           const fastDeliveryTag = item.fast_delivery_tag === 1;
+          const hasWarranty = item.is_warranty === 1;
           const rating =
             item.rating && item.rating !== 0 ? item.rating : 4;
           const totalRatings =
@@ -97,31 +98,34 @@ const QuickOrderGrid = () => {
               : 20;
 
           return {
-            id: item.id,
-            name: item.name,
-            img: item.thumb_img?.file_name || no_image,
-            oldPrice: item.mrp
-              ? `₹${parseFloat(item.mrp.toString()).toFixed(2)}`
-              : "₹0.00",
-            newPrice: item.discount_price
-              ? `₹${parseFloat(
-                  item.discount_price.toString().replace(/₹/g, "")
-                ).toFixed(2)}`
-              : "₹0.00",
-            rating,
-            totalRatings,
-            sold: `${Math.floor(Math.random() * 50 + 1)}/${Math.floor(
-              Math.random() * 200 + 50
-            )}`,
-            fastDeliveryTag: fastDeliveryTag,
-            noCredit,
-            discount: item.discount
-              ? `${item.discount.toString()}%`
-              : "20%",
-            user_id: user?.id || null,
-          };
-        });
-
+              id: item.id,
+              name: item.name,
+              img: item.thumb_img?.file_name || no_image,
+              oldPrice: item.mrp
+                ? `₹${parseFloat(item.mrp.toString()).toFixed(2)}`
+                : "₹0.00",
+              newPrice: item.discount_price
+                ? `₹${parseFloat(
+                    item.discount_price.toString().replace(/₹/g, "")
+                  ).toFixed(2)}`
+                : "₹0.00",
+              rating,
+              totalRatings,
+              sold: `${Math.floor(Math.random() * 50 + 1)}/${Math.floor(
+                Math.random() * 200 + 50
+              )}`,
+              fastDeliveryTag,
+              is_warranty: hasWarranty,   // 👈 add this
+              noCredit,
+              discount: item.discount ? `${item.discount.toString()}%` : "20%",
+              user_id: user?.id || null,
+              category_group: item.category_group.name,
+              category: item.category.name,
+              fast_delivery_tag: item.fast_delivery_tag,
+              stocks: item.stocks,
+              reviews: item.reviews,
+            };
+          });
         setProducts(transformedData);
       } else {
         NotificationManager.error(
@@ -152,6 +156,18 @@ const QuickOrderGrid = () => {
       </div>
     );
   };
+  const renderWarrantyTag = (product) => {
+    if (!product.is_warranty) return null;   // ✅ now this exists
+    return (
+      <div className="delivery">
+        <img
+          src={warrantyIcon}
+          alt="Warranty"
+          loading="lazy"
+        />
+      </div>
+    );
+  };
   const renderProductImage = (product, onCartClick = () => {}) => {
     return (
       <div className="product-img">
@@ -163,6 +179,10 @@ const QuickOrderGrid = () => {
             onError={(e) => {
               e.target.onerror = null;
               e.target.src = no_image;
+            }}
+            onClick={(e) => {
+              e.stopPropagation(); // prevent click bubbling
+              onCartClick(product); // call the modal open function
             }}
           />
         ) : (
@@ -274,7 +294,7 @@ const QuickOrderGrid = () => {
               {renderProductImage(product, openModal)}
               <div className="product-info">
                 <h3>{product.name.length > 15 ? product.name.substring(0, 15) + "..." : product.name}</h3>
-                
+                <span>{product.oldPrice}</span>
                 {product.user_id != null && (
                   <div className="prices">
                     <span className="old">{product.oldPrice}</span>
@@ -282,7 +302,7 @@ const QuickOrderGrid = () => {
                   </div>
                 )}
                 <div className="ratingGrp">
-                  <div className="ratingGrpLft">
+                  {/* <div className="ratingGrpLft">
                     {product.user_id != null && (
                       <div className="discount">OFF {product.discount}</div>
                     )}
@@ -292,6 +312,9 @@ const QuickOrderGrid = () => {
                         ({product.totalRatings})
                       </span>
                     </div>                    
+                  </div> */}
+                  <div className="ratingGrpLft">
+                     {renderWarrantyTag(product)}
                   </div>
                   {fastDeliveryTag(product)}
                 </div>
@@ -317,7 +340,7 @@ const QuickOrderGrid = () => {
           Previous
         </button>
 
-        {[...Array(totalPages)].map((_, index) => {
+        {[Array(totalPages)].map((_, index) => {
           const pageNum = index + 1;
           const showDots =
             totalPages > 5 &&
@@ -365,11 +388,7 @@ const QuickOrderGrid = () => {
       </div>
 
       {/* Product Modal */}
-      <ProductModal
-        product={selectedProduct}
-        isOpen={!!selectedProduct}
-        onClose={closeModal}
-      />
+      <ProductModal product={selectedProduct} isOpen={!!selectedProduct} onClose={closeModal} />
     </div>
   );
 };

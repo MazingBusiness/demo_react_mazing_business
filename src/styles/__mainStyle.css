@@ -1492,18 +1492,6 @@ a.right-link {
   width: 100%;
 }
 
-.power-tools-section-inner .product-card {
-  min-height: auto;
-}
-
-.power-tools-section.offer-section .product-card {
-  min-height: 340px;
-}
-
-.power-tools-section.Best-Sellers .product-card {
-  min-height: 340px;
-}
-
 .power-tools-section-inner .slick-slider {
   background-color: #fff;
   padding: 5px 2px;
@@ -1571,7 +1559,7 @@ a.all-link svg {
   left: 0;
   width: 100%;
   height: 100%;
-  object-fit: contain;
+  object-fit: cover;
   background: white;
   border-radius: 5px 5px 0 0;
 }
@@ -1637,19 +1625,10 @@ a.all-link svg {
 }
 
 .product-info h3 {
-  font-size: 14px;
+  font-size: 18px;
   font-weight: 600;
   margin-bottom: 5px;
   color: #000;
-  min-height: 70px;
-}
-
-.product-info h4 {
-  font-size: 14px;
-  font-weight: 600;
-  margin-bottom: 5px;
-  color: #000;
-  min-height: 70px;
 }
 
 .prices {
@@ -1934,7 +1913,7 @@ a.all-link svg {
 }
 
 .hand-tools-content {
-  flex: 5;
+  flex: 3;
   border-radius: 12px;
   overflow: hidden;
   position: relative;
@@ -1949,7 +1928,7 @@ a.all-link svg {
   background: #fff;
   border-radius: 5px;
   width: 100%;
-  height: 280px;
+  height: 410px;
   display: flex;
   align-items: end;
   justify-content: center;
@@ -2001,7 +1980,7 @@ a.all-link svg {
 .brand-card img {
   width: 100%;
   height: 200px;
-  object-fit: contain;
+  object-fit: cover;
   border-radius: 10px;
 }
 
@@ -4811,41 +4790,6 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   color: #004d84;
   font-weight: 600;
 }
-.warranty-div {
-  border: 2px solid #008409;
-  width: 100%;
-  padding: 10px 15px;
-  border-radius: 15px;
-  text-align: left;
-  font-weight: 500;
-  font-family: "Poppins", sans-serif;
-  font-size: 16px;
-  color: #000;
-  margin: 25px 0;
-}
-
-.warranty-div span.highlight {
-  color: #008409;
-  font-weight: 600;
-  text-decoration: none;
-}
-
-.warranty-text {
-  display: flex;               /* make icon & text on one row */
-  align-items: center;         /* vertically center icon & text */
-  gap: 8px;                    /* space between icon and text */
-  margin: 0;                   /* remove default p margin */
-}
-
-.warranty-text img {
-  height: 36px;                /* adjust as you like */
-  width: auto;
-}
-
-.warranty-text .highlight {
-  font-weight: 700;
-  color: #008c2e;              /* green for the number */
-}
 
 .bulk-discount {
   border: 2px solid #004d84;
@@ -4859,8 +4803,6 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   color: #000;
   margin: 25px 0;
 }
-
-
 .bulk-discount span.red {
   color: #d70000;
 }
