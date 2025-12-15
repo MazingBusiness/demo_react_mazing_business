@@ -165,3 +165,42 @@ export const getProductDetails = async (id) => {
   return response;
 };
 
+// Cart
+export const cart = async () => {
+  const header = getHeader();
+  if (!header) throw new Error("Authorization token missing");
+
+  const res = await fetch(`${API_BASE_URL}cart`, {
+    method: "GET",
+    headers: {
+      Accept: "application/json",
+      ...(header.headers || {}),
+    },
+  });
+
+  const data = await res.json();
+  if (!res.ok) throw new Error(data?.msg || "Cart API failed");
+  return data;
+};
+
+export const addToCart = async ({ product_id, quantity, type }) => {
+  const header = getHeader();
+  if (!header) throw new Error("Authorization token missing");
+
+  const res = await fetch(`${API_BASE_URL}cart/add-to-cart`, {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+      ...(header.headers || {}), // Authorization: Bearer xxx
+    },
+    body: JSON.stringify({ product_id, quantity, type, }),
+  });
+
+  const data = await res.json();
+  if (!res.ok || data?.res === false) {
+    throw new Error(data?.msg || "Add to cart failed");
+  }
+  return data;
+};
+

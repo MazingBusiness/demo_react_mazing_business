@@ -22,18 +22,45 @@ import SearchModal from "../components/SearchModal";
 
 import CartSlide from "../components/CartSlide"; // adjust path if needed
 
+import { cart } from "../api/apiRequest";
+
 
 const Header = () => {
   const [searchText, setSearchText] = useState("");
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [showMegaMenu, setShowMegaMenu] = useState(false);
   const [isLangOpen, setIsLangOpen] = useState(false);
+  const [cartItems, setCartItems] = useState([]);
+  const [cartCount, setCartCount] = useState(0);
+  const [cartSubTotal, setCartSubTotal] = useState(0);
 
   {/** store login credentials */}
   const [userInfo, setUserInfo] = useState(null);
 
   const [isCartVisible, setIsCartVisible] = useState(false);
   const toggleCart = () => setIsCartVisible(!isCartVisible);
+
+  const cartData = async () => {
+    try {
+      const responseData = await cart();
+      if (responseData.res) {
+        const cart_item = responseData.cart_item || [];
+        const cartSubTotal = responseData.other_item_total_amount || '0';
+        setCartItems(cart_item);
+        setCartCount(cart_item.length); // ✅ count
+        setCartSubTotal(cartSubTotal);
+      } else {
+        NotificationManager.error(
+          responseData.msg || "Something went wrong",
+          "",
+          2000
+        );
+      }
+    } catch (error) {
+      console.error("Fetch error:", error);
+      NotificationManager.error("Failed to load Cart", "", 2000);
+    }
+  };
 
   {/** User Logout */}
   const handleLogout = () => {
@@ -105,6 +132,18 @@ const Header = () => {
     };
   }, [showMegaMenu, isSearchOpen, isCartVisible]);
 
+  useEffect(() => {
+    cartData(); // first load when header renders
+
+    const handler = () => cartData(); // when cart-updated happens, refresh
+
+    window.addEventListener("cart-updated", handler);
+
+    return () => {
+      window.removeEventListener("cart-updated", handler);
+    };
+  }, []);
+
   return (
     <header className="main-header">
       <div className="top-header">
@@ -145,26 +184,26 @@ const Header = () => {
           <div className="top-headerRgt">
             <div className="header-icons">
               
-                  <Link to="/profile-dashbord">
-                  <button className="icon-btn">
-                    <img src={userIcon} alt="User" />
-                  </button>
-                  </Link>
+              <Link to="/profile-dashbord">
+              <button className="icon-btn">
+                <img src={userIcon} alt="User" />
+              </button>
+              </Link>
 
               <button className="icon-btn badge-container">
                 <img src={wishlistIcon} alt="Wishlist" />
-                <span className="badge">5</span>
+                <span className="badge">0</span>
               </button>
               <button
                 className="icon-btn badge-container cart-item"
                 onClick={toggleCart}
               >
                 <img src={cartIcon} alt="Cart" />
-                <span className="badge">3</span>
+                <span className="badge">{cartCount}</span>
                 <div className="cart-details">
                   <div className="cart-label">Your cart</div>
                   <div className="cart-price">
-                    <span>₹</span> 20,597
+                    <span>₹</span> {cartSubTotal}
                   </div>
                 </div>
               </button>

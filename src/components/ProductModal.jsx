@@ -3,6 +3,8 @@ import { FaStar, FaStarHalfAlt, FaRegStar } from "react-icons/fa";
 import "react-responsive-carousel/lib/styles/carousel.min.css";
 import { Carousel } from "react-responsive-carousel";
 
+// import { NotificationManager } from "react-notifications"; // if using it
+
 import fastDeliveryIcon from "../assets/icons/fast-delivery.svg";
 import warrantyIcon from "../assets/icons/warranty.jpeg";
 
@@ -12,7 +14,7 @@ import CartbtnIcon from "../assets/icons/cartbtnIcon.svg";
 
 import { GoDotFill } from "react-icons/go";
 
-import { getProductDetails } from "../api/apiRequest";
+import { getProductDetails , addToCart } from "../api/apiRequest";
 import { getLoggedInUser, getAuthToken } from '../utils/authUtils';
 
 const ProductModal = ({ product, isOpen, onClose }) => {
@@ -31,14 +33,14 @@ const ProductModal = ({ product, isOpen, onClose }) => {
     if (qtyNum <= 0) {
       return {
         totalPrice: "",
-        type: "pice",
+        type: "piece",
         unitPrice: normalPrice,
       };
     }
 
     // Decide which price to use
     const useBulk = bulkQty > 0 && qtyNum >= bulkQty;
-    const chosenType = useBulk ? "bulk" : "pice";
+    const chosenType = useBulk ? "bulk" : "piece";
     const chosenPrice = useBulk ? bulkPrice : normalPrice;
 
     return {
@@ -50,8 +52,6 @@ const ProductModal = ({ product, isOpen, onClose }) => {
    const handleQuantityChange = (e) => {
     setQuantity(e.target.value);
   };
-
-
 
   // const images = [product1, image2, image3, image4, image5];
   const rating = 3.5;
@@ -78,6 +78,29 @@ const ProductModal = ({ product, isOpen, onClose }) => {
     }
 
     return stars;
+  };
+
+  const handleAddToCart = async () => {
+    try {
+      const pid = productDetails?.id;
+      const qty = Number(quantity);
+
+      if (!pid) return alert("Product not loaded");
+      if (!qty || qty <= 0) return alert("Enter valid quantity");
+
+      const res = await addToCart({ product_id: pid, quantity: qty, type });
+
+      // ✅ tell whole app: cart changed
+      window.dispatchEvent(new Event("cart-updated"));
+      alert(res?.msg || "Added to cart");
+
+      // optional: close modal or reset qty
+      setQuantity("");
+      onClose();
+    } catch (err) {
+      console.error(err);
+      alert(err.message || "Failed to add to cart");
+    }
   };
 
   const productId = product?.id;
@@ -289,13 +312,8 @@ const ProductModal = ({ product, isOpen, onClose }) => {
               </div>
 
               <div className="action-buttons">
-                <button className="add-to-cart">
-                  <img
-                    src={CartbtnIcon}
-                    alt="cartbtnIcon"
-                    className="cartbtnIcon"
-                  />{" "}
-                  Add to Cart
+                <button className="add-to-cart" onClick={handleAddToCart}>
+                  <img src={CartbtnIcon} alt="cartbtnIcon" className="cartbtnIcon"  />{" "} Add to Cart
                 </button>
                 <button className="modal-wishlist-btn">
                   <FiHeart />
