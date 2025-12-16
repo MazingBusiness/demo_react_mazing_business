@@ -21,7 +21,6 @@ const Home = () => {
     <MainLayout>
       <BannerSection />
       <OfferItems />
-
       <div className="maincontainer">
         <div className="hand-tools-wrapper">
           <div className="hand-tools-content">

@@ -162,7 +162,8 @@ export const getProductDetails = async (id) => {
       'Content-Type': 'application/json',
     },
   });
-  return response;
+  const data = await response.json();
+  return data;
 };
 
 // Cart

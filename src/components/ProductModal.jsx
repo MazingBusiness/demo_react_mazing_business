@@ -22,17 +22,21 @@ const ProductModal = ({ product, isOpen, onClose }) => {
   const [productDetails, setProductDetails] = useState(null);
   const [productImages, setProductImages] = useState([]);
   const [productThumbImages, setProductThumbImages] = useState([]);
+  const [productPrice, setProductPrice] = useState('0');
+  const [minBulkQty, setMinBulkQty] = useState('0');
+  const [bulkPrice, setBulkPrice] = useState('0');
+  const [totalPrice, setTotalPrice] = useState('0');
 
   // total price calculation
   const [quantity, setQuantity] = useState("");
   const bulkQty = productDetails?.piece_by_carton ?? 0;
   const normalPrice = productDetails?.discount_price ?? 0;
-  const bulkPrice = productDetails?.bulk_discount_price ?? normalPrice;
-  const { totalPrice, type, unitPrice } = useMemo(() => {
+  // const bulkPrice = productDetails?.bulk_discount_price ?? normalPrice;
+  const { type, unitPrice, computedTotal } = useMemo(() => {
     const qtyNum = Number(quantity) || 0;
     if (qtyNum <= 0) {
       return {
-        totalPrice: "",
+        computedTotal: "",
         type: "piece",
         unitPrice: normalPrice,
       };
@@ -42,13 +46,19 @@ const ProductModal = ({ product, isOpen, onClose }) => {
     const useBulk = bulkQty > 0 && qtyNum >= bulkQty;
     const chosenType = useBulk ? "bulk" : "piece";
     const chosenPrice = useBulk ? bulkPrice : normalPrice;
+    setProductPrice(chosenPrice);
 
     return {
-      totalPrice: (qtyNum * chosenPrice).toFixed(2),
+      computedTotal: (qtyNum * chosenPrice).toFixed(2),
       type: chosenType,
       unitPrice: chosenPrice,
     };
   }, [quantity, bulkQty, normalPrice, bulkPrice]);
+
+  useEffect(() => {
+    setTotalPrice(computedTotal);
+  }, [computedTotal]);
+
    const handleQuantityChange = (e) => {
     setQuantity(e.target.value);
   };
@@ -102,20 +112,47 @@ const ProductModal = ({ product, isOpen, onClose }) => {
       alert(err.message || "Failed to add to cart");
     }
   };
+  const getDiscount = async () => {
+    try {
+      const pid = productDetails?.id;
+      const qty = Number(quantity);
+
+      if (!pid) return alert("Product not loaded");
+      if (!qty || qty <= 0) return alert("Enter valid quantity");
+
+      const res = await addToCart({ product_id: pid, quantity: qty, type });
+
+      // ✅ tell whole app: cart changed
+      window.dispatchEvent(new Event("cart-updated"));
+      alert(res?.msg || "Added to cart");
+
+      // optional: close modal or reset qty
+      setQuantity("");
+      onClose();
+    } catch (err) {
+      console.error(err);
+      alert(err.message || "Failed to add to cart");
+    }
+  };
 
   const productId = product?.id;
   useEffect(() => {
     if (!isOpen || !productId) return;
     const fetchDetails = async () => {
       try {
-        const proDetailsapiRes = await getProductDetails(productId);
-        const apiResponseData = await proDetailsapiRes.json();
+        const apiResponseData = await getProductDetails(productId);
+        // const apiResponseData = await proDetailsapiRes.json();
         if (apiResponseData.res) {
           const list = apiResponseData?.data || [];
           const firstProduct = Array.isArray(list) ? list[0] : list;
           setProductDetails(firstProduct);
           setProductImages(firstProduct.images || []);
           setProductThumbImages(firstProduct.thumb_img);
+          setProductPrice(firstProduct.discount_price);
+          setMinBulkQty(firstProduct.piece_by_carton);
+          setBulkPrice(firstProduct.bulk_discount_price);
+          setQuantity(firstProduct.min_qty);
+          setTotalPrice(firstProduct.min_qty * productPrice);
         }
       } catch (error) {
         console.error("Fetch error:", error);
@@ -260,7 +297,7 @@ const ProductModal = ({ product, isOpen, onClose }) => {
 
               <div className="product-price">
                 <span className="old-price">₹{parseFloat(productDetails?.mrp).toFixed(2)}</span>
-                <span className="new-price">₹{parseFloat(productDetails?.discount_price).toFixed(2)}</span>
+                <span className="new-price">₹{productPrice}</span>
                 <span className="unit">/Pc</span>
               </div>
               {productDetails?.stocks != null && (
