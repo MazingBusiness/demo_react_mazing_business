@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 import no_image from "../assets/images/no-image.png";
@@ -18,6 +18,7 @@ import { renderRating } from "../data/QuickOrderUtils.jsx"; // 🔧 or define yo
 const QuickOrderGrid = () => {
   const { state } = useLocation();
   const navigate = useNavigate();
+  const loaderRef = useRef(null);
   const initialSlug = state?.slug || "";
   const initialCatGroups = state?.cat_groups || "";
   const initialCategories = state?.categories || "";
@@ -38,12 +39,19 @@ const QuickOrderGrid = () => {
   const [location_id, setLocationId] = useState(initialLocationId);
   const [inhouse_product, setInhouseProduct] = useState(initialInhouseProduct);
 
-  const [loading, setLoading] = useState(false);
   const [categoryName, setCategoryName] = useState("");
   const [categoryGroupName, setCategoryGroupName] = useState("");
-  const [totalRecord, setTotalRecord] = useState("");
-  const [products, setProducts] = useState([]);
   const user = getLoggedInUser();
+
+  // ----- Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalRecord, setTotalRecord] = useState(0);
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const productsPerPage = 16;
+  const totalPages = Math.ceil(totalRecord / productsPerPage) || 1;
+  const [hasMore, setHasMore] = useState(true);
+  // ---------------------
 
   // Keep slug/catId in sync with location state
   useEffect(() => {
@@ -53,94 +61,160 @@ const QuickOrderGrid = () => {
     }
   }, [state]);
 
-  const [sortBy, setSortBy] = useState("Popularity");
-  const [currentPage, setCurrentPage] = useState(1);
-  const productsPerPage = 16;
-
-  const totalPages = Math.ceil(totalRecord / productsPerPage) || 1;
+  const [price_sort, setSortBy] = useState("Popularity");
 
   // We’re currently using API pagination, so use the API’s page data directly
   const currentProducts = products;
 
-  const handleSortChange = (option) => {
-    setSortBy(option);
-    // TODO: pass sort info to API or sort locally
-  };
-
+  const handleSortChange = (option) => { setSortBy(option); };
   const sortOptions = [
-    "Popularity",
-    "Price: Low to High",
-    "Price: High to Low",
+    { label: "Popularity", value: "popularity" },
+    { label: "Price: Low to High", value: "low_to_high" },
+    { label: "Price: High to Low", value: "high_to_low" },
   ];
 
   const [selectedProduct, setSelectedProduct] = useState(null);
   const openModal = (product) => setSelectedProduct(product);
   const closeModal = () => setSelectedProduct(null);
 
-  const getQuickOrderProductRecord = async () => {
+  // const getQuickOrderProductRecord = async () => {
+  //   try {
+  //     setLoading(true);
+  //     const apiRes = await getQuickOrderProduct(cat_groups, categories, brands, search_text, min_price, max_price, location_id, inhouse_product, currentPage);
+  //     const responseData = await apiRes.json();
+
+  //     if (responseData.res) {
+  //       const productList = responseData.data?.data || [];
+  //       setTotalRecord(responseData.data?.total || 0);
+  //       const transformedData = productList.map((item) => {
+  //         const noCredit        = item.cash_and_carry_item === 1;
+  //         const fastDeliveryTag = item.fast_delivery_tag === 1;
+  //         const hasWarranty = item.is_warranty === 1;
+  //         const rating = item.rating && item.rating !== 0 ? item.rating : 4;
+  //         const totalRatings =
+  //           Array.isArray(item.reviews) && item.reviews.length > 0
+  //             ? item.reviews.length
+  //             : 20;
+
+  //         return {
+  //             id: item.id,
+  //             name: item.name,
+  //             img: item.thumb_img?.file_name || no_image,
+  //             oldPrice: item.mrp
+  //               ? `₹${parseFloat(item.mrp.toString()).toFixed(2)}`
+  //               : "₹0.00",
+  //             newPrice: item.discount_price
+  //               ? `₹${parseFloat(
+  //                   item.discount_price.toString().replace(/₹/g, "")
+  //                 ).toFixed(2)}`
+  //               : "₹0.00",
+  //             rating,
+  //             totalRatings,
+  //             sold: `${Math.floor(Math.random() * 50 + 1)}/${Math.floor(
+  //               Math.random() * 200 + 50
+  //             )}`,
+  //             fastDeliveryTag,
+  //             is_warranty: hasWarranty,   // 👈 add this
+  //             noCredit,
+  //             discount: item.discount ? `${item.discount.toString()}%` : "20%",
+  //             user_id: user?.id || null,
+  //             category_group: item.category_group.name,
+  //             category: item.category.name,
+  //             fast_delivery_tag: item.fast_delivery_tag,
+  //             stocks: item.stocks,
+  //             reviews: item.reviews,
+  //           };
+  //         });
+  //       setProducts(transformedData);
+  //     } else {
+  //       NotificationManager.error(
+  //         responseData.msg || "Something went wrong",
+  //         "",
+  //         2000
+  //       );
+  //     }
+  //   } catch (error) {
+  //     console.error("Fetch error:", error);
+  //     NotificationManager.error("Failed to load products", "", 2000);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
+  const getQuickOrderProductRecord = async (page = 1) => {
     try {
       setLoading(true);
-      const apiRes = await getQuickOrderProduct(cat_groups, categories, brands, search_text, min_price, max_price, location_id, inhouse_product, currentPage);
+      const apiRes = await getQuickOrderProduct(
+        cat_groups,
+        categories,
+        brands,
+        search_text,
+        min_price,
+        max_price,
+        location_id,
+        inhouse_product,
+        price_sort,
+        page
+      );
+
       const responseData = await apiRes.json();
 
       if (responseData.res) {
         const productList = responseData.data?.data || [];
-        setTotalRecord(responseData.data?.total || 0);
+        const total = responseData.data?.total || 0;
+
+        setTotalRecord(total);
+
         const transformedData = productList.map((item) => {
-          const noCredit        = item.cash_and_carry_item === 1;
+          const noCredit = item.cash_and_carry_item === 1;
           const fastDeliveryTag = item.fast_delivery_tag === 1;
           const hasWarranty = item.is_warranty === 1;
-          const rating =
-            item.rating && item.rating !== 0 ? item.rating : 4;
+
+          const rating = item.rating && item.rating !== 0 ? item.rating : 4;
           const totalRatings =
             Array.isArray(item.reviews) && item.reviews.length > 0
               ? item.reviews.length
               : 20;
 
           return {
-              id: item.id,
-              name: item.name,
-              img: item.thumb_img?.file_name || no_image,
-              oldPrice: item.mrp
-                ? `₹${parseFloat(item.mrp.toString()).toFixed(2)}`
-                : "₹0.00",
-              newPrice: item.discount_price
-                ? `₹${parseFloat(
-                    item.discount_price.toString().replace(/₹/g, "")
-                  ).toFixed(2)}`
-                : "₹0.00",
-              rating,
-              totalRatings,
-              sold: `${Math.floor(Math.random() * 50 + 1)}/${Math.floor(
-                Math.random() * 200 + 50
-              )}`,
-              fastDeliveryTag,
-              is_warranty: hasWarranty,   // 👈 add this
-              noCredit,
-              discount: item.discount ? `${item.discount.toString()}%` : "20%",
-              user_id: user?.id || null,
-              category_group: item.category_group.name,
-              category: item.category.name,
-              fast_delivery_tag: item.fast_delivery_tag,
-              stocks: item.stocks,
-              reviews: item.reviews,
-            };
-          });
-        setProducts(transformedData);
-      } else {
-        NotificationManager.error(
-          responseData.msg || "Something went wrong",
-          "",
-          2000
-        );
+            id: item.id,
+            name: item.name,
+            img: item.thumb_img?.file_name || no_image,
+            oldPrice: item.mrp ? `₹${parseFloat(item.mrp).toFixed(2)}` : "₹0.00",
+            newPrice: item.discount_price
+              ? `₹${parseFloat(String(item.discount_price).replace(/₹/g, "")).toFixed(2)}`
+              : "₹0.00",
+            rating,
+            totalRatings,
+            sold: `${Math.floor(Math.random() * 50 + 1)}/${Math.floor(
+              Math.random() * 200 + 50
+            )}`,
+            fastDeliveryTag,
+            is_warranty: hasWarranty,
+            noCredit,
+            discount: item.discount ? `${item.discount}%` : "20%",
+            user_id: user?.id || null,
+            category_group: item.category_group?.name,
+            category: item.category?.name,
+            fast_delivery_tag: item.fast_delivery_tag,
+            stocks: item.stocks,
+            reviews: item.reviews,
+          };
+        });
+
+        // ✅ IMPORTANT: append for page>1, replace for page=1
+        setProducts((prev) => (page === 1 ? transformedData : [...prev, ...transformedData]));
+
+        const computedTotalPages = Math.ceil(total / productsPerPage) || 1;
+        setHasMore(page < computedTotalPages);
       }
     } catch (error) {
       console.error("Fetch error:", error);
-      NotificationManager.error("Failed to load products", "", 2000);
     } finally {
       setLoading(false);
     }
   };
+
   const fastDeliveryTag = (product) => {
     if (!product.fastDeliveryTag) return null;
     return (
@@ -156,6 +230,7 @@ const QuickOrderGrid = () => {
       </div>
     );
   };
+
   const renderWarrantyTag = (product) => {
     if (!product.is_warranty) return null;   // ✅ now this exists
     return (
@@ -168,6 +243,7 @@ const QuickOrderGrid = () => {
       </div>
     );
   };
+
   const renderProductImage = (product, onCartClick = () => {}) => {
     return (
       <div className="product-img">
@@ -235,15 +311,38 @@ const QuickOrderGrid = () => {
     );
   };
 
-  // Fetch when catId or page changes
+  // Called funtion with current page for pagination
   useEffect(() => {
-    getQuickOrderProductRecord();
+    getQuickOrderProductRecord(currentPage);
   }, [currentPage]);
+
+  // Pagination
+  useEffect(() => {
+    if (!loaderRef.current) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const first = entries[0];
+        if (first.isIntersecting && hasMore && !loading) {
+          setCurrentPage((prev) => prev + 1);
+        }
+      },
+      { root: null, rootMargin: "200px", threshold: 0.1 } // rootMargin helps prefetch early
+    );
+    observer.observe(loaderRef.current);
+    return () => observer.disconnect();
+  }, [hasMore, loading]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+    setProducts([]);
+    setHasMore(true);
+    getQuickOrderProductRecord(1);
+  }, [cat_groups, categories, brands, search_text, min_price, max_price, location_id, inhouse_product]);
 
   return (
     <div className="product-section-wrapper">
       {/* Breadcrumb */}
-      <div className="breadcrumb">
+      {/* <div className="breadcrumb">
         Home
         <em>
           <GoDotFill />
@@ -257,7 +356,7 @@ const QuickOrderGrid = () => {
           <GoDotFill />
         </em>
         <span className="current">Air Blower</span>
-      </div>
+      </div> */}
 
       {/* Result and Sort */}
       <div className="product-header">
@@ -266,21 +365,15 @@ const QuickOrderGrid = () => {
         </div>
         <div className="sort-by">
           <span>Sort By:</span>
-          <select
-            value={sortBy}
-            onChange={(e) => handleSortChange(e.target.value)}
-          >
-            {sortOptions.map((option, idx) => (
-              <option key={idx} value={option}>
-                {option}
+          <select value={price_sort} onChange={(e) => handleSortChange(e.target.value)} >
+            {sortOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
               </option>
             ))}
           </select>
         </div>
       </div>
-
-      {/* Loader */}
-      {loading && <div className="loader">Loading products…</div>}
 
       {/* Product Grid */}
       <div className="product-grid Quick-grid">
@@ -329,64 +422,16 @@ const QuickOrderGrid = () => {
         ))}
       </div>
 
-      {/* Pagination */}
-      <div className="pagination-wrapper">
-        <button
-          className={`pagination-btn nav ${
-            currentPage === 1 ? "disabled" : ""
-          }`}
-          onClick={() => currentPage > 1 && setCurrentPage(currentPage - 1)}
-        >
-          Previous
-        </button>
-
-        {[Array(totalPages)].map((_, index) => {
-          const pageNum = index + 1;
-          const showDots =
-            totalPages > 5 &&
-            ((pageNum === 2 && currentPage > 3) ||
-              (pageNum === totalPages - 1 && currentPage < totalPages - 2));
-
-          if (showDots) {
-            return (
-              <span key={`dots-${pageNum}`} className="pagination-btn dots">
-                ...
-              </span>
-            );
-          }
-
-          if (
-            pageNum === 1 ||
-            pageNum === totalPages ||
-            (pageNum >= currentPage - 1 && pageNum <= currentPage + 1)
-          ) {
-            return (
-              <button
-                key={pageNum}
-                className={`pagination-btn ${
-                  currentPage === pageNum ? "active" : ""
-                }`}
-                onClick={() => setCurrentPage(pageNum)}
-              >
-                {pageNum}
-              </button>
-            );
-          }
-          return null;
-        })}
-
-        <button
-          className={`pagination-btn nav ${
-            currentPage === totalPages ? "disabled" : ""
-          }`}
-          onClick={() =>
-            currentPage < totalPages && setCurrentPage(currentPage + 1)
-          }
-        >
-          Next
-        </button>
-      </div>
-
+      {/* Pagination . Infinite scroll loader*/}
+      <div ref={loaderRef} style={{ height: 1 }} />
+        {loading && (
+          <div className="loader">
+            {currentPage === 1 ? "Loading products…" : "Loading products…"}
+          </div>
+        )}
+        {!hasMore && !loading && products.length > 0 && (
+          <div className="no-more">You reached the end.</div>
+        )}
       {/* Product Modal */}
       <ProductModal product={selectedProduct} isOpen={!!selectedProduct} onClose={closeModal} />
     </div>

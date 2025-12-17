@@ -118,7 +118,7 @@ export const getCatProduct = async (id, page = 1, brand_id) => {
 };
 
 // Quick Order Product
-export const getQuickOrderProduct = async (cat_groups, categories, brands, search_text, min_price, max_price, location_id, inhouse_product, page = 1, pagination = 16) => {
+export const getQuickOrderProduct = async (cat_groups, categories, brands, search_text, min_price, max_price, location_id, inhouse_product, price_sort, page = 1, pagination = 16) => {
   const user = getLoggedInUser();
   const header = getHeader();
   // Build query params
@@ -132,6 +132,7 @@ export const getQuickOrderProduct = async (cat_groups, categories, brands, searc
   if (location_id) queryParams.append('location_id', location_id);
   if (inhouse_product) queryParams.append('inhouse_product', inhouse_product);
   if (page) queryParams.append('page', page);
+  if (price_sort) queryParams.append('price_sort', price_sort);
   if (pagination) queryParams.append('pagination', pagination);
   if (user?.id) queryParams.append('user_id', user.id);
   queryParams.append('page', page); // ✅ add page with default = 1
