@@ -66,7 +66,13 @@ const QuickOrderGrid = () => {
   // We’re currently using API pagination, so use the API’s page data directly
   const currentProducts = products;
 
-  const handleSortChange = (option) => { setSortBy(option); };
+  // const handleSortChange = (option) => { setSortBy(option); };
+  const handleSortChange = (value) => {
+    setPriceSort(value);
+    setCurrentPage(1);
+    setProducts([]);
+    setHasMore(true);
+  };
   const sortOptions = [
     { label: "Popularity", value: "popularity" },
     { label: "Price: Low to High", value: "low_to_high" },
@@ -314,7 +320,7 @@ const QuickOrderGrid = () => {
   // Called funtion with current page for pagination
   useEffect(() => {
     getQuickOrderProductRecord(currentPage);
-  }, [currentPage]);
+  }, [currentPage, price_sort]);
 
   // Pagination
   useEffect(() => {
