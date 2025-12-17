@@ -152,7 +152,12 @@ const ProductModal = ({ product, isOpen, onClose }) => {
           setMinBulkQty(firstProduct.piece_by_carton);
           setBulkPrice(firstProduct.bulk_discount_price);
           setQuantity(firstProduct.min_qty);
-          setTotalPrice(firstProduct.min_qty * productPrice);
+          if(firstProduct.min_qty < firstProduct.piece_by_carton){
+            setTotalPrice(firstProduct.min_qty * productPrice);
+          }else{
+            setTotalPrice(firstProduct.min_qty * bulkPrice);
+          }
+          
         }
       } catch (error) {
         console.error("Fetch error:", error);
