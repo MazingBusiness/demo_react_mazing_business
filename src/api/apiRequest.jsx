@@ -206,3 +206,37 @@ export const addToCart = async ({ product_id, quantity, type }) => {
   return data;
 };
 
+// Get All Category Group
+export const getAllCategoryGroups = async () => {
+  const url = `${API_BASE_URL}product/cetrgory-groups`;
+  const response = await fetch(url, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+  // const data = await response.json();
+  return response;
+};
+
+// Get All Brands
+export const getAllBrands = async (category_group_id, category_id) => {
+  const queryParams = new URLSearchParams();
+  if (category_group_id) queryParams.append("category_group_id", category_group_id);
+  if (category_id) queryParams.append("category_id", category_id);
+
+  const url = `${API_BASE_URL}product/all-brands?${queryParams.toString()}`;
+
+  const response = await fetch(url, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+
+  // const data = await response.json();
+  return response;
+};
+
+
+

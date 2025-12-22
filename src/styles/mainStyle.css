@@ -2038,6 +2038,13 @@ a.all-link svg {
   align-items: flex-start;
   padding: 65px 0;
   width: 100%;
+  align-items: flex-start;   /* IMPORTANT for sticky inside flex */
+}
+
+/* Sidebar width */
+.filters-section.sidebarFilters{
+  width: 320px;              /* adjust */
+  flex: 0 0 320px;
 }
 
 .sidebarFilters {
@@ -2048,6 +2055,7 @@ a.all-link svg {
 .productGrid {
   flex: 1;
   padding-left: 20px;
+  min-width: 0; /* prevents overflow issues in flex */
 }
 
 .active-filters {
@@ -6843,6 +6851,16 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 
 /* Responsive design */
+/* ✅ Sticky behavior (desktop) */
+@media (min-width: 993px){
+  .filters-section.sidebarFilters{
+    position: sticky;
+    top: 90px; /* adjust based on your header height */
+    max-height: calc(100vh - 90px);
+    overflow-y: auto;  /* if filters long, scroll inside */
+  }
+}
+
 @media (max-width: 768px) {
   .about-us-content {
     flex-direction: column;

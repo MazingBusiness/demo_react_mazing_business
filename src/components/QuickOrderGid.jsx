@@ -61,7 +61,7 @@ const QuickOrderGrid = () => {
     }
   }, [state]);
 
-  const [price_sort, setSortBy] = useState("Popularity");
+  const [price_sort, setPriceSort] = useState("Popularity");
 
   // We’re currently using API pagination, so use the API’s page data directly
   const currentProducts = products;
@@ -83,70 +83,7 @@ const QuickOrderGrid = () => {
   const openModal = (product) => setSelectedProduct(product);
   const closeModal = () => setSelectedProduct(null);
 
-  // const getQuickOrderProductRecord = async () => {
-  //   try {
-  //     setLoading(true);
-  //     const apiRes = await getQuickOrderProduct(cat_groups, categories, brands, search_text, min_price, max_price, location_id, inhouse_product, currentPage);
-  //     const responseData = await apiRes.json();
-
-  //     if (responseData.res) {
-  //       const productList = responseData.data?.data || [];
-  //       setTotalRecord(responseData.data?.total || 0);
-  //       const transformedData = productList.map((item) => {
-  //         const noCredit        = item.cash_and_carry_item === 1;
-  //         const fastDeliveryTag = item.fast_delivery_tag === 1;
-  //         const hasWarranty = item.is_warranty === 1;
-  //         const rating = item.rating && item.rating !== 0 ? item.rating : 4;
-  //         const totalRatings =
-  //           Array.isArray(item.reviews) && item.reviews.length > 0
-  //             ? item.reviews.length
-  //             : 20;
-
-  //         return {
-  //             id: item.id,
-  //             name: item.name,
-  //             img: item.thumb_img?.file_name || no_image,
-  //             oldPrice: item.mrp
-  //               ? `₹${parseFloat(item.mrp.toString()).toFixed(2)}`
-  //               : "₹0.00",
-  //             newPrice: item.discount_price
-  //               ? `₹${parseFloat(
-  //                   item.discount_price.toString().replace(/₹/g, "")
-  //                 ).toFixed(2)}`
-  //               : "₹0.00",
-  //             rating,
-  //             totalRatings,
-  //             sold: `${Math.floor(Math.random() * 50 + 1)}/${Math.floor(
-  //               Math.random() * 200 + 50
-  //             )}`,
-  //             fastDeliveryTag,
-  //             is_warranty: hasWarranty,   // 👈 add this
-  //             noCredit,
-  //             discount: item.discount ? `${item.discount.toString()}%` : "20%",
-  //             user_id: user?.id || null,
-  //             category_group: item.category_group.name,
-  //             category: item.category.name,
-  //             fast_delivery_tag: item.fast_delivery_tag,
-  //             stocks: item.stocks,
-  //             reviews: item.reviews,
-  //           };
-  //         });
-  //       setProducts(transformedData);
-  //     } else {
-  //       NotificationManager.error(
-  //         responseData.msg || "Something went wrong",
-  //         "",
-  //         2000
-  //       );
-  //     }
-  //   } catch (error) {
-  //     console.error("Fetch error:", error);
-  //     NotificationManager.error("Failed to load products", "", 2000);
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
-
+  
   const getQuickOrderProductRecord = async (page = 1) => {
     try {
       setLoading(true);
@@ -392,8 +329,8 @@ const QuickOrderGrid = () => {
             <div className="product-card">
               {renderProductImage(product, openModal)}
               <div className="product-info">
-                <h3>{product.name.length > 15 ? product.name.substring(0, 15) + "..." : product.name}</h3>
-                <span>{product.oldPrice}</span>
+                <h3>{product.name.length > 25 ? product.name.substring(0, 25) + "..." : product.name}</h3>
+                
                 {product.user_id != null && (
                   <div className="prices">
                     <span className="old">{product.oldPrice}</span>

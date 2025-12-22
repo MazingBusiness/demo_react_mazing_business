@@ -8,10 +8,13 @@ import { BiSolidCart } from "react-icons/bi";
 import SaveLatericon from "../assets/icons/SaveLatericon.svg";
 import SaveLatericon1 from "../assets/icons/SaveLatericon1.svg";
 import Deleteicon from "../assets/icons/Deleteicon.svg";
+import noImage from "../assets/images/no-image.png";
 
 import OfferModal from "../components/OfferModal.jsx";
 
 import { useNavigate } from "react-router-dom";
+
+import { cart } from "../api/apiRequest";
 
 const initialCartItems = [
   { id: 1, name: "Bosch Rexroth Hydraulic Pump", price: 15800, qty: 1 },
@@ -42,13 +45,26 @@ const initialSavedItems = [
   },
 ];
 
+const getProductImage = (product) => {
+  // images is an array in your API
+  const url = product?.images?.[0]?.file_name;
+  // if url empty/null => show noImage
+  if (!url) return noImage;
+  // if already full URL => return as-is
+  if (url.startsWith("http")) return url;
+  // if sometimes backend sends only filename/path, build it (optional)
+  const BACKEND = process.env.REACT_APP_BACKEND_URL || "https://mazingbusiness.com";
+  return `${BACKEND}/${url.replace(/^\/+/, "")}`;
+};
+
 const CartSlide = ({ isCartVisible, toggleCart }) => {
-  const [cartItems, setCartItems] = useState(initialCartItems);
+  const [cartItems, setCartItems] = useState([]);
   const [savedItems, setSavedItems] = useState(initialSavedItems);
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [selectedCartIds, setSelectedCartIds] = useState([]);
   const [selectedSavedIds, setSelectedSavedIds] = useState([]);
-
+  const [cartSubTotal, setCartSubTotal] = useState(0);
+  const [cartCount, setCartCount] = useState(0);
   const [isOfferModalOpen, setOfferModalOpen] = useState(false);
 
   const navigate = useNavigate();
@@ -56,6 +72,37 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
   const handleCheckout = () => {
     navigate("/company");
   };
+
+  const cartData = async () => {
+      try {
+        const responseData = await cart();
+        if (responseData.res) {
+          const cart_item = responseData.cart_item || [];
+          const cartSubTotal = responseData.other_item_total_amount || '0';
+          setCartItems(cart_item);
+          setCartCount(cart_item.length); // ✅ count
+          setCartSubTotal(cartSubTotal);
+        } else {
+          NotificationManager.error(
+            responseData.msg || "Something went wrong",
+            "",
+            2000
+          );
+        }
+      } catch (error) {
+        console.error("Fetch error:", error);
+        NotificationManager.error("Failed to load Cart", "", 2000);
+      }
+    };
+
+  useEffect(() => {
+    cartData(); // first load when header renders
+    const handler = () => cartData(); // when cart-updated happens, refresh
+    window.addEventListener("cart-updated", handler);
+    return () => {
+      window.removeEventListener("cart-updated", handler);
+    };
+  }, []);
 
   // 🔧 Fix: cart subtotal (use qty instead of quantity)
   const calculateCartSubtotal = () => {
@@ -176,7 +223,6 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
                   </span>
                   <span className="Cartitem">{cartItems.length} Items</span>
                 </h2>
-
                 <div className="cart-table-container">
                   <table className="order-table">
                     <thead>
@@ -215,8 +261,13 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
                           </td>
                           <td className="narrow1" data-label="Product">
                             <div className="cartproduct">
-                              <img src={cartIcon} alt="" width="70" />{" "}
-                              {item.name}
+                              <img src={getProductImage(item?.product)} alt={item?.product?.name || "Product"} width="70"
+                                onError={(e) => {
+                                  e.currentTarget.src = noImage;   // ✅ if broken link / 404
+                                }}
+                              />
+                              {" "}
+                              {item.product.name}
                               {item.noCredit && (
                                 <span className="no-credit">
                                   No Credit Item
@@ -231,7 +282,7 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
                             <input
                               type="number"
                               min="1"
-                              value={item.qty}
+                              value={item.quantity}
                               onChange={(e) =>
                                 setCartItems((prev) =>
                                   prev.map((i) =>
@@ -244,7 +295,7 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
                             />
                           </td>
                           <td className="cartprice" data-label="Total">
-                            ₹ {item.qty * item.price}
+                            ₹ {item.quantity * item.price}
                           </td>
                           <td data-label="Action">
                             <button onClick={() => moveToSaved(item)}>

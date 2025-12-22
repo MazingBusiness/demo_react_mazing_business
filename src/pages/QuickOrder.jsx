@@ -5,6 +5,9 @@ import { FaAngleDown, FaAngleUp, FaFilter } from "react-icons/fa";
 import ProductGrid from "../components/ProductGrid";
 import QuickOrderGid from "../components/QuickOrderGid";
 
+// Api Call
+import { getAllBrands, getAllCategoryGroups } from "../api/apiRequest";
+
 const allBrands = [
   "HIKOKI (15)",
   "Bosch (24)",
@@ -24,10 +27,12 @@ const deliveryOptions = [
 ];
 
 const QuickOrder = () => {
-  const [selectedBrands, setSelectedBrands] = useState(["HIKOKI (15)"]);
-  const [selectedDelivery, setSelectedDelivery] = useState(
-    "Delivery in 3 - 4 Days"
-  );
+  const [selectedCatGs, setSelectedCatGs] = useState([]);
+  const [selectedBrands, setSelectedBrands] = useState([]);
+  const [selectedDelivery, setSelectedDelivery] = useState("Delivery in 3 - 4 Days");
+  const [allCategoryGroups, setAllCategoryGroups] = useState([]);
+  const [allBrands, setAllBrands] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   const min = 1000;
   const max = 7500;
@@ -45,8 +50,12 @@ const QuickOrder = () => {
   const [sliderWidth, setSliderWidth] = useState(0);
   const [sliderOffset, setSliderOffset] = useState(0);
 
+  const [showMoreCatG, setShowMoreCatG] = useState(5);
   const [showMoreBrands, setShowMoreBrands] = useState(5);
   const [showMoreDelivery, setShowMoreDelivery] = useState(2);
+
+  const [category_group_id, setCategoryGroupId] = useState('');
+  const [category_id, setcategoryId] = useState('');
 
   useEffect(() => {
     if (sliderRef.current) {
@@ -64,7 +73,50 @@ const QuickOrder = () => {
       maxValueRef.current.style.width = `${(currentMax * 100) / max}%`;
     }
   };
+  const getAllCategoryGroupsFromAPI = async () => {
+    try {
+      setLoading(true);
+      const apiRes = await getAllCategoryGroups();
+      const responseData = await apiRes.json(); // ✅ important
+      if (responseData?.res) {
+        setAllCategoryGroups(responseData?.data || []);
+      } else {
+        setAllCategoryGroups([]);
+        // NotificationManager.error(responseData?.msg || "Something went wrong", "", 2000);
+      }
+    } catch (error) {
+      console.error("Fetch error:", error);
+      setAllCategoryGroups([]);
+      // NotificationManager.error("Failed to load brands", "", 2000);
+    } finally {
+      setLoading(false);
+    }
+  };
+  const getAllBrandsFromAPI = async () => {
+    try {
+      setLoading(true);
+      const apiRes = await getAllBrands(category_group_id, category_id);
+      const responseData = await apiRes.json(); // ✅ important
 
+      if (responseData?.res) {
+        setAllBrands(responseData?.data || []);
+      } else {
+        setAllBrands([]);
+        // NotificationManager.error(responseData?.msg || "Something went wrong", "", 2000);
+      }
+    } catch (error) {
+      console.error("Fetch error:", error);
+      setAllBrands([]);
+      // NotificationManager.error("Failed to load brands", "", 2000);
+    } finally {
+      setLoading(false);
+    }
+  };
+  // Called funtion
+  useEffect(() => { getAllBrandsFromAPI(); }, [category_group_id, category_id]);
+  useEffect(() => { getAllCategoryGroupsFromAPI(); },[]);
+
+  const clearBCatG = () => setSelectedCatGs([]);
   const clearBrand = () => setSelectedBrands([]);
   const clearDelivery = () => setSelectedDelivery(null);
   const clearPrice = () => {
@@ -81,6 +133,10 @@ const QuickOrder = () => {
     clearPrice();
   };
 
+  const toggleCatGs = () => {
+    setShowMoreCatG((prev) => (prev >= allCategoryGroups.length ? 5 : prev + 5));
+  };
+
   const toggleBrands = () => {
     setShowMoreBrands((prev) => (prev >= allBrands.length ? 5 : prev + 5));
   };
@@ -88,6 +144,12 @@ const QuickOrder = () => {
   const toggleDelivery = () => {
     setShowMoreDelivery((prev) =>
       prev >= deliveryOptions.length ? 2 : prev + 2
+    );
+  };
+
+  const toggleCatG = (catG) => {
+    setSelectedCatGs((prev) =>
+      prev.includes(catG) ? prev.filter((b) => b !== catG) : [...prev, catG]
     );
   };
 
@@ -195,16 +257,28 @@ const QuickOrder = () => {
             <FaFilter />
             Filters
           </button>
-          <div
-            className={`filters-section sidebarFilters ${
+          <div className={`filters-section sidebarFilters ${
               showMobileFilters ? "mobile-visible" : ""
             }`}
           >
-            {(selectedBrands.length > 0 ||
+            {(selectedCatGs.length > 0 || selectedBrands.length > 0 ||
               selectedDelivery ||
               currentMin !== 1500 ||
               currentMax !== 6000) && (
               <div className="active-filters">
+                {selectedCatGs.length > 0 && (
+                  <div className="active-part">
+                    <label>Category Groupss:</label>
+                    <div className="active-tag">
+                      {selectedCatGs.map((catG, index) => (
+                        <span key={index}>
+                          {catG}
+                          <button onClick={() => toggleCatG(catG)}>✕</button>
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 {selectedBrands.length > 0 && (
                   <div className="active-part">
                     <label>Brands:</label>
@@ -247,6 +321,36 @@ const QuickOrder = () => {
             )}
 
             <div className="filters">
+
+              {/* Catgory Group Filter */}
+              <div className="filter-section">
+                <h4>
+                  Category Group{" "}
+                  <button onClick={clearBrand} className="clear-btn">
+                    ✕ CLEAR
+                  </button>
+                </h4>
+                <div className="checkbox-group brand-group fade-in">
+                  {allCategoryGroups.slice(0, showMoreCatG).map((catG) => (
+                    <label key={catG.id} className={`animated-checkbox ${ selectedCatGs.includes(catG.id) ? "checked" : "" }`} >
+                      <input type="checkbox" checked={selectedCatGs.includes(catG.name)} onChange={() => toggleCatG(catG.name)} />
+                      <span className="custom-check"></span>
+                      {catG.name}
+                    </label>
+                  ))}
+                </div>
+                <button onClick={toggleCatGs} className="show-more">
+                  {showMoreCatG >= allCategoryGroups.length ? (
+                    <>
+                      <FaAngleUp /> SHOW LESS
+                    </>
+                  ) : (
+                    <>
+                      <FaAngleDown /> SHOW MORE
+                    </>
+                  )}
+                </button>
+              </div>
               {/* Brands Filter */}
               <div className="filter-section">
                 <h4>
@@ -256,20 +360,14 @@ const QuickOrder = () => {
                   </button>
                 </h4>
                 <div className="checkbox-group brand-group fade-in">
-                  {allBrands.slice(0, showMoreBrands).map((brand, index) => (
-                    <label
-                      key={index}
-                      className={`animated-checkbox ${
-                        selectedBrands.includes(brand) ? "checked" : ""
+                  {allBrands.slice(0, showMoreBrands).map((brand) => (
+                    <label key={brand.id} className={`animated-checkbox ${
+                        selectedBrands.includes(brand.id) ? "checked" : ""
                       }`}
                     >
-                      <input
-                        type="checkbox"
-                        checked={selectedBrands.includes(brand)}
-                        onChange={() => toggleBrand(brand)}
-                      />
+                      <input type="checkbox" checked={selectedBrands.includes(brand.name)} onChange={() => toggleBrand(brand.name)} />
                       <span className="custom-check"></span>
-                      {brand}
+                      {brand.name}
                     </label>
                   ))}
                 </div>
