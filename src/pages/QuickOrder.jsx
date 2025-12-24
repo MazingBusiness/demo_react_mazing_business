@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import MainLayout from "../layouts/MainLayout";
 
 import { FaAngleDown, FaAngleUp, FaFilter } from "react-icons/fa";
@@ -29,10 +29,13 @@ const deliveryOptions = [
 const QuickOrder = () => {
   const [selectedCatGs, setSelectedCatGs] = useState([]);
   const [selectedBrands, setSelectedBrands] = useState([]);
-  const [selectedDelivery, setSelectedDelivery] = useState("Delivery in 3 - 4 Days");
+  const [selectedDelivery, setSelectedDelivery] = useState([]);
   const [allCategoryGroups, setAllCategoryGroups] = useState([]);
   const [allBrands, setAllBrands] = useState([]);
   const [loading, setLoading] = useState(false);
+
+  const [selectedCatGIds, setSelectedCatGIds] = useState([]);        // ✅ store group IDs
+  const [selectedChildCatIds, setSelectedChildCatIds] = useState([]); // ✅ store child IDs
 
   const min = 1000;
   const max = 7500;
@@ -73,21 +76,35 @@ const QuickOrder = () => {
       maxValueRef.current.style.width = `${(currentMax * 100) / max}%`;
     }
   };
+  // const getAllCategoryGroupsFromAPI = async () => {
+  //   try {
+  //     setLoading(true);
+  //     const apiRes = await getAllCategoryGroups();
+  //     const responseData = await apiRes.json(); // ✅ important
+  //     if (responseData?.res) {
+  //       setAllCategoryGroups(responseData?.data || []);
+  //     } else {
+  //       setAllCategoryGroups([]);
+  //       // NotificationManager.error(responseData?.msg || "Something went wrong", "", 2000);
+  //     }
+  //   } catch (error) {
+  //     console.error("Fetch error:", error);
+  //     setAllCategoryGroups([]);
+  //     // NotificationManager.error("Failed to load brands", "", 2000);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
   const getAllCategoryGroupsFromAPI = async () => {
     try {
       setLoading(true);
       const apiRes = await getAllCategoryGroups();
-      const responseData = await apiRes.json(); // ✅ important
-      if (responseData?.res) {
-        setAllCategoryGroups(responseData?.data || []);
-      } else {
-        setAllCategoryGroups([]);
-        // NotificationManager.error(responseData?.msg || "Something went wrong", "", 2000);
-      }
-    } catch (error) {
-      console.error("Fetch error:", error);
+      const responseData = await apiRes.json();
+      if (responseData?.res) setAllCategoryGroups(responseData?.data || []);
+      else setAllCategoryGroups([]);
+    } catch (e) {
+      console.error(e);
       setAllCategoryGroups([]);
-      // NotificationManager.error("Failed to load brands", "", 2000);
     } finally {
       setLoading(false);
     }
@@ -116,6 +133,33 @@ const QuickOrder = () => {
   useEffect(() => { getAllBrandsFromAPI(); }, [category_group_id, category_id]);
   useEffect(() => { getAllCategoryGroupsFromAPI(); },[]);
 
+  // ✅ Alphabetically sort child categories for each group
+  const groupsWithSortedChildren = useMemo(() => {
+    return (allCategoryGroups || []).map((g) => ({
+      ...g,
+      child_category: [...(g.child_category || [])].sort((a, b) =>
+        (a?.name || "").localeCompare(b?.name || "", undefined, { sensitivity: "base" })
+      ),
+    }));
+  }, [allCategoryGroups]);
+
+  const toggleCatG = (groupId) => {
+    setSelectedCatGIds((prev) =>
+      prev.includes(groupId) ? prev.filter((id) => id !== groupId) : [...prev, groupId]
+    );
+
+    // optional: when group is unselected, remove its child selections
+    const group = allCategoryGroups.find((g) => g.id === groupId);
+    const childIds = (group?.child_category || []).map((c) => c.id);
+    setSelectedChildCatIds((prev) => prev.filter((id) => !childIds.includes(id)));
+  };
+
+  const toggleChildCat = (childId) => {
+    setSelectedChildCatIds((prev) =>
+      prev.includes(childId) ? prev.filter((id) => id !== childId) : [...prev, childId]
+    );
+  };
+
   const clearBCatG = () => setSelectedCatGs([]);
   const clearBrand = () => setSelectedBrands([]);
   const clearDelivery = () => setSelectedDelivery(null);
@@ -126,7 +170,10 @@ const QuickOrder = () => {
     setInputMax(6000);
     updateSliderWidths();
   };
-
+  const clearCatG = () => {
+    setSelectedCatGIds([]);
+    setSelectedChildCatIds([]);
+  };
   const clearAll = () => {
     clearBrand();
     clearDelivery();
@@ -147,11 +194,11 @@ const QuickOrder = () => {
     );
   };
 
-  const toggleCatG = (catG) => {
-    setSelectedCatGs((prev) =>
-      prev.includes(catG) ? prev.filter((b) => b !== catG) : [...prev, catG]
-    );
-  };
+  // const toggleCatG = (catG) => {
+  //   setSelectedCatGs((prev) =>
+  //     prev.includes(catG) ? prev.filter((b) => b !== catG) : [...prev, catG]
+  //   );
+  // };
 
   const toggleBrand = (brand) => {
     setSelectedBrands((prev) =>
@@ -249,19 +296,14 @@ const QuickOrder = () => {
       <div className="maincontainer">
         <div className="productListingwrapper">
           {/* Mobile Filter Button */}
-          <button
-            className="mobile-filter-btn"
-            onClick={toggleMobileFilters}
-            aria-label="Toggle filters"
-          >
-            <FaFilter />
-            Filters
+          <button className="mobile-filter-btn" onClick={toggleMobileFilters} aria-label="Toggle filters" >
+            <FaFilter /> Filters
           </button>
           <div className={`filters-section sidebarFilters ${
               showMobileFilters ? "mobile-visible" : ""
             }`}
           >
-            {(selectedCatGs.length > 0 || selectedBrands.length > 0 ||
+            {/* {(selectedCatGs.length > 0 || selectedBrands.length > 0 ||
               selectedDelivery ||
               currentMin !== 1500 ||
               currentMax !== 6000) && (
@@ -318,7 +360,7 @@ const QuickOrder = () => {
                   Remove All Filters
                 </button>
               </div>
-            )}
+            )} */}
 
             <div className="filters">
 
@@ -326,18 +368,48 @@ const QuickOrder = () => {
               <div className="filter-section">
                 <h4>
                   Category Group{" "}
-                  <button onClick={clearBrand} className="clear-btn">
+                  <button onClick={clearCatG} className="clear-btn">
                     ✕ CLEAR
                   </button>
                 </h4>
-                <div className="checkbox-group brand-group fade-in">
+                {/* <div className="checkbox-group brand-group fade-in">
                   {allCategoryGroups.slice(0, showMoreCatG).map((catG) => (
                     <label key={catG.id} className={`animated-checkbox ${ selectedCatGs.includes(catG.id) ? "checked" : "" }`} >
-                      <input type="checkbox" checked={selectedCatGs.includes(catG.name)} onChange={() => toggleCatG(catG.name)} />
+                      <input type="checkbox" checked={selectedCatGs.includes(catG.name)} onChange={() => toggleCatG(catG.name)} value={catG.id} />
                       <span className="custom-check"></span>
                       {catG.name}
                     </label>
                   ))}
+                </div> */}
+                <div className="checkbox-group brand-group fade-in">
+                  {groupsWithSortedChildren.slice(0, showMoreCatG).map((catG) => {
+                    const isGroupSelected = selectedCatGIds.includes(catG.id);
+
+                    return (
+                      <div key={catG.id} style={{ marginBottom: 10 }}>
+                        <label className={`animated-checkbox ${isGroupSelected ? "checked" : ""}`}>
+                          <input type="checkbox" checked={isGroupSelected} onChange={() => toggleCatG(catG.id)} value={catG.id} />
+                          <span className="custom-check" />
+                          {catG.name}
+                        </label>
+                        {/* Child Categories (show only when this group is selected) */}
+                        {isGroupSelected && (catG.child_category?.length > 0) && (
+                          <div className="checkbox-group brand-group fade-in" style={{ marginLeft: 26, marginTop: 6 }}>
+                            {catG.child_category.map((child) => {
+                              const isChildSelected = selectedChildCatIds.includes(child.id);
+                              return (
+                                <label key={child.id} className={`animated-checkbox ${isChildSelected ? "checked" : ""}`}>
+                                  <input type="checkbox" checked={isChildSelected} onChange={() => toggleChildCat(child.id)} value={child.id} />
+                                  <span className="custom-check" />
+                                  {child.name}
+                                </label>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
                 <button onClick={toggleCatGs} className="show-more">
                   {showMoreCatG >= allCategoryGroups.length ? (
@@ -393,20 +465,9 @@ const QuickOrder = () => {
                   </button>
                 </h4>
                 <div className="checkbox-group delivery-group fade-in">
-                  {deliveryOptions
-                    .slice(0, showMoreDelivery)
-                    .map((option, index) => (
-                      <label
-                        key={index}
-                        className={`animated-checkbox ${
-                          selectedDelivery === option ? "checked" : ""
-                        }`}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={selectedDelivery === option}
-                          onChange={() => setSelectedDelivery(option)}
-                        />
+                  {deliveryOptions .slice(0, showMoreDelivery) .map((option, index) => (
+                      <label key={index} className={`animated-checkbox ${ selectedDelivery === option ? "checked" : "" }`} >
+                        <input type="checkbox" checked={selectedDelivery === option} onChange={() => setSelectedDelivery(option)} />
                         <span className="custom-check"></span>
                         {option}
                       </label>
