@@ -15,7 +15,8 @@ import { getLoggedInUser, getAuthToken } from '../utils/authUtils';
 
 import { renderRating } from "../data/QuickOrderUtils.jsx"; // 🔧 or define your own
 
-const QuickOrderGrid = () => {
+const QuickOrderGrid  = (props) => {
+  const { filters } = props;
   const { state } = useLocation();
   const navigate = useNavigate();
   const loaderRef = useRef(null);
@@ -87,17 +88,19 @@ const QuickOrderGrid = () => {
   const getQuickOrderProductRecord = async (page = 1) => {
     try {
       setLoading(true);
+      // alert(filters.brands);
       const apiRes = await getQuickOrderProduct(
-        cat_groups,
-        categories,
-        brands,
-        search_text,
-        min_price,
-        max_price,
-        location_id,
-        inhouse_product,
-        price_sort,
-        page
+        filters.cat_groups,
+        filters.categories,
+        filters.brands,
+        filters.search_text,
+        filters.min_price,
+        filters.max_price,
+        filters.location_id,
+        filters.inhouse_product,
+        filters.price_sort,
+        filters.delivery,
+        page        
       );
 
       const responseData = await apiRes.json();
@@ -257,7 +260,16 @@ const QuickOrderGrid = () => {
   // Called funtion with current page for pagination
   useEffect(() => {
     getQuickOrderProductRecord(currentPage);
-  }, [currentPage, price_sort]);
+  }, [currentPage, filters.cat_groups,
+    filters.categories,
+    filters.brands,
+    filters.search_text,
+    filters.min_price,
+    filters.max_price,
+    filters.location_id,
+    filters.inhouse_product,
+    filters.price_sort,
+    filters.delivery]);
 
   // Pagination
   useEffect(() => {
@@ -280,7 +292,7 @@ const QuickOrderGrid = () => {
     setProducts([]);
     setHasMore(true);
     getQuickOrderProductRecord(1);
-  }, [cat_groups, categories, brands, search_text, min_price, max_price, location_id, inhouse_product]);
+  }, [filters.cat_groups, filters.categories, filters.brands, filters.search_text, filters.min_price, filters.max_price, filters.location_id, filters.inhouse_product, filters.price_sort, filters.delivery]);
 
   return (
     <div className="product-section-wrapper">

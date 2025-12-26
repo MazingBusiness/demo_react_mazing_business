@@ -2,40 +2,52 @@ import React, { useState, useMemo, useEffect, useRef } from "react";
 import MainLayout from "../layouts/MainLayout";
 
 import { FaAngleDown, FaAngleUp, FaFilter } from "react-icons/fa";
-import ProductGrid from "../components/ProductGrid";
 import QuickOrderGid from "../components/QuickOrderGid";
 
 // Api Call
 import { getAllBrands, getAllCategoryGroups } from "../api/apiRequest";
 
-const allBrands = [
-  "HIKOKI (15)",
-  "Bosch (24)",
-  "DeWalt (18)",
-  "Makita (10)",
-  "Black+Decker (8)",
-  "Stanley (6)",
-  "Ferm (4)",
-  "iBell (3)",
-  "Cheston (2)",
-];
-
 const deliveryOptions = [
-  "Delivery in 3 - 4 Days",
-  "Delivery in 6 - 7 Days",
-  "Delivery in 9 - 10 Days",
+  { value: 1, label: "Delivery in 3 - 4 Days" },
+  { value: 2, label: "Delivery in 6 - 7 Days" },
 ];
 
 const QuickOrder = () => {
   const [selectedCatGs, setSelectedCatGs] = useState([]);
+  const [selectedCatGIds, setSelectedCatGIds] = useState([]);        // ✅ store group IDs
+  const [selectedChildCatIds, setSelectedChildCatIds] = useState([]); // ✅ store child IDs
   const [selectedBrands, setSelectedBrands] = useState([]);
   const [selectedDelivery, setSelectedDelivery] = useState([]);
+  const [search_text, setSearchText] = useState("");
+  // example extra filters you already pass
+  const [min_price, setMinPrice] = useState(null);
+  const [max_price, setMaxPrice] = useState(null);
+  const [location_id, setLocationId] = useState(null);
+  const [inhouse_product, setInhouseProduct] = useState(null);
+  const [price_sort, setPriceSort] = useState(null);
+
+  // ✅ Build one object to pass to grid
+  const filters = useMemo(() => ({
+    cat_groups: selectedCatGIds,       // group ids
+    categories: selectedChildCatIds,   // category ids
+    brands: selectedBrands,            // ids or names (consistent)
+    delivery: selectedDelivery,        // 1 or 2
+    search_text,
+    min_price,
+    max_price,
+    location_id,
+    inhouse_product,
+    price_sort,
+  }), [
+    selectedCatGIds, selectedChildCatIds, selectedBrands, selectedDelivery,
+    search_text, min_price, max_price, location_id, inhouse_product, price_sort
+  ]);
+
   const [allCategoryGroups, setAllCategoryGroups] = useState([]);
   const [allBrands, setAllBrands] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  const [selectedCatGIds, setSelectedCatGIds] = useState([]);        // ✅ store group IDs
-  const [selectedChildCatIds, setSelectedChildCatIds] = useState([]); // ✅ store child IDs
+  
 
   const min = 1000;
   const max = 7500;
@@ -76,25 +88,6 @@ const QuickOrder = () => {
       maxValueRef.current.style.width = `${(currentMax * 100) / max}%`;
     }
   };
-  // const getAllCategoryGroupsFromAPI = async () => {
-  //   try {
-  //     setLoading(true);
-  //     const apiRes = await getAllCategoryGroups();
-  //     const responseData = await apiRes.json(); // ✅ important
-  //     if (responseData?.res) {
-  //       setAllCategoryGroups(responseData?.data || []);
-  //     } else {
-  //       setAllCategoryGroups([]);
-  //       // NotificationManager.error(responseData?.msg || "Something went wrong", "", 2000);
-  //     }
-  //   } catch (error) {
-  //     console.error("Fetch error:", error);
-  //     setAllCategoryGroups([]);
-  //     // NotificationManager.error("Failed to load brands", "", 2000);
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
   const getAllCategoryGroupsFromAPI = async () => {
     try {
       setLoading(true);
@@ -372,23 +365,13 @@ const QuickOrder = () => {
                     ✕ CLEAR
                   </button>
                 </h4>
-                {/* <div className="checkbox-group brand-group fade-in">
-                  {allCategoryGroups.slice(0, showMoreCatG).map((catG) => (
-                    <label key={catG.id} className={`animated-checkbox ${ selectedCatGs.includes(catG.id) ? "checked" : "" }`} >
-                      <input type="checkbox" checked={selectedCatGs.includes(catG.name)} onChange={() => toggleCatG(catG.name)} value={catG.id} />
-                      <span className="custom-check"></span>
-                      {catG.name}
-                    </label>
-                  ))}
-                </div> */}
                 <div className="checkbox-group brand-group fade-in">
                   {groupsWithSortedChildren.slice(0, showMoreCatG).map((catG) => {
                     const isGroupSelected = selectedCatGIds.includes(catG.id);
-
                     return (
                       <div key={catG.id} style={{ marginBottom: 10 }}>
                         <label className={`animated-checkbox ${isGroupSelected ? "checked" : ""}`}>
-                          <input type="checkbox" checked={isGroupSelected} onChange={() => toggleCatG(catG.id)} value={catG.id} />
+                          <input type="checkbox" checked={isGroupSelected} onChange={() => toggleCatG(catG.id)}/>
                           <span className="custom-check" />
                           {catG.name}
                         </label>
@@ -399,7 +382,7 @@ const QuickOrder = () => {
                               const isChildSelected = selectedChildCatIds.includes(child.id);
                               return (
                                 <label key={child.id} className={`animated-checkbox ${isChildSelected ? "checked" : ""}`}>
-                                  <input type="checkbox" checked={isChildSelected} onChange={() => toggleChildCat(child.id)} value={child.id} />
+                                  <input type="checkbox" checked={isChildSelected} onChange={() => toggleChildCat(child.id)} />
                                   <span className="custom-check" />
                                   {child.name}
                                 </label>
@@ -433,11 +416,8 @@ const QuickOrder = () => {
                 </h4>
                 <div className="checkbox-group brand-group fade-in">
                   {allBrands.slice(0, showMoreBrands).map((brand) => (
-                    <label key={brand.id} className={`animated-checkbox ${
-                        selectedBrands.includes(brand.id) ? "checked" : ""
-                      }`}
-                    >
-                      <input type="checkbox" checked={selectedBrands.includes(brand.name)} onChange={() => toggleBrand(brand.name)} />
+                    <label key={brand.id} className={`animated-checkbox ${ selectedBrands.includes(brand.id) ? "checked" : "" }`} >
+                      <input type="checkbox" checked={selectedBrands.includes(brand.id)} onChange={() => toggleBrand(brand.id)} />
                       <span className="custom-check"></span>
                       {brand.name}
                     </label>
@@ -465,15 +445,15 @@ const QuickOrder = () => {
                   </button>
                 </h4>
                 <div className="checkbox-group delivery-group fade-in">
-                  {deliveryOptions .slice(0, showMoreDelivery) .map((option, index) => (
-                      <label key={index} className={`animated-checkbox ${ selectedDelivery === option ? "checked" : "" }`} >
-                        <input type="checkbox" checked={selectedDelivery === option} onChange={() => setSelectedDelivery(option)} />
-                        <span className="custom-check"></span>
-                        {option}
-                      </label>
-                    ))}
+                  {deliveryOptions.slice(0, showMoreDelivery).map((opt) => (
+                    <label key={opt.value} className={`animated-checkbox ${selectedDelivery === opt.value ? "checked" : ""}`} >
+                      <input type="checkbox" checked={selectedDelivery === opt.value} onChange={() => setSelectedDelivery(opt.value)} />
+                      <span className="custom-check"></span>
+                      {opt.label}
+                    </label>
+                  ))}
                 </div>
-                <button onClick={toggleDelivery} className="show-more">
+                {/* <button onClick={toggleDelivery} className="show-more">
                   {showMoreDelivery >= deliveryOptions.length ? (
                     <>
                       <FaAngleUp /> SHOW LESS
@@ -483,11 +463,11 @@ const QuickOrder = () => {
                       <FaAngleDown /> SHOW MORE
                     </>
                   )}
-                </button>
+                </button> */}
               </div>
 
               {/* ✅ Price Range */}
-              <div className="filter-section">
+              {/* <div className="filter-section">
                 <h4>
                   Price Range{" "}
                   <button onClick={clearPrice} className="clear-btn">
@@ -496,52 +476,24 @@ const QuickOrder = () => {
                 </h4>
 
                 <div className="PriceRange">
-                  {/* <div className="current-value">
-                  <label>Min:</label>
-                  <input
-                    type="number"
-                    value={inputMin}
-                    min={min}
-                    max={maxForMin()}
-                    onChange={handleMinChange}
-                  />
-                  <br />
-                  <label>Max:</label>
-                  <input
-                    type="number"
-                    value={inputMax}
-                    min={minForMax()}
-                    max={max}
-                    onChange={handleMaxChange}
-                  />
-                </div> */}
                   <div className="values">
                     <div>{min}</div>
                     <div>{max}</div>
                   </div>
                   <div ref={sliderRef} id="slider">
                     <div ref={minValueRef} id="min" data-content={currentMin}>
-                      <div
-                        id="min-drag"
-                        onMouseDown={startMinDrag}
-                        onTouchStart={startMinDrag}
-                      ></div>
+                      <div id="min-drag" onMouseDown={startMinDrag} onTouchStart={startMinDrag} ></div>
                     </div>
                     <div ref={maxValueRef} id="max" data-content={currentMax}>
-                      <div
-                        id="max-drag"
-                        onMouseDown={startMaxDrag}
-                        onTouchStart={startMaxDrag}
-                      ></div>
+                      <div id="max-drag" onMouseDown={startMaxDrag} onTouchStart={startMaxDrag} ></div>
                     </div>
                   </div>
                 </div>
-              </div>
+              </div> */}
             </div>
           </div>
-
           <div className="productGrid">
-            <QuickOrderGid />
+            <QuickOrderGid filters={filters}/>
           </div>
         </div>
       </div>
