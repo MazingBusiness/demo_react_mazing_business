@@ -105,7 +105,7 @@ const QuickOrder = () => {
   const getAllBrandsFromAPI = async () => {
     try {
       setLoading(true);
-      const apiRes = await getAllBrands(category_group_id, category_id);
+      const apiRes = await getAllBrands(selectedCatGIds, selectedChildCatIds);
       const responseData = await apiRes.json(); // ✅ important
 
       if (responseData?.res) {
@@ -123,7 +123,7 @@ const QuickOrder = () => {
     }
   };
   // Called funtion
-  useEffect(() => { getAllBrandsFromAPI(); }, [category_group_id, category_id]);
+  useEffect(() => { getAllBrandsFromAPI(); }, [selectedCatGIds, selectedChildCatIds]);
   useEffect(() => { getAllCategoryGroupsFromAPI(); },[]);
 
   // ✅ Alphabetically sort child categories for each group
@@ -137,15 +137,22 @@ const QuickOrder = () => {
   }, [allCategoryGroups]);
 
   const toggleCatG = (groupId) => {
-    setSelectedCatGIds((prev) =>
-      prev.includes(groupId) ? prev.filter((id) => id !== groupId) : [...prev, groupId]
-    );
-
-    // optional: when group is unselected, remove its child selections
-    const group = allCategoryGroups.find((g) => g.id === groupId);
-    const childIds = (group?.child_category || []).map((c) => c.id);
-    setSelectedChildCatIds((prev) => prev.filter((id) => !childIds.includes(id)));
+    setSelectedCatGIds((prev) => {
+      const isSelected = prev.includes(groupId);
+      // if removing group => remove its children too
+      if (isSelected) {
+        const group = groupsWithSortedChildren.find((g) => g.id === groupId);
+        const childIds = (group?.child_category || []).map((c) => c.id);
+        setSelectedChildCatIds((childPrev) =>
+          childPrev.filter((id) => !childIds.includes(id))
+        );
+        return prev.filter((id) => id !== groupId);
+      }
+      // add group
+      return [...prev, groupId];
+    });
   };
+
 
   const toggleChildCat = (childId) => {
     setSelectedChildCatIds((prev) =>
@@ -358,6 +365,7 @@ const QuickOrder = () => {
             <div className="filters">
 
               {/* Catgory Group Filter */}
+              {/* Category Group Filter */}
               <div className="filter-section">
                 <h4>
                   Category Group{" "}
@@ -365,35 +373,20 @@ const QuickOrder = () => {
                     ✕ CLEAR
                   </button>
                 </h4>
+
                 <div className="checkbox-group brand-group fade-in">
                   {groupsWithSortedChildren.slice(0, showMoreCatG).map((catG) => {
                     const isGroupSelected = selectedCatGIds.includes(catG.id);
                     return (
-                      <div key={catG.id} style={{ marginBottom: 10 }}>
-                        <label className={`animated-checkbox ${isGroupSelected ? "checked" : ""}`}>
-                          <input type="checkbox" checked={isGroupSelected} onChange={() => toggleCatG(catG.id)}/>
-                          <span className="custom-check" />
-                          {catG.name}
-                        </label>
-                        {/* Child Categories (show only when this group is selected) */}
-                        {isGroupSelected && (catG.child_category?.length > 0) && (
-                          <div className="checkbox-group brand-group fade-in" style={{ marginLeft: 26, marginTop: 6 }}>
-                            {catG.child_category.map((child) => {
-                              const isChildSelected = selectedChildCatIds.includes(child.id);
-                              return (
-                                <label key={child.id} className={`animated-checkbox ${isChildSelected ? "checked" : ""}`}>
-                                  <input type="checkbox" checked={isChildSelected} onChange={() => toggleChildCat(child.id)} />
-                                  <span className="custom-check" />
-                                  {child.name}
-                                </label>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </div>
+                      <label key={catG.id} className={`animated-checkbox ${isGroupSelected ? "checked" : ""}`} >
+                        <input type="checkbox" checked={isGroupSelected} onChange={() => toggleCatG(catG.id)} />
+                        <span className="custom-check" />
+                        {catG.name}
+                      </label>
                     );
                   })}
                 </div>
+
                 <button onClick={toggleCatGs} className="show-more">
                   {showMoreCatG >= allCategoryGroups.length ? (
                     <>
@@ -406,6 +399,55 @@ const QuickOrder = () => {
                   )}
                 </button>
               </div>
+
+              {/* Child Categories Filter (separate section) */}
+              <div className="filter-section">
+                <h4>
+                  Categories{" "}
+                  <button onClick={() => setSelectedChildCatIds([])} // or your clearChildCat()
+                    className="clear-btn"
+                  >
+                    ✕ CLEAR
+                  </button>
+                </h4> 
+                {/* If no group selected */}
+                {selectedCatGIds.length === 0 ? (
+                  <div style={{ fontSize: 12, color: "#6b7280" }}>
+                    Select a Category Group to see categories.
+                  </div>
+                ) : (
+                  <div className="fade-in">
+                    {groupsWithSortedChildren
+                      .filter((g) => selectedCatGIds.includes(g.id))
+                      .map((g) => {
+                        const children = g.child_category || [];
+                        if (children.length === 0) return null;
+                        return (
+                          <div key={g.id} style={{ marginBottom: 14 }}>
+                            {/* Group title */}
+                            <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 6 }}>
+                              {g.name}
+                            </div>
+                            {/* Children */}
+                            <div className="checkbox-group brand-group fade-in">
+                              {children.map((child) => {
+                                const isChildSelected = selectedChildCatIds.includes(child.id);
+                                return (
+                                  <label key={child.id} className={`animated-checkbox ${isChildSelected ? "checked" : ""}`} >
+                                    <input type="checkbox" checked={isChildSelected} onChange={() => toggleChildCat(child.id)} />
+                                    <span className="custom-check" />
+                                    {child.name}
+                                  </label>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        );
+                      })}
+                  </div>
+                )}
+              </div>
+
               {/* Brands Filter */}
               <div className="filter-section">
                 <h4>

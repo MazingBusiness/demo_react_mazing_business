@@ -67,7 +67,6 @@ const QuickOrderGrid  = (props) => {
   // We’re currently using API pagination, so use the API’s page data directly
   const currentProducts = products;
 
-  // const handleSortChange = (option) => { setSortBy(option); };
   const handleSortChange = (value) => {
     setPriceSort(value);
     setCurrentPage(1);
@@ -88,7 +87,7 @@ const QuickOrderGrid  = (props) => {
   const getQuickOrderProductRecord = async (page = 1) => {
     try {
       setLoading(true);
-      // alert(filters.brands);
+      // alert(price_sort);
       const apiRes = await getQuickOrderProduct(
         filters.cat_groups,
         filters.categories,
@@ -98,7 +97,7 @@ const QuickOrderGrid  = (props) => {
         filters.max_price,
         filters.location_id,
         filters.inhouse_product,
-        filters.price_sort,
+        price_sort,
         filters.delivery,
         page        
       );
@@ -268,7 +267,7 @@ const QuickOrderGrid  = (props) => {
     filters.max_price,
     filters.location_id,
     filters.inhouse_product,
-    filters.price_sort,
+    price_sort,
     filters.delivery]);
 
   // Pagination
@@ -292,7 +291,7 @@ const QuickOrderGrid  = (props) => {
     setProducts([]);
     setHasMore(true);
     getQuickOrderProductRecord(1);
-  }, [filters.cat_groups, filters.categories, filters.brands, filters.search_text, filters.min_price, filters.max_price, filters.location_id, filters.inhouse_product, filters.price_sort, filters.delivery]);
+  }, [filters.cat_groups, filters.categories, filters.brands, filters.search_text, filters.min_price, filters.max_price, filters.location_id, filters.inhouse_product, price_sort, filters.delivery]);
 
   return (
     <div className="product-section-wrapper">
@@ -319,14 +318,14 @@ const QuickOrderGrid  = (props) => {
           Result: <strong>{totalRecord} Products</strong>
         </div>
         <div className="sort-by">
-          <span>Sort By:</span>
+          {/* <span>Sort By:</span>
           <select value={price_sort} onChange={(e) => handleSortChange(e.target.value)} >
             {sortOptions.map((option) => (
               <option key={option.value} value={option.value}>
                 {option.label}
               </option>
             ))}
-          </select>
+          </select> */}
         </div>
       </div>
 

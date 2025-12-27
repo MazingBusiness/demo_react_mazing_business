@@ -136,7 +136,7 @@ export const getQuickOrderProduct = async (cat_groups, categories, brands, searc
   if (pagination) queryParams.append('pagination', pagination);
   if (delivery != null) queryParams.append("delivery", delivery); // ✅ 1/2
   if (user?.id) queryParams.append('user_id', user.id);
-  queryParams.append('page', page); // ✅ add page with default = 1
+  // queryParams.append('page', page); // ✅ add page with default = 1
   const url = `${API_BASE_URL}product/quick-order?${queryParams.toString()}`;
   const response = await fetch(url, {
     method: 'GET',
