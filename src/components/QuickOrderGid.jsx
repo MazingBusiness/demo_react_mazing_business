@@ -29,6 +29,7 @@ const QuickOrderGrid  = (props) => {
   const initialMaxPrice = state?.max_price || "";
   const initialLocationId = state?.location_id || "";
   const initialInhouseProduct = state?.inhouse_product || "";
+
   
   const [slug, setSlug] = useState(initialSlug);
   const [cat_groups, setCatgroup] = useState(initialCatGroups);
@@ -87,7 +88,7 @@ const QuickOrderGrid  = (props) => {
   const getQuickOrderProductRecord = async (page = 1) => {
     try {
       setLoading(true);
-      // alert(price_sort);
+      // alert(filters.delivery);
       const apiRes = await getQuickOrderProduct(
         filters.cat_groups,
         filters.categories,

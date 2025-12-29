@@ -130,11 +130,12 @@ export const getQuickOrderProduct = async (cat_groups, categories, brands, searc
   if (min_price) queryParams.append('min_price', min_price);
   if (max_price) queryParams.append('max_price', max_price);
   if (location_id) queryParams.append('location_id', location_id);
-  if (inhouse_product) queryParams.append('inhouse_product', inhouse_product);
+  // if (inhouse_product) queryParams.append('inhouse_product', inhouse_product);
+  if (delivery) queryParams.append('inhouse_product', delivery);
   if (page) queryParams.append('page', page);
   if (price_sort) queryParams.append('price_sort', price_sort);
   if (pagination) queryParams.append('pagination', pagination);
-  if (delivery != null) queryParams.append("delivery", delivery); // ✅ 1/2
+  // if (delivery != null) queryParams.append("delivery", delivery); // ✅ 1/2
   if (user?.id) queryParams.append('user_id', user.id);
   // queryParams.append('page', page); // ✅ add page with default = 1
   const url = `${API_BASE_URL}product/quick-order?${queryParams.toString()}`;

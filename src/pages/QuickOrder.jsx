@@ -9,7 +9,7 @@ import { getAllBrands, getAllCategoryGroups } from "../api/apiRequest";
 
 const deliveryOptions = [
   { value: 1, label: "Delivery in 3 - 4 Days" },
-  { value: 2, label: "Delivery in 6 - 7 Days" },
+  { value: 0, label: "Delivery in 6 - 7 Days" },
 ];
 
 const QuickOrder = () => {
@@ -190,7 +190,7 @@ const QuickOrder = () => {
 
   const toggleDelivery = () => {
     setShowMoreDelivery((prev) =>
-      prev >= deliveryOptions.length ? 2 : prev + 2
+      prev >= deliveryOptions.length ? 3 : prev + 3
     );
   };
 
@@ -495,7 +495,7 @@ const QuickOrder = () => {
                     </label>
                   ))}
                 </div>
-                {/* <button onClick={toggleDelivery} className="show-more">
+                <button onClick={toggleDelivery} className="show-more">
                   {showMoreDelivery >= deliveryOptions.length ? (
                     <>
                       <FaAngleUp /> SHOW LESS
@@ -505,7 +505,7 @@ const QuickOrder = () => {
                       <FaAngleDown /> SHOW MORE
                     </>
                   )}
-                </button> */}
+                </button>
               </div>
 
               {/* ✅ Price Range */}
