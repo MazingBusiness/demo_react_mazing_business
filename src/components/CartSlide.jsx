@@ -9,24 +9,37 @@ import SaveLatericon from "../assets/icons/SaveLatericon.svg";
 import SaveLatericon1 from "../assets/icons/SaveLatericon1.svg";
 import Deleteicon from "../assets/icons/Deleteicon.svg";
 import noImage from "../assets/images/no-image.png";
+import fastDeliveryIcon from "../assets/icons/fast-delivery.svg";
+import HeartIcon from "../assets/icons/HeartIcon.svg";
+import CartIcon from "../assets/icons/CartIcon.svg";
+import warrantyIcon from "../assets/icons/warranty.jpeg";
 
 import OfferModal from "../components/OfferModal.jsx";
 
 import { useNavigate } from "react-router-dom";
 
-import { cart } from "../api/apiRequest";
+import { cart, updateQuantity } from "../api/apiRequest";
 
-const initialCartItems = [
-  { id: 1, name: "Bosch Rexroth Hydraulic Pump", price: 15800, qty: 1 },
-  {
-    id: 2,
-    name: "Caterpillar Hydraulic Excavator (CAT 320D)",
-    price: 10800,
-    qty: 1,
-    noCredit: true,
-  },
-  { id: 3, name: "KUKA Industrial Robot (KR AGILUS)", price: 2997, qty: 1 },
-];
+const renderWarrantyTag = (product) => {
+  if (!product.is_warranty) return null;   // ✅ now this exists
+  return (
+    <div className="delivery">
+      <img src={warrantyIcon} alt="Warranty" loading="lazy" style={{ width: "50px", height: "auto" }} />
+    </div>
+  );
+};
+const fastDeliveryTag = (product) => {
+    if (!product.fast_delivery_tag == 1) return null;
+    return (
+      <div className="delivery">
+        <img src={fastDeliveryIcon} alt="Fast Delivery" loading="lazy"
+          onError={(e) => {
+            e.target.style.display = "none";
+          }}
+        />
+      </div>
+    );
+  };
 
 const initialSavedItems = [
   {
@@ -64,9 +77,13 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
   const [selectedCartIds, setSelectedCartIds] = useState([]);
   const [selectedSavedIds, setSelectedSavedIds] = useState([]);
   const [cartSubTotal, setCartSubTotal] = useState(0);
+  const [noCreditItemTotalAmount, setNoCreditItemTotalAmount] = useState(0);
   const [cartCount, setCartCount] = useState(0);
   const [isOfferModalOpen, setOfferModalOpen] = useState(false);
-
+  const [overDueAmount, setOverDueAmount] = useState(0);
+  const [qtyTimers, setQtyTimers] = useState({});
+  const [subTotal, setSubTotal] = useState(0);
+  const [totalPayable, setTotalPayable] = useState(0);
   const navigate = useNavigate();
 
   const handleCheckout = () => {
@@ -78,10 +95,16 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
         const responseData = await cart();
         if (responseData.res) {
           const cart_item = responseData.cart_item || [];
-          const cartSubTotal = responseData.other_item_total_amount || '0';
+          const cartSubTotal = Number(responseData.other_item_total_amount || 0);
+          const noCreditItemTotalAmount = Number(responseData.no_credit_item_total_amount || 0);
+          const overDueAmount = Number(responseData.over_due_amount || 0);
           setCartItems(cart_item);
           setCartCount(cart_item.length); // ✅ count
           setCartSubTotal(cartSubTotal);
+          setNoCreditItemTotalAmount(noCreditItemTotalAmount);
+          setOverDueAmount(overDueAmount);
+          setSubTotal(cartSubTotal + noCreditItemTotalAmount);
+          setTotalPayable(cartSubTotal + noCreditItemTotalAmount + overDueAmount);
         } else {
           NotificationManager.error(
             responseData.msg || "Something went wrong",
@@ -94,6 +117,34 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
         NotificationManager.error("Failed to load Cart", "", 2000);
       }
     };
+
+  const handleQtyChange = (item, rawValue) => {
+    const newQty = Math.max(1, Number(rawValue) || 1);
+    // 1) update UI immediately
+    setCartItems((prev) =>
+      prev.map((i) => (i.id === item.id ? { ...i, quantity: newQty } : i))
+    );
+    // 2) debounce API call
+    if (qtyTimers[item.id]) clearTimeout(qtyTimers[item.id]);
+    const t = setTimeout(async () => {
+      try {
+        // IMPORTANT: use the correct payload keys as your backend expects
+        await updateQuantity({
+          cart_id: item.id,              // or item.cart_id
+          quantity: newQty,
+        });
+        // optional: refresh cart totals from API
+        cartData();
+        window.dispatchEvent(new Event("cart-updated"));
+      } catch (err) {
+        console.error("updateQuantity failed:", err);
+        // optional: show toast + revert by reloading cart
+        cartData();
+      }
+    }, 400);
+    setQtyTimers((prev) => ({ ...prev, [item.id]: t }));
+  };
+
 
   useEffect(() => {
     cartData(); // first load when header renders
@@ -251,11 +302,7 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
                         <tr key={item.id}>
                           <td data-label="">
                             <label className="animated-checkbox">
-                              <input
-                                type="checkbox"
-                                checked={selectedCartIds.includes(item.id)}
-                                onChange={() => handleCartCheckbox(item.id)}
-                              />
+                              <input type="checkbox" checked={selectedCartIds.includes(item.id)} onChange={() => handleCartCheckbox(item.id)} />
                               <span className="custom-check"></span>
                             </label>
                           </td>
@@ -268,11 +315,17 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
                               />
                               {" "}
                               {item.product.name}
-                              {item.noCredit && (
+                              {item.product.cash_and_carry_item == 1 && (
                                 <span className="no-credit">
                                   No Credit Item
                                 </span>
                               )}
+                            </div>
+                            <div className="ratingGrp">
+                              <div className="ratingGrpLft">
+                                {renderWarrantyTag(item.product)}
+                              </div>
+                              {fastDeliveryTag(item.product)}
                             </div>
                           </td>
                           <td className="cartprice" data-label="Price">
@@ -283,15 +336,21 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
                               type="number"
                               min="1"
                               value={item.quantity}
-                              onChange={(e) =>
+                              onChange={(e) => {
+                                const newQty = Math.max(1, Number(e.target.value) || 1);
                                 setCartItems((prev) =>
-                                  prev.map((i) =>
-                                    i.id === item.id
-                                      ? { ...i, qty: +e.target.value }
-                                      : i
-                                  )
-                                )
-                              }
+                                  prev.map((i) => (i.id === item.id ? { ...i, quantity: newQty } : i))
+                                );
+                              }}
+                              onBlur={async () => {
+                                try {
+                                  await updateQuantity({ id: item.id, quantity: item.quantity });
+                                  cartData(); // totals refresh
+                                } catch (err) {
+                                  console.error(err);
+                                  cartData(); // revert if failed
+                                }
+                              }}
                             />
                           </td>
                           <td className="cartprice" data-label="Total">
@@ -315,7 +374,7 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
                 <div className="cartSubtotal">
                   <label>
                     Subtotal:
-                    <span>₹{calculateCartSubtotal()}</span>
+                    <span>₹{subTotal}</span>
                   </label>
 
                   <div className="section-buttons">
@@ -469,16 +528,18 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
 
             <div className="cart-summary-content">
               <h3>Summary</h3>
-              <label>
-                No Credit Item Subtotal:<span>₹ {noCreditTotal}</span>
-              </label>
-              <label>
-                Other Item Subtotal:<span>₹ {total}</span>
-              </label>
-              <label>
-                Overdue Amount:<span>₹ 9000</span>
-              </label>
 
+              <label>
+                No Credit Item Subtotal:<span>₹ {noCreditItemTotalAmount}</span>
+              </label>
+              <label>
+                Other Item Subtotal:<span>₹{cartSubTotal}</span>  
+              </label>
+              {overDueAmount > 0 && (
+                <label>
+                  Overdue Amount:<span>₹ {overDueAmount}</span>
+                </label>
+              )}
               <button className="download-pdf">
                 <BsCloudArrowDownFill /> Download Pdf
               </button>
@@ -487,7 +548,8 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
             {/* Cart Footer */}
             <div className="cart-panel-footer">
               <div className="subtotal">
-                Total Payable: <span>₹ {total + 9000}</span>
+                {}
+                Total Payable: <span>₹ {totalPayable}</span>
               </div>
               <button
                 className="checkout-btn Offer-btn"

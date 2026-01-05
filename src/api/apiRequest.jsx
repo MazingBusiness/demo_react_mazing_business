@@ -187,6 +187,70 @@ export const cart = async () => {
   return data;
 };
 
+// export const updateQuantity = async (id, quantity) => {
+//   const queryParams = new URLSearchParams();
+//   if (id) queryParams.append("id", id);
+//   if (quantity) queryParams.append("quantity", quantity);
+//   const url = `${API_BASE_URL}cart/update-quantity?${queryParams.toString()}`;
+//   const response = await fetch(url, {
+//     method: "POST",
+//     headers: {
+//       "Content-Type": "application/json",
+//     },
+//   });
+//   // const data = await response.json();
+//   return response;
+// };
+
+// export const updateQuantity = async ({ id, quantity }) => {
+//   const header = getHeader();
+//   if (!header) throw new Error("Authorization token missing");
+
+//   const res = await fetch(`${API_BASE_URL}cart/update-quantity`, {
+//     method: "POST",
+//     headers: {
+//       Accept: "application/json",
+//       "Content-Type": "application/json",
+//       ...(header.headers || {}), // Authorization: Bearer xxx
+//     },
+//     body: JSON.stringify({ id, quantity }),
+//   });
+
+//   const data = await res.json();
+//   if (!res.ok || data?.res === false) {
+//     throw new Error(data?.msg || "Update cart failed");
+//   }
+//   return data;
+// };
+
+export const updateQuantity = async ({ id, quantity, product_id, cart_id }) => {
+  const header = getHeader();
+  if (!header) throw new Error("Authorization token missing");
+
+  const finalId = id ?? cart_id ?? product_id;
+  if (!finalId) throw new Error("Missing id/cart_id/product_id for updateQuantity");
+
+  const res = await fetch(`${API_BASE_URL}cart/update-quantity`, {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+      ...(header.headers || {}),
+    },
+    body: JSON.stringify({
+      id: finalId,
+      quantity: Number(quantity),
+    }),
+  });
+
+  const data = await res.json();
+  if (!res.ok || data?.res === false) {
+    throw new Error(data?.msg || "Update cart failed");
+  }
+  return data;
+};
+
+
 export const addToCart = async ({ product_id, quantity, type }) => {
   const header = getHeader();
   if (!header) throw new Error("Authorization token missing");
