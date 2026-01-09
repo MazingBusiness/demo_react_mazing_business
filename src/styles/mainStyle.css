@@ -603,6 +603,11 @@ a.right-link {
   color: rgba(255, 255, 255, 0.8);
 }
 
+.qty-loader{
+  margin-left: 8px;
+  font-size: 12px;
+}
+
 .clear-x {
   color: white;
   cursor: pointer;
