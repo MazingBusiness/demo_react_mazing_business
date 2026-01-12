@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useMemo  } from "react";
 import { FiX } from "react-icons/fi";
 import cartIcon from "../assets/images/product.jpg";
 import { MdArrowBackIos } from "react-icons/md";
@@ -41,12 +41,12 @@ const fastDeliveryTag = (product) => {
     );
   };
 
-// const initialSavedItems = [
-//   { id: 4, name: "Electric Oil Pump", price: 999, qty: 10, category: "ELECTRIC OIL PUMP", },
-//   { id: 5, name: "Tool Kit Pro", price: 1200, category: "TOOL KIT" },
-//   { id: 6, name: "Air Blower Turbo", price: 1100, category: "AIR BLOWER" },
-//   { id: 7, name: "Electric Oil Pump V2", price: 1050, category: "ELECTRIC OIL PUMP", },
-// ];
+const initialSavedItems = [
+  { id: 4, name: "Electric Oil Pump", price: 999, category: "ELECTRIC OIL PUMP", },
+  { id: 5, name: "Tool Kit Pro", price: 1200, category: "TOOL KIT" },
+  { id: 6, name: "Air Blower Turbo", price: 1100, category: "AIR BLOWER" },
+  { id: 7, name: "Electric Oil Pump V2", price: 1050, category: "ELECTRIC OIL PUMP", },
+];
 
 const getProductImage = (product) => {
   // images is an array in your API
@@ -62,7 +62,8 @@ const getProductImage = (product) => {
 
 const CartSlide = ({ isCartVisible, toggleCart }) => {
   const [cartItems, setCartItems] = useState([]);
-  
+  const [savedItems, setSavedItems] = useState(initialSavedItems);
+  const [selectedCategory, setSelectedCategory] = useState("All");
   const [selectedCartIds, setSelectedCartIds] = useState([]);
   const [selectedSavedIds, setSelectedSavedIds] = useState([]);
   const [cartSubTotal, setCartSubTotal] = useState(0);
@@ -76,11 +77,10 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
   const [cartLoading, setCartLoading] = useState(false);      // for cartData()
   const [updatingQty, setUpdatingQty] = useState({});         // { [itemId]: true/false }
 
-  // ✅ THIS replaces initialSavedItems
+  const saveForLaterOriginalRef = useRef([]);
   const [saveForLaterItems, setSaveForLaterItems] = useState([]);
   const [saveForLaterCount, setSaveForLaterCount] = useState(0);
   const [saveForLaterCategory, setSaveForLaterCategory] = useState([]);
-  const [selectedCategory, setSelectedCategory] = useState("ALL");
 
   const navigate = useNavigate();
 
@@ -101,6 +101,7 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
         const save_for_later = responseData.save_for_later || [];
         const save_for_later_category = responseData.save_for_later_category || [];
 
+
         setCartItems(cart_item);
         setCartCount(cart_item.length);
 
@@ -114,6 +115,8 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
         setSaveForLaterItems(save_for_later);
         setSaveForLaterCount(save_for_later.length);
         setSaveForLaterCategory(save_for_later_category);
+        // ✅ keep original order for "All"
+        saveForLaterOriginalRef.current = save_for_later;
       }
     } catch (e) {
       console.error(e);
@@ -122,32 +125,19 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
     }
   };
 
-  // same structure as initialSavedItems, but safe for missing nested objects
-  const initialSavedItems = (saveForLaterItems || []).map((it) => ({
-    id: it?.id,
-    name: it?.product?.name || it?.product_name || "",
-    price: Number(it?.price || it?.product?.unit_price || 0),
-    qty: Number(it?.quantity || 0),
-    category: it?.product?.category?.name || "",
-    image: it?.product?.images?.[0]?.file_name || "",
-  }));
-  const getImageUrl = (url) => {
-    if (!url) return noImage;
-    if (url.startsWith("http")) return url;
-
-    const BACKEND = process.env.REACT_APP_BACKEND_URL || "https://mazingbusiness.com";
-    return `${BACKEND}/${String(url).replace(/^\/+/, "")}`;
-  };
-
-  const [savedItems, setSavedItems] = useState(initialSavedItems);
-
   const handleQtyChange = (itemId, rawValue) => {
     const newQty = Math.max(1, Number(rawValue) || 1);
+
+    // update UI immediately (this triggers the useEffect totals recalculation)
     setCartItems((prev) =>
       prev.map((i) => (i.id === itemId ? { ...i, quantity: newQty } : i))
     );
+
+    // debounce API call
     if (qtyTimers[itemId]) clearTimeout(qtyTimers[itemId]);
+
     setUpdatingQty((p) => ({ ...p, [itemId]: true }));
+
     const t = setTimeout(async () => {
       try {
         await updateQuantity({ cart_id: itemId, quantity: newQty }); // adjust keys if needed
@@ -161,6 +151,7 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
         setUpdatingQty((p) => ({ ...p, [itemId]: false }));
       }
     }, 400);
+
     setQtyTimers((prev) => ({ ...prev, [itemId]: t }));
   };
 
@@ -188,6 +179,67 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
     }
   };
 
+  const getItemCategory = (item) =>
+    item?.product?.category_name ||
+    item?.product?.category?.name ||
+    item?.category_name ||
+    item?.category ||
+    "UNCATEGORIZED";
+
+  const isSameCategory = (a, b) =>
+    String(a || "").trim().toLowerCase() === String(b || "").trim().toLowerCase();
+
+  const sortedSaveForLaterItems = useMemo(() => {
+    const list =
+      saveForLaterOriginalRef.current?.length
+        ? saveForLaterOriginalRef.current
+        : saveForLaterItems;
+
+    if (selectedCategory === "All") return list;
+
+    const selected = [];
+    const others = [];
+
+    for (const it of list) {
+      if (isSameCategory(getItemCategory(it), selectedCategory)) {
+        selected.push(it);
+      } else {
+        others.push(it);
+      }
+    }
+
+    return [...selected, ...others];
+  }, [saveForLaterItems, selectedCategory]);
+
+
+
+    const baseSaveForLaterList =
+      saveForLaterOriginalRef.current.length
+        ? saveForLaterOriginalRef.current
+        : saveForLaterItems;
+
+    // const sortedSaveForLaterItems = (() => {
+    //   const list =
+    //     saveForLaterOriginalRef.current.length
+    //       ? saveForLaterOriginalRef.current
+    //       : saveForLaterItems;
+
+    //   if (selectedCategory === "All") return list;
+
+    //   const selected = [];
+    //   const others = [];
+
+    //   for (const it of list) {
+    //     if (isSameCategory(getItemCategory(it), selectedCategory)) {
+    //       selected.push(it);
+    //     } else {
+    //       others.push(it);
+    //     }
+    //   }
+
+    //   return [...selected, ...others];
+    // })();
+
   useEffect(() => {
     cartData(); // first load when header renders
     const handler = () => cartData(); // when cart-updated happens, refresh
@@ -196,10 +248,6 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
       window.removeEventListener("cart-updated", handler);
     };
   }, []);
-
-  useEffect(() => {
-    setSavedItems(initialSavedItems);
-  }, [saveForLaterItems]); // or [initialSavedItems]
 
   useEffect(() => {
     let other = 0;
@@ -229,21 +277,17 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
   // };
 
   
-  const calculateSavedSubtotal = () => {
-    return savedItems
-      .reduce((sum, item) => sum + item.price * (item.qty || 1), 0)
-      .toFixed(2);
-  };
+  // const calculateSavedSubtotal = () => {
+  //   return savedItems
+  //     .reduce((sum, item) => sum + item.price * (item.qty || 1), 0)
+  //     .toFixed(2);
+  // };
 
   useEffect(() => {
     document.body.style.overflow = isCartVisible ? "hidden" : "auto";
     return () => {
       document.body.style.overflow = "auto";
     };
-  }, [isCartVisible]);
-
-  useEffect(() => {
-    if (isCartVisible) setSelectedCategory("All");
   }, [isCartVisible]);
 
   const handleCartCheckbox = (id) => {
@@ -267,7 +311,7 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
   };
 
   const toggleSelectAllSaved = () => {
-    const currentIds = filteredSavedItems.map((item) => item.id);
+    const currentIds = sortedSaveForLaterItems.map((item) => item.id);
     if (currentIds.every((id) => selectedSavedIds.includes(id))) {
       setSelectedSavedIds((prev) =>
         prev.filter((id) => !currentIds.includes(id))
@@ -320,6 +364,23 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
     .filter((i) => i.noCredit)
     .reduce((sum, item) => sum + item.price, 0);
 
+  useEffect(() => {
+    if (saveForLaterItems.length) {
+      console.log("Selected Tab:", selectedCategory);
+      console.log("First item category:", getItemCategory(saveForLaterItems[0]));
+      console.log("All categories:", saveForLaterItems.map(getItemCategory));
+    }
+  }, [selectedCategory, saveForLaterItems]);
+
+  // if (String(getItemCategory(it)).toLowerCase() === String(selectedCategory).toLowerCase())
+  // const isSameCategory = (a, b) =>
+  //   String(a || "").trim().toLowerCase() === String(b || "").trim().toLowerCase();
+
+  // for (const it of baseSaveForLaterList) {
+  //   if (isSameCategory(getItemCategory(it), selectedCategory)) selected.push(it);
+  //   else others.push(it);
+  // };
+    
   return (
     <>
       <div
@@ -465,36 +526,33 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
             )}
 
             {/* Saved For Later */}
-            {savedItems.length > 0 && (
+            {saveForLaterCount > 0 && (
               <div className="cart-section">
                 <h2>
                   <span>Saved For Later</span>
-                  <span className="Cartitem">{savedItems.length} Items</span>
+                  <span className="Cartitem">{saveForLaterCount} Items</span>
                 </h2>
 
                 {/* Category Tabs */}
                 <div className="cart-Category-Tabs">
                   <h3>Selected Categories</h3>
 
-                  {Object.keys(categoryCounts).length > 0 && (
+                  {saveForLaterItems.length > 0 && (
                     <div className="category-tabs">
                       <span
-                        className={`tab ${
-                          selectedCategory === "All" ? "active" : ""
-                        }`}
+                        className={`tab ${selectedCategory === "All" ? "active" : ""}`}
                         onClick={() => setSelectedCategory("All")}
                       >
-                        All ({savedItems.length})
+                        All ({saveForLaterCount})
                       </span>
-                      {Object.entries(categoryCounts).map(([cat, count]) => (
+
+                      {saveForLaterCategory.map((item) => (
                         <span
-                          key={cat}
-                          className={`tab ${
-                            selectedCategory === cat ? "active" : ""
-                          }`}
-                          onClick={() => setSelectedCategory(cat)}
+                          key={item.category_name}
+                          className={`tab ${selectedCategory === item.category_name ? "active" : ""}`}
+                          onClick={() => setSelectedCategory(item.category_name)}
                         >
-                          {cat} ({count})
+                          {item.category_name} ({item.product_count})
                         </span>
                       ))}
                     </div>
@@ -502,19 +560,19 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
                 </div>
 
                 {/* Filtered Table */}
-                {filteredSavedItems.length > 0 && (
+                {saveForLaterItems.length > 0 && (
                   <div className="cart-table-container">
                     <table className="order-table">
                       <thead>
                         <tr>
                           <th>
-                            <label class="animated-checkbox">
+                            <label className="animated-checkbox">
                               <input
                                 type="checkbox"
                                 onChange={toggleSelectAllSaved}
                                 checked={
-                                  filteredSavedItems.length > 0 &&
-                                  filteredSavedItems.every((item) =>
+                                  saveForLaterItems.length > 0 &&
+                                  saveForLaterItems.every((item) =>
                                     selectedSavedIds.includes(item.id)
                                   )
                                 }
@@ -530,10 +588,10 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
                         </tr>
                       </thead>
                       <tbody>
-                        {filteredSavedItems.map((item) => (
+                        {sortedSaveForLaterItems.map((item) => (
                           <tr key={item.id}>
                             <td data-label="">
-                              <label class="animated-checkbox">
+                              <label className="animated-checkbox">
                                 <input
                                   type="checkbox"
                                   checked={selectedSavedIds.includes(item.id)}
@@ -545,13 +603,13 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
 
                             <td className="narrow1" data-label="Product">
                               <div className="cartproduct">
-                                <img src={getImageUrl(item.image)} alt={item?.name || "Product"} width="70"
+                                <img src={getProductImage(item?.product)} alt={item?.product?.name || "Product"} width="70"
                                   onError={(e) => {
-                                    e.currentTarget.onerror = null; // stop infinite loop
-                                    e.currentTarget.src = noImage;
+                                    e.currentTarget.src = noImage;   // ✅ if broken link / 404
                                   }}
                                 />
-                                {item.name}
+                                {" "}
+                                {item.product.name}
                               </div>
                             </td>
 
@@ -560,10 +618,10 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
                             </td>
 
                             <td className="narrow5" data-label="Added Quantity">
-                              <span>{item.qty || 1}</span>
+                              <span>{item.quantity || 1}</span>
                             </td>
                             <td className="cartprice" data-label="Total">
-                              ₹ {(item.price * (item.qty || 1)).toFixed(2)}
+                              ₹ {(item.price * (item.quantity || 1)).toFixed(2)}
                             </td>
                             <td data-label="Action">
                               <button onClick={() => moveToCart(item)}>
