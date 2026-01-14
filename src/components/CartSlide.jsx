@@ -18,7 +18,7 @@ import OfferModal from "../components/OfferModal.jsx";
 
 import { useNavigate } from "react-router-dom";
 
-import { cart, updateQuantity } from "../api/apiRequest";
+import { cart, updateQuantity, saveForLater, moveToCart, saveAllNoCreditItems, moveAllNoCreditItems } from "../api/apiRequest";
 
 const renderWarrantyTag = (product) => {
   if (!product.is_warranty) return null;   // ✅ now this exists
@@ -41,21 +41,10 @@ const fastDeliveryTag = (product) => {
     );
   };
 
-// const initialSavedItems = [
-//   { id: 4, name: "Electric Oil Pump", price: 999, qty: 10, category: "ELECTRIC OIL PUMP", },
-//   { id: 5, name: "Tool Kit Pro", price: 1200, category: "TOOL KIT" },
-//   { id: 6, name: "Air Blower Turbo", price: 1100, category: "AIR BLOWER" },
-//   { id: 7, name: "Electric Oil Pump V2", price: 1050, category: "ELECTRIC OIL PUMP", },
-// ];
-
 const getProductImage = (product) => {
-  // images is an array in your API
   const url = product?.images?.[0]?.file_name;
-  // if url empty/null => show noImage
   if (!url) return noImage;
-  // if already full URL => return as-is
   if (url.startsWith("http")) return url;
-  // if sometimes backend sends only filename/path, build it (optional)
   const BACKEND = process.env.REACT_APP_BACKEND_URL || "https://mazingbusiness.com";
   return `${BACKEND}/${url.replace(/^\/+/, "")}`;
 };
@@ -130,6 +119,7 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
     qty: Number(it?.quantity || 0),
     category: it?.product?.category?.name || "",
     image: it?.product?.images?.[0]?.file_name || "",
+    cash_and_carry_item: it?.product?.cash_and_carry_item || "0",
   }));
   const getImageUrl = (url) => {
     if (!url) return noImage;
@@ -174,9 +164,7 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
         return copy;
       });
     }
-
     setUpdatingQty((p) => ({ ...p, [item.id]: true }));
-
     try {
       await updateQuantity({ cart_id: item.id, quantity: item.quantity });
       await cartData();
@@ -220,14 +208,6 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
     setSubTotal(st);
     setTotalPayable(st + Number(overDueAmount || 0));
   }, [cartItems, overDueAmount]);
-
-  // 🔧 Fix: cart subtotal (use qty instead of quantity)
-  // const calculateCartSubtotal = () => {
-  //   return cartItems
-  //     .reduce((sum, item) => sum + item.price * item.qty, 0)
-  //     .toFixed(2);
-  // };
-
   
   const calculateSavedSubtotal = () => {
     return savedItems
@@ -277,19 +257,26 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
     }
   };
 
-  const moveToSaved = (item) => {
-    setCartItems((prev) => prev.filter((i) => i.id !== item.id));
-    setSavedItems((prev) => [
-      ...prev,
-      { ...item, category: item.category || "UNCATEGORIZED" },
-    ]);
-    setSelectedCartIds((prev) => prev.filter((id) => id !== item.id));
+  const moveToSaveForLater = async (cart_id) => {
+    if (!cart_id) return console.error("Invalid cart_id:", cart_id);
+    await saveForLater({ cart_id: Number(cart_id) });
+    await cartData();
   };
 
-  const moveToCart = (item) => {
-    setSavedItems((prev) => prev.filter((i) => i.id !== item.id));
-    setCartItems((prev) => [...prev, { ...item, qty: 1 }]);
-    setSelectedSavedIds((prev) => prev.filter((id) => id !== item.id));
+  const moveItemToCart = async (cart_id) => {
+    if (!cart_id) return console.error("Invalid cart_id:", cart_id);
+    await moveToCart({ cart_id: Number(cart_id) });
+    await cartData();
+  };
+
+  const moveToSaveAllNoCreditItems = async () => {
+    await saveAllNoCreditItems();
+    await cartData();
+  };
+
+  const moveAllNoCreditItemsToCart = async () => {
+    await moveAllNoCreditItems();
+    await cartData();
   };
 
   const deleteFromCart = (id) => {
@@ -419,20 +406,14 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
                                 }
                               }}
                             /> */}
-                            <input
-                              type="number"
-                              min="1"
-                              value={item.quantity}
-                              onChange={(e) => handleQtyChange(item.id, e.target.value)}
-                              onBlur={() => handleQtyBlur(item)}
-                            />
+                            <input type="number" min="1" value={item.quantity} onChange={(e) => handleQtyChange(item.id, e.target.value)} onBlur={() => handleQtyBlur(item)} />
                             {updatingQty[item.id] && <span className="qty-loader">Updating...</span>}
                           </td>
                           <td className="cartprice" data-label="Total">
                             ₹ {item.quantity * item.price}
                           </td>
                           <td data-label="Action">
-                            <button onClick={() => moveToSaved(item)}>
+                            <button onClick={() => moveToSaveForLater(item.id)}>
                               {" "}
                               <img src={SaveLatericon} alt="SaveLatericon" />
                             </button>
@@ -456,7 +437,7 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
                     <button className="greenbtn">
                       Save all checked item for later
                     </button>
-                    <button className="bluebtn">
+                    <button className="bluebtn" onClick={() => moveToSaveAllNoCreditItems()}>
                       Save all no credit item for later
                     </button>
                   </div>
@@ -508,7 +489,7 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
                       <thead>
                         <tr>
                           <th>
-                            <label class="animated-checkbox">
+                            <label className="animated-checkbox">
                               <input
                                 type="checkbox"
                                 onChange={toggleSelectAllSaved}
@@ -533,7 +514,7 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
                         {filteredSavedItems.map((item) => (
                           <tr key={item.id}>
                             <td data-label="">
-                              <label class="animated-checkbox">
+                              <label className="animated-checkbox">
                                 <input
                                   type="checkbox"
                                   checked={selectedSavedIds.includes(item.id)}
@@ -552,6 +533,11 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
                                   }}
                                 />
                                 {item.name}
+                                {item.cash_and_carry_item == 1 && (
+                                  <span className="no-credit">
+                                    No Credit Item
+                                  </span>
+                                )}
                               </div>
                             </td>
 
@@ -566,13 +552,11 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
                               ₹ {(item.price * (item.qty || 1)).toFixed(2)}
                             </td>
                             <td data-label="Action">
-                              <button onClick={() => moveToCart(item)}>
+                              <button onClick={() => moveItemToCart(item.id)}>
                                 {" "}
-                                <img
-                                  src={SaveLatericon1}
-                                  alt="SaveLatericon1"
-                                />
+                                <img src={SaveLatericon1} alt="SaveLatericon1" />
                               </button>
+                              
                               <button onClick={() => deleteFromSaved(item.id)}>
                                 <img src={Deleteicon} alt="Deleteicon" />
                               </button>
@@ -589,7 +573,7 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
                     <button className="greenbtn">
                       Move all checked item for cart
                     </button>
-                    <button className="bluebtn">
+                    <button className="bluebtn"  onClick={() => moveAllNoCreditItemsToCart()}>
                       Move all no credit item for cart
                     </button>
                   </div>

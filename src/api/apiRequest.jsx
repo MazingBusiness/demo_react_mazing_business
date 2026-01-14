@@ -304,5 +304,79 @@ export const getAllBrands = async (category_group_id, category_id) => {
   return response;
 };
 
+export const saveForLater = async ({ cart_id }) => {
+  const header = getHeader();
+  if (!header) throw new Error("Authorization token missing");
+  const finalId = cart_id;
+  if (!finalId) throw new Error("Missing cart_id for saveForLater");
+  const res = await fetch(`${API_BASE_URL}cart/save-for-later`, {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+      ...(header.headers || {}),
+    },
+    body: JSON.stringify({
+      cart_id: finalId
+    }),
+  });
+  const data = await res.json();
+  if (!res.ok || data?.res === false) {
+    throw new Error(data?.msg || "Update cart failed");
+  }
+  return data;
+};
+
+export const moveToCart = async ({ cart_id }) => {
+  const header = getHeader();
+  if (!header) throw new Error("Authorization token missing");
+  const finalId = cart_id;
+  if (!finalId) throw new Error("Missing cart_id for saveForLater");
+  const res = await fetch(`${API_BASE_URL}cart/move-to-cart`, {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+      ...(header.headers || {}),
+    },
+    body: JSON.stringify({
+      id: finalId
+    }),
+  });
+  const data = await res.json();
+  if (!res.ok || data?.res === false) {
+    throw new Error(data?.msg || "Update cart failed");
+  }
+  return data;
+};
+
+export const saveAllNoCreditItems = async () => {  
+  const header = getHeader();
+  const url = `${API_BASE_URL}cart/save-all-no-credit-item-for-later`;
+  const response = await fetch(url, {
+    method: "GET",
+    headers: {
+      Accept: "application/json",
+      ...(header.headers || {}),
+    },
+  });
+  // const data = await response.json();
+  return response;
+};
+
+export const moveAllNoCreditItems = async () => {  
+  const header = getHeader();
+  const url = `${API_BASE_URL}cart/move-all-no-credit-item-to-cart`;
+  const response = await fetch(url, {
+    method: "GET",
+    headers: {
+      Accept: "application/json",
+      ...(header.headers || {}),
+    },
+  });
+  // const data = await response.json();
+  return response;
+};
+
 
 
