@@ -18,7 +18,7 @@ import OfferModal from "../components/OfferModal.jsx";
 
 import { useNavigate } from "react-router-dom";
 
-import { cart, updateQuantity, saveForLater, moveToCart, saveAllNoCreditItems, moveAllNoCreditItems } from "../api/apiRequest";
+import { cart, updateQuantity, saveForLater, moveToCart, saveAllNoCreditItems, moveAllNoCreditItems, moveToCartAllSelectedItems, saveForLaterAllSelectedItems, deleteFromSaveForLaterItem } from "../api/apiRequest";
 
 const renderWarrantyTag = (product) => {
   if (!product.is_warranty) return null;   // ✅ now this exists
@@ -238,24 +238,34 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
     );
   };
 
-  const toggleSelectAllCart = () => {
-    if (selectedCartIds.length === cartItems.length) {
-      setSelectedCartIds([]);
-    } else {
-      setSelectedCartIds(cartItems.map((item) => item.id));
-    }
+  const handleSavedCheckbox2 = (id) => {
+    const sid = String(id);
+    setSelectedSavedIds((prev) =>
+      prev.includes(sid) ? prev.filter((x) => x !== sid) : [...prev, sid]
+    );
   };
 
-  const toggleSelectAllSaved = () => {
-    const currentIds = filteredSavedItems.map((item) => item.id);
+  const toggleSelectAllCart = () => {
+    const currentIds = filteredSavedItems.map((item) => String(item.id)); // ✅ string
+
     if (currentIds.every((id) => selectedSavedIds.includes(id))) {
-      setSelectedSavedIds((prev) =>
-        prev.filter((id) => !currentIds.includes(id))
-      );
+      setSelectedSavedIds((prev) => prev.filter((id) => !currentIds.includes(id)));
     } else {
       setSelectedSavedIds((prev) => [...new Set([...prev, ...currentIds])]);
     }
   };
+
+  const toggleSelectAllSaved = () => {
+    const currentIds = filteredSavedItems.map((item) => String(item.id));
+
+    setSelectedSavedIds((prev) => {
+      const allSelected = currentIds.every((id) => prev.includes(id));
+      return allSelected
+        ? prev.filter((id) => !currentIds.includes(id))
+        : [...new Set([...prev, ...currentIds])];
+    });
+  };
+
 
   const moveToSaveForLater = async (cart_id) => {
     if (!cart_id) return console.error("Invalid cart_id:", cart_id);
@@ -279,14 +289,46 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
     await cartData();
   };
 
-  const deleteFromCart = (id) => {
-    setCartItems((prev) => prev.filter((i) => i.id !== id));
-    setSelectedCartIds((prev) => prev.filter((x) => x !== id));
+  const deleteFromCart = async (id,qty) => {
+    await updateQuantity({ cart_id: id, quantity: qty });
+    await cartData();
   };
 
-  const deleteFromSaved = (id) => {
-    setSavedItems((prev) => prev.filter((i) => i.id !== id));
-    setSelectedSavedIds((prev) => prev.filter((x) => x !== id));
+  const deleteFromSaved = async (id) => {
+    await deleteFromSaveForLaterItem({ id: id });
+    await cartData();
+  };
+
+  const handleMoveCheckedToCart = async () => {
+    const idsCsv = filteredSavedItems
+      .filter((it) => selectedSavedIds.includes(it.id))
+      .map((it) => String(it.id))
+      .join(",");
+
+    console.log(idsCsv); // "12,15,22"
+
+    await moveToCartAllSelectedItems({ idsCsv });
+    await cartData();
+  };
+
+  const handleSaveForLaterAllCheckedToCart = async () => {
+    const idsCsv = cartItems
+      .filter((it) => selectedSavedIds.includes(String(it.id))) // ✅ match string
+      .map((it) => String(it.id))
+      .join(",");
+
+    console.log("idsCsv:", idsCsv);
+
+    if (!idsCsv) return; // optional safety
+
+    await saveForLaterAllSelectedItems({ idsCsv });
+    await cartData();
+  };
+
+  const moveAllSelectedItemToCart = async (cart_ids) => {
+    if (!cart_ids) return console.error("Invalid cart_id:", cart_ids);
+    await moveToCart({ cart_id:cart_ids });
+    await cartData();
   };
 
   const categoryCounts = savedItems.reduce((acc, item) => {
@@ -359,7 +401,20 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
                         <tr key={item.id}>
                           <td data-label="">
                             <label className="animated-checkbox">
-                              <input type="checkbox" checked={selectedCartIds.includes(item.id)} onChange={() => handleCartCheckbox(item.id)} />
+                              <input
+                                type="checkbox"
+                                checked={selectedSavedIds.includes(String(item.id))}
+                                onChange={() => handleSavedCheckbox2(String(item.id))}
+                              />
+
+                              {/* <input type="checkbox" onChange={toggleSelectAllSaved}
+                                checked={
+                                  filteredSavedItems.length > 0 &&
+                                  filteredSavedItems.every((item) =>
+                                    selectedSavedIds.includes(item.id)
+                                  )
+                                }
+                              /> */}
                               <span className="custom-check"></span>
                             </label>
                           </td>
@@ -417,7 +472,7 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
                               {" "}
                               <img src={SaveLatericon} alt="SaveLatericon" />
                             </button>
-                            <button onClick={() => deleteFromCart(item.id)}>
+                            <button onClick={() => deleteFromCart(item.id,'0')}>
                               <img src={Deleteicon} alt="Deleteicon" />
                             </button>
                           </td>
@@ -434,7 +489,7 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
                   </label>
 
                   <div className="section-buttons">
-                    <button className="greenbtn">
+                    <button className="greenbtn" onClick={handleSaveForLaterAllCheckedToCart}>
                       Save all checked item for later
                     </button>
                     <button className="bluebtn" onClick={() => moveToSaveAllNoCreditItems()}>
@@ -490,9 +545,7 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
                         <tr>
                           <th>
                             <label className="animated-checkbox">
-                              <input
-                                type="checkbox"
-                                onChange={toggleSelectAllSaved}
+                              <input type="checkbox" onChange={toggleSelectAllCart}
                                 checked={
                                   filteredSavedItems.length > 0 &&
                                   filteredSavedItems.every((item) =>
@@ -515,11 +568,7 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
                           <tr key={item.id}>
                             <td data-label="">
                               <label className="animated-checkbox">
-                                <input
-                                  type="checkbox"
-                                  checked={selectedSavedIds.includes(item.id)}
-                                  onChange={() => handleSavedCheckbox(item.id)}
-                                />
+                                <input type="checkbox" checked={selectedSavedIds.includes(item.id)} onChange={() => handleSavedCheckbox(item.id)} />
                                 <span className="custom-check"></span>
                               </label>
                             </td>
@@ -570,7 +619,10 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
 
                 <div className="cartSubtotal">
                   <div className="section-buttons">
-                    <button className="greenbtn">
+                    {/* <button className="greenbtn">
+                      Move all checked item for cart
+                    </button> */}
+                    <button className="greenbtn" onClick={handleMoveCheckedToCart} >
                       Move all checked item for cart
                     </button>
                     <button className="bluebtn"  onClick={() => moveAllNoCreditItemsToCart()}>

@@ -327,6 +327,32 @@ export const saveForLater = async ({ cart_id }) => {
   return data;
 };
 
+export const saveForLaterAllSelectedItems = async ({ idsCsv }) => {
+  const header = getHeader();
+  if (!header) throw new Error("Authorization token missing");
+
+  if (!idsCsv || typeof idsCsv !== "string" || !idsCsv.trim()) {
+    throw new Error("Missing idsCsv for bulk move");
+  }
+
+  const res = await fetch(`${API_BASE_URL}cart/save-for-later`, {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+      ...(header.headers || {}),
+    },
+    body: JSON.stringify({
+      cart_id: idsCsv, // ✅ string: "12,15,22"
+    }),
+  });
+  const data = await res.json();
+  if (!res.ok || data?.res === false) {
+    throw new Error(data?.msg || "Bulk move failed");
+  }
+  return data;
+};
+
 export const moveToCart = async ({ cart_id }) => {
   const header = getHeader();
   if (!header) throw new Error("Authorization token missing");
@@ -349,6 +375,34 @@ export const moveToCart = async ({ cart_id }) => {
   }
   return data;
 };
+
+export const moveToCartAllSelectedItems = async ({ idsCsv }) => {
+  const header = getHeader();
+  if (!header) throw new Error("Authorization token missing");
+
+  if (!idsCsv || typeof idsCsv !== "string" || !idsCsv.trim()) {
+    throw new Error("Missing idsCsv for bulk move");
+  }
+
+  const res = await fetch(`${API_BASE_URL}cart/move-to-cart`, {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+      ...(header.headers || {}),
+    },
+    body: JSON.stringify({
+      id: idsCsv, // ✅ string: "12,15,22"
+    }),
+  });
+
+  const data = await res.json();
+  if (!res.ok || data?.res === false) {
+    throw new Error(data?.msg || "Bulk move failed");
+  }
+  return data;
+};
+
 
 export const saveAllNoCreditItems = async () => {  
   const header = getHeader();
@@ -378,5 +432,18 @@ export const moveAllNoCreditItems = async () => {
   return response;
 };
 
+export const deleteFromSaveForLaterItem = async (id) => {
+  const queryParams = new URLSearchParams();
+  if (id) queryParams.append("id", id);
+  const url = `${API_BASE_URL}cart/delete-from_save_for_later-item?${queryParams.toString()}`;
+  const response = await fetch(url, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
 
+  // const data = await response.json();
+  return response;
+};
 
