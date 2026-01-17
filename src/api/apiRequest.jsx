@@ -432,18 +432,14 @@ export const moveAllNoCreditItems = async () => {
   return response;
 };
 
-export const deleteFromSaveForLaterItem = async (id) => {
-  const queryParams = new URLSearchParams();
-  if (id) queryParams.append("id", id);
-  const url = `${API_BASE_URL}cart/delete-from_save_for_later-item?${queryParams.toString()}`;
+export const deleteFromSaveForLaterItem = async (payload) => {
+  const header = getHeader();
+  const finalId = typeof payload === "object" ? payload.id : payload;
+  const url = `${API_BASE_URL}cart/update-save-for-later?id=${encodeURIComponent(String(finalId))}`;
   const response = await fetch(url, {
     method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: { Accept: "application/json", ...(header.headers || {}) },
   });
-
-  // const data = await response.json();
   return response;
 };
 
