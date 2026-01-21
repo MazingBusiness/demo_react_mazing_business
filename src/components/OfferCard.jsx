@@ -52,7 +52,17 @@ const OfferCard = ({ title, description, type, details, onApply, img }) => {
                   <div key={idx} className="offer-detail-item">
                     <div className="offer-detail-item-lft">
                       <div className="offer-detail-item-lft-inner">
-                        <span className="Idnumber">{item.id}</span>
+                        <span className="Idnumber">
+                          <img
+                            src={item.productImg}
+                            alt=""
+                            loading="lazy"
+                            onError={(e) => {
+                              e.target.onerror = null;
+                              e.target.src = "/placeholder-product.jpg";
+                            }}
+                          />
+                        </span>
 
                         <div className="offer-detail-item-lft-inner-rgt">
                           <h5>{item.name}</h5>

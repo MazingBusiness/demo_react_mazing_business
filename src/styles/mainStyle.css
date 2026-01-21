@@ -798,6 +798,25 @@ a.right-link {
   height: 18px;
 }
 
+/* modal body height + scrolling */
+.offer-modal .modal-body {
+  max-height: 80vh;       /* modal max visible height */
+  overflow: hidden;       /* avoid double scroll */
+  padding: 0;             /* optional */
+}
+
+/* make inside container scrollable */
+.offer-modal-box {
+  max-height: 80vh;
+  overflow-y: auto;
+  padding: 20px;          /* keep spacing */
+}
+
+/* optional smooth scroll for mobile */
+.offer-modal-box {
+  -webkit-overflow-scrolling: touch;
+}
+
 .language-select {
   display: flex;
   align-items: center;
@@ -1265,7 +1284,7 @@ a.right-link {
 }
 
 .download-pdf {
-  width: 135px;
+  width: 258px;
   height: 30px;
   background-color: #fff;
   border: none;
@@ -1631,6 +1650,19 @@ a.all-link svg {
   background: #d70000;
   padding: 5px 13px;
   border-radius: 0 10px 10px 0;
+  z-index: 1;
+}
+
+.applied-offer-tag {
+  position: absolute;
+  bottom: -90px;
+  left: 0;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 400;
+  background: #377dd5;
+  padding: 5px 13px;
+  border-radius: 10px 10px 10px 10px;
   z-index: 1;
 }
 
@@ -5143,6 +5175,10 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   background-color: #009000;
 }
 
+.checkout-btn.Remove-btn {
+  background-color: #f40b0b;
+}
+
 .before-reg-btn {
   background-color: #004d84;
   border: none;
@@ -7137,6 +7173,14 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   height: 90%;
   object-fit: contain;
 }
+
+.Offer-more-info .offer-details .offer-detail-item .offer-detail-item-lft .offer-detail-item-lft-inner span.Idnumber img {
+  width: 90%;
+  height: 90%;
+  object-fit: contain;
+}
+
+.tem-row { background-color: #76e44854; }
 
 .offer-content-hr h4 {
   font-size: 17px;

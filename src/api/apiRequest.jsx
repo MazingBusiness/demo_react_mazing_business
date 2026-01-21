@@ -443,3 +443,67 @@ export const deleteFromSaveForLaterItem = async (payload) => {
   return response;
 };
 
+export const validOffers = async () => {
+  const header = getHeader();
+  const url = `${API_BASE_URL}product/valid-offers`;
+  const response = await fetch(url, {
+    method: "GET",
+    headers: { Accept: "application/json", ...(header.headers || {}) },
+  });
+  return response;
+};
+
+export const applyOffer = async (offer_id) => {
+  const header = getHeader();
+  const queryParams = new URLSearchParams();
+  if (offer_id != null) queryParams.append("offer_id", String(offer_id));
+  const url = `${API_BASE_URL}cart/apply-offer?${queryParams.toString()}`;
+  const response = await fetch(url, {
+    method: "GET",
+    headers: { Accept: "application/json", ...(header.headers || {}) },
+  });
+  console.log(response);
+  return response;
+};
+
+export const removeOffer = async (offer_id) => {
+  const header = getHeader();
+  const queryParams = new URLSearchParams();
+  if (offer_id != null) queryParams.append("offer_id", String(offer_id));
+  const url = `${API_BASE_URL}cart/remove-offer?${queryParams.toString()}`;
+  const response = await fetch(url, {
+    method: "GET",
+    headers: { Accept: "application/json", ...(header.headers || {}) },
+  });
+  console.log(response);
+  return response;
+};
+
+// export const statementDownload = async () => {
+//   const header = getHeader();
+//   const url = `${API_BASE_URL}user/statement-download`;
+//   const response = await fetch(url, {
+//     method: "GET",
+//     headers: { Accept: "application/json", ...(header.headers || {}) },
+//   });
+//   console.log(response);
+//   return response;
+// };
+
+export const statementDownload = async () => {
+  const header = getHeader();
+  const url = `${API_BASE_URL}user/statement-download`;
+
+  const res = await fetch(url, {
+    method: "GET",
+    headers: { Accept: "application/json", ...(header.headers || {}) },
+  });
+
+  if (!res.ok) {
+    throw new Error(`HTTP ${res.status}`);
+  }
+
+  const json = await res.json(); // ✅ read response body
+  return json; // { pdf_url: "..." }
+};
+

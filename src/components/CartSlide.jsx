@@ -18,7 +18,7 @@ import OfferModal from "../components/OfferModal.jsx";
 
 import { useNavigate } from "react-router-dom";
 
-import { cart, updateQuantity, saveForLater, moveToCart, saveAllNoCreditItems, moveAllNoCreditItems, moveToCartAllSelectedItems, saveForLaterAllSelectedItems, deleteFromSaveForLaterItem } from "../api/apiRequest";
+import { cart, updateQuantity, saveForLater, moveToCart, saveAllNoCreditItems, moveAllNoCreditItems, moveToCartAllSelectedItems, saveForLaterAllSelectedItems, deleteFromSaveForLaterItem, removeOffer, statementDownload } from "../api/apiRequest";
 
 const renderWarrantyTag = (product) => {
   if (!product.is_warranty) return null;   // ✅ now this exists
@@ -71,6 +71,10 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
   const [saveForLaterCategory, setSaveForLaterCategory] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("ALL");
 
+  const [offerApplied, setofferApplied] = useState(0);
+  const [appliedOfferDetails, setAppliedOfferDetails] = useState([]);
+  const [downloading, setDownloading] = useState(false);
+
   const navigate = useNavigate();
 
   const handleCheckout = () => {
@@ -86,10 +90,13 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
         const cartSubTotal = Number(responseData.other_item_total_amount || 0);
         const noCreditItemTotalAmount = Number(responseData.no_credit_item_total_amount || 0);
         const overDueAmount = Number(responseData.over_due_amount || 0);
+        const totalPayableAmount = Number(responseData.payable_amount || 0);
+        const applied_offer_details = responseData.offerDetails || [];
 
         const save_for_later = responseData.save_for_later || [];
         const save_for_later_category = responseData.save_for_later_category || [];
-
+        const offer = responseData.save_for_later_category || [];
+                
         setCartItems(cart_item);
         setCartCount(cart_item.length);
 
@@ -98,11 +105,14 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
         setOverDueAmount(overDueAmount);
 
         setSubTotal(cartSubTotal + noCreditItemTotalAmount);
-        setTotalPayable(cartSubTotal + noCreditItemTotalAmount + overDueAmount);
+        // setTotalPayable(cartSubTotal + noCreditItemTotalAmount + overDueAmount);
+        setTotalPayable(totalPayableAmount);
 
         setSaveForLaterItems(save_for_later);
         setSaveForLaterCount(save_for_later.length);
-        setSaveForLaterCategory(save_for_later_category);
+        setSaveForLaterCategory(save_for_later_category);        
+        setAppliedOfferDetails(applied_offer_details);        
+        setofferApplied(responseData.applied_offer_id != null ? "1" : "0");
       }
     } catch (e) {
       console.error(e);
@@ -192,22 +202,21 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
   useEffect(() => {
     let other = 0;
     let noCredit = 0;
-
+    let payableAmount = 0;
     for (const item of cartItems) {
-      const qty = Number(item.quantity || 1); // ✅ use ONLY quantity everywhere
+      const qty = Number(item.quantity || 1);
       const lineTotal = Number(item.price || 0) * qty;
 
       if (item?.product?.cash_and_carry_item == 1) noCredit += lineTotal;
       else other += lineTotal;
+      payableAmount = item.payable_amount;
     }
-
     setCartSubTotal(other);
     setNoCreditItemTotalAmount(noCredit);
 
     const st = other + noCredit;
     setSubTotal(st);
-    setTotalPayable(st + Number(overDueAmount || 0));
-  }, [cartItems, overDueAmount]);
+  }, [cartItems]);
   
   const calculateSavedSubtotal = () => {
     return savedItems
@@ -299,13 +308,40 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
     await cartData();
   };
 
+  // const downloadStatement = async (id) => {
+  //   await statementDownload();
+  // };
+
+  const forceDownload = (fileUrl, fileName = "statement.pdf") => {
+    const a = document.createElement("a");
+    a.href = fileUrl;
+    a.setAttribute("download", fileName); // hint to download
+    a.setAttribute("target", "_blank");   // fallback if browser ignores download
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  };
+
+  const downloadStatement = async () => {
+    setDownloading(true);
+    try {
+      const data = await statementDownload();
+      if (!data?.pdf_url) throw new Error("pdf_url not found");
+
+      const fileName = data.pdf_url.split("/").pop() || "statement.pdf";
+      forceDownload(data.pdf_url, fileName);
+      setDownloading(false);
+    } catch (e) {
+      console.error(e);
+      alert(e.message || "Download failed");
+    }
+  };
+
   const handleMoveCheckedToCart = async () => {
     const idsCsv = filteredSavedItems
       .filter((it) => selectedSavedIds.includes(it.id))
       .map((it) => String(it.id))
       .join(",");
-
-    console.log(idsCsv); // "12,15,22"
 
     await moveToCartAllSelectedItems({ idsCsv });
     await cartData();
@@ -336,6 +372,25 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
     acc[category] = (acc[category] || 0) + 1;
     return acc;
   }, {});
+
+  const removeAppliedOffer = async (offerId) => {
+    try {
+      const res = await removeOffer(offerId); // or applyOffer({ offer_id: offerId })
+      const json = await res.json(); // ✅ must read response body
+      if (json?.res === false) {
+        alert(json?.msg || "Offer removed failed");
+        await cartData();
+        return;
+      }else{
+        alert(json?.msg || "Remove offer.");
+      }
+    } catch (e) {
+      console.error(e);
+      alert(e?.message || "Something went wrong");
+    } finally {
+      await cartData(); // ✅ always refresh cart
+    }
+  };
 
   const filteredSavedItems =
     selectedCategory === "All"
@@ -378,7 +433,7 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
                     <thead>
                       <tr>
                         <th>
-                          <label className="animated-checkbox">
+                          {/* <label className="animated-checkbox">
                             <input
                               type="checkbox"
                               onChange={toggleSelectAllCart}
@@ -387,7 +442,7 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
                               }
                             />
                             <span className="custom-check"></span>
-                          </label>
+                          </label> */}
                         </th>
                         <th className="narrow1">Product</th>
                         <th>Price</th>
@@ -398,7 +453,7 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
                     </thead>
                     <tbody>
                       {cartItems.map((item) => (
-                        <tr key={item.id}>
+                        <tr key={item.id} className={item?.applied_offer_id != null ? "tem-row" : ""}>
                           <td data-label="">
                             <label className="animated-checkbox">
                               <input
@@ -427,11 +482,19 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
                               />
                               {" "}
                               {item.product.name}
+                              {item.applied_offer_id}
                               {item.product.cash_and_carry_item == 1 && (
                                 <span className="no-credit">
                                   No Credit Item
                                 </span>
                               )}
+
+                              {item.applied_offer_id != null && (
+                                <span className="applied-offer-tag">
+                                  {appliedOfferDetails?.offer_name} Offer Applied 
+                                </span>
+                              )}
+
                             </div>
                             <div className="ratingGrp">
                               <div className="ratingGrpLft">
@@ -545,14 +608,14 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
                         <tr>
                           <th>
                             <label className="animated-checkbox">
-                              <input type="checkbox" onChange={toggleSelectAllCart}
+                              {/* <input type="checkbox" onChange={toggleSelectAllCart}
                                 checked={
                                   filteredSavedItems.length > 0 &&
                                   filteredSavedItems.every((item) =>
                                     selectedSavedIds.includes(item.id)
                                   )
                                 }
-                              />
+                              /> */}
                               <span className="custom-check"></span>
                             </label>
                           </th>
@@ -656,8 +719,8 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
                   Overdue Amount:<span>₹ {overDueAmount}</span>
                 </label>
               )}
-              <button className="download-pdf">
-                <BsCloudArrowDownFill /> Download Pdf
+              <button className="download-pdf" onClick={() => downloadStatement()}>
+                <BsCloudArrowDownFill /> {downloading ? "Downloading..." : "Download Statement"}
               </button>
             </div>
 
@@ -667,12 +730,17 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
                 {}
                 Total Payable: <span>₹ {totalPayable}</span>
               </div>
-              <button
-                className="checkout-btn Offer-btn"
-                onClick={() => setOfferModalOpen(true)}
-              >
-                Apply Offer
-              </button>
+
+              {offerApplied != 0 ? (
+                  <button className="checkout-btn Remove-btn" onClick={() => removeAppliedOffer(appliedOfferDetails?.id)}>
+                    Remove Offer {appliedOfferDetails?.offer_name}
+                  </button>
+                ) : (
+                  <button className="checkout-btn Offer-btn" onClick={() => setOfferModalOpen(true)}>
+                    Apply Offer
+                  </button>
+                )}
+
               <button className="checkout-btn" onClick={handleCheckout}>
                 Checkout
               </button>
@@ -682,10 +750,7 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
       </div>
 
       {/* 🟢 Offer Modal */}
-      <OfferModal
-        isOpen={isOfferModalOpen}
-        onClose={() => setOfferModalOpen(false)}
-      />
+      <OfferModal isOpen={isOfferModalOpen} onClose={() => setOfferModalOpen(false)} onApplied={cartData} />
     </>
   );
 };
