@@ -1306,6 +1306,23 @@ a.right-link {
   width: 18px;
 }
 
+.btn-loader{
+  font-size: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.btn-loader::before{
+  content: "";
+  width: 14px;
+  height: 14px;
+  border: 2px solid #ccc;
+  border-top-color: #333;
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
 /* Footer Section */
 
 .footer-wrapper {

@@ -28,6 +28,7 @@ const renderWarrantyTag = (product) => {
     </div>
   );
 };
+
 const fastDeliveryTag = (product) => {
     if (!product.fast_delivery_tag == 1) return null;
     return (
@@ -131,6 +132,7 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
     image: it?.product?.images?.[0]?.file_name || "",
     cash_and_carry_item: it?.product?.cash_and_carry_item || "0",
   }));
+  
   const getImageUrl = (url) => {
     if (!url) return noImage;
     if (url.startsWith("http")) return url;
@@ -235,6 +237,37 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
     if (isCartVisible) setSelectedCategory("All");
   }, [isCartVisible]);
 
+  // Save for later with loader start
+  // Save for later with loader start
+  const [actionLoading, setActionLoading] = useState({ id: null, type: null });
+  const moveToSaveForLater = async (cart_id) => {
+    if (!cart_id) return console.error("Invalid cart_id:", cart_id);
+
+    try {
+      setActionLoading({ id: cart_id, type: "save" });
+      await saveForLater({ cart_id: Number(cart_id) });
+      await cartData();
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setActionLoading({ id: null, type: null });
+    }
+  };
+
+  const moveItemToCart = async (cart_id) => {
+    if (!cart_id) return console.error("Invalid cart_id:", cart_id);
+
+    try {
+      setActionLoading({ id: cart_id, type: "move" });
+      await moveToCart({ cart_id: Number(cart_id) });
+      await cartData();
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setActionLoading({ id: null, type: null });
+    }
+  };
+
   const handleCartCheckbox = (id) => {
     setSelectedCartIds((prev) =>
       prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
@@ -266,26 +299,12 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
 
   const toggleSelectAllSaved = () => {
     const currentIds = filteredSavedItems.map((item) => String(item.id));
-
     setSelectedSavedIds((prev) => {
       const allSelected = currentIds.every((id) => prev.includes(id));
       return allSelected
         ? prev.filter((id) => !currentIds.includes(id))
         : [...new Set([...prev, ...currentIds])];
     });
-  };
-
-
-  const moveToSaveForLater = async (cart_id) => {
-    if (!cart_id) return console.error("Invalid cart_id:", cart_id);
-    await saveForLater({ cart_id: Number(cart_id) });
-    await cartData();
-  };
-
-  const moveItemToCart = async (cart_id) => {
-    if (!cart_id) return console.error("Invalid cart_id:", cart_id);
-    await moveToCart({ cart_id: Number(cart_id) });
-    await cartData();
   };
 
   const moveToSaveAllNoCreditItems = async () => {
@@ -531,9 +550,15 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
                             ₹ {item.quantity * item.price}
                           </td>
                           <td data-label="Action">
-                            <button onClick={() => moveToSaveForLater(item.id)}>
-                              {" "}
-                              <img src={SaveLatericon} alt="SaveLatericon" />
+                            <button
+                              onClick={() => moveToSaveForLater(item.id)}
+                              disabled={actionLoading.id === item.id && actionLoading.type === "save"}
+                            >
+                              {actionLoading.id === item.id && actionLoading.type === "save" ? (
+                                <span className="btn-loader">Saving...</span>
+                              ) : (
+                                <img src={SaveLatericon} alt="SaveLatericon" />
+                              )}
                             </button>
                             <button onClick={() => deleteFromCart(item.id,'0')}>
                               <img src={Deleteicon} alt="Deleteicon" />
@@ -664,9 +689,15 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
                               ₹ {(item.price * (item.qty || 1)).toFixed(2)}
                             </td>
                             <td data-label="Action">
-                              <button onClick={() => moveItemToCart(item.id)}>
-                                {" "}
-                                <img src={SaveLatericon1} alt="SaveLatericon1" />
+                              <button
+                                onClick={() => moveItemToCart(item.id)}
+                                disabled={actionLoading.id === item.id && actionLoading.type === "move"}
+                              >
+                                  {actionLoading.id === item.id && actionLoading.type === "move" ? (
+                                    <span className="btn-loader">Moving...</span>
+                                  ) : (
+                                    <img src={SaveLatericon1} alt="SaveLatericon1" />
+                                  )}
                               </button>
                               
                               <button onClick={() => deleteFromSaved(item.id)}>
