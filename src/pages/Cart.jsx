@@ -71,7 +71,7 @@ const Cart = ({ isCartVisible, toggleCart }) => {
   const [qtyTimers, setQtyTimers] = useState({});
   const [subTotal, setSubTotal] = useState(0);
   const [totalPayable, setTotalPayable] = useState(0);
-  const [cartLoading, setCartLoading] = useState(false);      // for cartData()
+  const [cartLoading, setCartLoading] = useState(false);      // for cartPageData()
   const [updatingQty, setUpdatingQty] = useState({});         // { [itemId]: true/false }
 
   // ✅ THIS replaces initialSavedItems
@@ -83,9 +83,13 @@ const Cart = ({ isCartVisible, toggleCart }) => {
   const [offerApplied, setofferApplied] = useState(0);
   const [appliedOfferDetails, setAppliedOfferDetails] = useState([]);
   const [downloading, setDownloading] = useState(false);
+  const [movingLoading, setMovingLoading] = useState(false);
+  const [noCreditLoading, setNoCreditLoading] = useState(false);
+  const [saveNoCreditLoading, setSaveNoCreditLoading] = useState(false);
+  const [saveCheckedLoading, setSaveCheckedLoading] = useState(false);
 
   
-  const cartData = async () => {
+  const cartPageData = async () => {
     setCartLoading(true);
     try {
       const responseData = await cart();
@@ -155,12 +159,12 @@ const Cart = ({ isCartVisible, toggleCart }) => {
     const t = setTimeout(async () => {
       try {
         await updateQuantity({ cart_id: itemId, quantity: newQty }); // adjust keys if needed
-        // optional: cartData() to sync exact totals from backend
-        await cartData();
+        // optional: cartPageData() to sync exact totals from backend
+        await cartPageData();
         window.dispatchEvent(new Event("cart-updated"));
       } catch (err) {
         console.error(err);
-        await cartData(); // revert from server on failure
+        await cartPageData(); // revert from server on failure
       } finally {
         setUpdatingQty((p) => ({ ...p, [itemId]: false }));
       }
@@ -181,18 +185,18 @@ const Cart = ({ isCartVisible, toggleCart }) => {
     setUpdatingQty((p) => ({ ...p, [item.id]: true }));
     try {
       await updateQuantity({ cart_id: item.id, quantity: item.quantity });
-      await cartData();
+      await cartPageData();
     } catch (err) {
       console.error(err);
-      await cartData();
+      await cartPageData();
     } finally {
       setUpdatingQty((p) => ({ ...p, [item.id]: false }));
     }
   };
 
   useEffect(() => {
-    cartData(); // first load when header renders
-    const handler = () => cartData(); // when cart-updated happens, refresh
+    cartPageData(); // first load when header renders
+    const handler = () => cartPageData(); // when cart-updated happens, refresh
     window.addEventListener("cart-updated", handler);
     return () => {
       window.removeEventListener("cart-updated", handler);
@@ -233,7 +237,7 @@ const Cart = ({ isCartVisible, toggleCart }) => {
   // const moveToSaveForLater = async (cart_id) => {
   //   if (!cart_id) return console.error("Invalid cart_id:", cart_id);
   //   await saveForLater({ cart_id: Number(cart_id) });
-  //   await cartData();
+  //   await cartPageData();
   // };
 
   // Save for later with loader start
@@ -244,7 +248,7 @@ const Cart = ({ isCartVisible, toggleCart }) => {
     try {
       setActionLoading({ id: cart_id, type: "save" });
       await saveForLater({ cart_id: Number(cart_id) });
-      await cartData();
+      await cartPageData();
     } catch (e) {
       console.error(e);
     } finally {
@@ -258,7 +262,7 @@ const Cart = ({ isCartVisible, toggleCart }) => {
     try {
       setActionLoading({ id: cart_id, type: "move" });
       await moveToCart({ cart_id: Number(cart_id) });
-      await cartData();
+      await cartPageData();
     } catch (e) {
       console.error(e);
     } finally {
@@ -267,29 +271,47 @@ const Cart = ({ isCartVisible, toggleCart }) => {
   };
 
   const moveToSaveAllNoCreditItems = async () => {
-    await saveAllNoCreditItems();
-    await cartData();
+    setSaveNoCreditLoading(true);
+    try {
+      await saveAllNoCreditItems();
+      await cartPageData();
+    } catch (e) {
+      console.error(e);
+      alert(e?.message || "Failed to save no-credit items.");
+    } finally {
+      setSaveNoCreditLoading(false);
+    }
   };
 
+
   const moveAllNoCreditItemsToCart = async () => {
-    await moveAllNoCreditItems();
-    await cartData();
+    setNoCreditLoading(true);
+    try {
+      await moveAllNoCreditItems();
+      await cartPageData();
+    } catch (e) {
+      console.error(e);
+      alert(e?.message || "Failed to move no-credit items.");
+    } finally {
+      setNoCreditLoading(false);
+    }
   };
 
   const deleteFromCart = async (id,qty) => {
     await updateQuantity({ cart_id: id, quantity: qty });
-    await cartData();
+    await cartPageData();
   };
 
   const deleteFromSaved = async (id) => {
     await deleteFromSaveForLaterItem({ id: id });
-    await cartData();
+    await cartPageData();
   };
 
   const navigate = useNavigate();
 
   const handleCheckout = () => {
-    navigate("/payment");
+    // navigate("/payment");
+    navigate("/company");
   };
 
   const handlegohome = () => {
@@ -364,6 +386,16 @@ const Cart = ({ isCartVisible, toggleCart }) => {
     setSelectedCartIds((prev) => prev.filter((id) => id !== item.id));
   };
 
+  const forceDownload = (fileUrl, fileName = "statement.pdf") => {
+    const a = document.createElement("a");
+    a.href = fileUrl;
+    a.setAttribute("download", fileName); // hint to download
+    a.setAttribute("target", "_blank");   // fallback if browser ignores download
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  };
+
   const downloadStatement = async () => {
     setDownloading(true);
     try {
@@ -385,22 +417,38 @@ const Cart = ({ isCartVisible, toggleCart }) => {
       .map((it) => String(it.id))
       .join(",");
 
-    await moveToCartAllSelectedItems({ idsCsv });
-    await cartData();
+    if (!idsCsv) return; // nothing selected
+
+    setMovingLoading(true);
+    try {
+      await moveToCartAllSelectedItems({ idsCsv });
+      await cartPageData();
+    } catch (e) {
+      console.error(e);
+      alert(e?.message || "Failed to move items.");
+    } finally {
+      setMovingLoading(false);
+    }
   };
 
   const handleSaveForLaterAllCheckedToCart = async () => {
     const idsCsv = cartItems
-      .filter((it) => selectedSavedIds.includes(String(it.id))) // ✅ match string
+      .filter((it) => selectedSavedIds.includes(String(it.id))) // match string
       .map((it) => String(it.id))
       .join(",");
 
-    console.log("idsCsv:", idsCsv);
+    if (!idsCsv) return;
 
-    if (!idsCsv) return; // optional safety
-
-    await saveForLaterAllSelectedItems({ idsCsv });
-    await cartData();
+    setSaveCheckedLoading(true);
+    try {
+      await saveForLaterAllSelectedItems({ idsCsv });
+      await cartPageData();
+    } catch (e) {
+      console.error(e);
+      alert(e?.message || "Failed to save items for later.");
+    } finally {
+      setSaveCheckedLoading(false);
+    }
   };
 
   const categoryCounts = savedItems.reduce((acc, item) => {
@@ -415,7 +463,7 @@ const Cart = ({ isCartVisible, toggleCart }) => {
       const json = await res.json(); // ✅ must read response body
       if (json?.res === false) {
         alert(json?.msg || "Offer removed failed");
-        await cartData();
+        await cartPageData();
         return;
       }else{
         alert(json?.msg || "Remove offer.");
@@ -424,7 +472,7 @@ const Cart = ({ isCartVisible, toggleCart }) => {
       console.error(e);
       alert(e?.message || "Something went wrong");
     } finally {
-      await cartData(); // ✅ always refresh cart
+      await cartPageData(); // ✅ always refresh cart
     }
   };
 
@@ -550,7 +598,7 @@ const Cart = ({ isCartVisible, toggleCart }) => {
                                     )}
       
                                     {item.applied_offer_id != null && (
-                                      <span className="applied-offer-tag">
+                                      <span className="applied-offer-tag" style={{ position: "static" }}>
                                         {appliedOfferDetails?.offer_name} Offer Applied 
                                       </span>
                                     )}
@@ -577,10 +625,10 @@ const Cart = ({ isCartVisible, toggleCart }) => {
                                     onBlur={async () => {
                                       try {
                                         await updateQuantity({ id: item.id, quantity: item.quantity });
-                                        cartData(); // totals refresh
+                                        cartPageData(); // totals refresh
                                       } catch (err) {
                                         console.error(err);
-                                        cartData(); // revert if failed
+                                        cartPageData(); // revert if failed
                                       }
                                     }}
                                   /> */}
@@ -620,15 +668,15 @@ const Cart = ({ isCartVisible, toggleCart }) => {
                       <div className="cartSubtotal">
                         <label>
                           Subtotal:
-                          <span>₹{calculateCartSubtotal()}</span>
+                          <span>₹{subTotal}</span>
                         </label>
 
                         <div className="section-buttons">
-                          <button className="greenbtn">
-                            Save all checked item for later
+                          <button className="greenbtn" onClick={handleSaveForLaterAllCheckedToCart}>
+                            {saveCheckedLoading ? "Saving..." : "Save all checked item for later"}
                           </button>
-                          <button className="bluebtn">
-                            Save all no credit item for later
+                          <button className="bluebtn" onClick={() => moveToSaveAllNoCreditItems()}>
+                            {saveNoCreditLoading ? "Saving..." : "Save all no credit item for later"}
                           </button>
                         </div>
                       </div>
@@ -764,11 +812,11 @@ const Cart = ({ isCartVisible, toggleCart }) => {
 
                       <div className="cartSubtotal">
                         <div className="section-buttons">
-                          <button className="greenbtn">
-                            Move all checked item for cart
+                          <button className="greenbtn" onClick={handleMoveCheckedToCart}>
+                            {movingLoading ? "Moving..." : "Move all checked item for cart"}
                           </button>
-                          <button className="bluebtn">
-                            Move all no credit item for cart
+                          <button className="bluebtn" onClick={() => moveAllNoCreditItemsToCart()}>
+                            {noCreditLoading ? "Moving..." : "Move all no credit item for cart"}
                           </button>
                         </div>
                       </div>
@@ -780,39 +828,44 @@ const Cart = ({ isCartVisible, toggleCart }) => {
 
             <div className="cart-summary">
               <div className="cart-panel-header">
-                <button className="cart-close-btn" onClick={handlegohome}>
+                {/* <button className="cart-close-btn" onClick={handlegohome}>
                   <FiX />
-                </button>
+                </button> */}
               </div>
 
               <div className="cart-summary-content">
                 <h3>Summary</h3>
-                <label>
-                  No Credit Item Subtotal:<span>₹ {noCreditTotal}</span>
-                </label>
-                <label>
-                  Other Item Subtotal:<span>₹ {total}</span>
-                </label>
-                <label>
-                  Overdue Amount:<span>₹ 9000</span>
-                </label>
 
-                <button className="download-pdf">
-                  <BsCloudArrowDownFill /> Download Pdf
+                <label>
+                  No Credit Item Subtotal:<span>₹ {noCreditItemTotalAmount}</span>
+                </label>
+                <label>
+                  Other Item Subtotal:<span>₹{cartSubTotal}</span>  
+                </label>
+                {overDueAmount > 0 && (
+                  <label>
+                    Overdue Amount:<span>₹ {overDueAmount}</span>
+                  </label>
+                )}
+                <button className="download-pdf" onClick={() => downloadStatement()}>
+                  <BsCloudArrowDownFill /> {downloading ? "Downloading..." : "Download Statement"}
                 </button>
               </div>
 
               {/* Cart Footer */}
               <div className="cart-panel-footer">
                 <div className="subtotal">
-                  Total Payable: <span>₹ {total + 9000}</span>
+                  Total Payable: <span>₹ {totalPayable}</span>
                 </div>
-                <button
-                  className="checkout-btn Offer-btn"
-                  onClick={() => setOfferModalOpen(true)}
-                >
-                  Apply Offer
-                </button>
+                {offerApplied != 0 ? (
+                  <button className="checkout-btn Remove-btn" onClick={() => removeAppliedOffer(appliedOfferDetails?.id)}>
+                    Remove Offer {appliedOfferDetails?.offer_name}
+                  </button>
+                ) : (
+                  <button className="checkout-btn Offer-btn" onClick={() => setOfferModalOpen(true)}>
+                    Apply Offer
+                  </button>
+                )}
                 <button className="checkout-btn" onClick={handleCheckout}>
                   Checkout
                 </button>
@@ -823,10 +876,7 @@ const Cart = ({ isCartVisible, toggleCart }) => {
       </MainLayout>
 
       {/* 🟢 Offer Modal */}
-      <OfferModal
-        isOpen={isOfferModalOpen}
-        onClose={() => setOfferModalOpen(false)}
-      />
+      <OfferModal isOpen={isOfferModalOpen} onClose={() => setOfferModalOpen(false)} onApplied={cartPageData} />
     </div>
   );
 };

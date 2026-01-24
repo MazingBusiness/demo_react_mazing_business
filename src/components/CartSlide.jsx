@@ -75,6 +75,10 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
   const [offerApplied, setofferApplied] = useState(0);
   const [appliedOfferDetails, setAppliedOfferDetails] = useState([]);
   const [downloading, setDownloading] = useState(false);
+  const [movingLoading, setMovingLoading] = useState(false);
+  const [noCreditLoading, setNoCreditLoading] = useState(false);
+  const [saveNoCreditLoading, setSaveNoCreditLoading] = useState(false);
+  const [saveCheckedLoading, setSaveCheckedLoading] = useState(false);
 
   const navigate = useNavigate();
 
@@ -308,13 +312,30 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
   };
 
   const moveToSaveAllNoCreditItems = async () => {
-    await saveAllNoCreditItems();
-    await cartData();
+    setSaveNoCreditLoading(true);
+    try {
+      await saveAllNoCreditItems();
+      await cartData();
+    } catch (e) {
+      console.error(e);
+      alert(e?.message || "Failed to save no-credit items.");
+    } finally {
+      setSaveNoCreditLoading(false);
+    }
   };
 
+
   const moveAllNoCreditItemsToCart = async () => {
-    await moveAllNoCreditItems();
-    await cartData();
+    setNoCreditLoading(true);
+    try {
+      await moveAllNoCreditItems();
+      await cartData();
+    } catch (e) {
+      console.error(e);
+      alert(e?.message || "Failed to move no-credit items.");
+    } finally {
+      setNoCreditLoading(false);
+    }
   };
 
   const deleteFromCart = async (id,qty) => {
@@ -362,22 +383,38 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
       .map((it) => String(it.id))
       .join(",");
 
-    await moveToCartAllSelectedItems({ idsCsv });
-    await cartData();
+    if (!idsCsv) return; // nothing selected
+
+    setMovingLoading(true);
+    try {
+      await moveToCartAllSelectedItems({ idsCsv });
+      await cartData();
+    } catch (e) {
+      console.error(e);
+      alert(e?.message || "Failed to move items.");
+    } finally {
+      setMovingLoading(false);
+    }
   };
 
   const handleSaveForLaterAllCheckedToCart = async () => {
     const idsCsv = cartItems
-      .filter((it) => selectedSavedIds.includes(String(it.id))) // ✅ match string
+      .filter((it) => selectedSavedIds.includes(String(it.id))) // match string
       .map((it) => String(it.id))
       .join(",");
 
-    console.log("idsCsv:", idsCsv);
+    if (!idsCsv) return;
 
-    if (!idsCsv) return; // optional safety
-
-    await saveForLaterAllSelectedItems({ idsCsv });
-    await cartData();
+    setSaveCheckedLoading(true);
+    try {
+      await saveForLaterAllSelectedItems({ idsCsv });
+      await cartData();
+    } catch (e) {
+      console.error(e);
+      alert(e?.message || "Failed to save items for later.");
+    } finally {
+      setSaveCheckedLoading(false);
+    }
   };
 
   const moveAllSelectedItemToCart = async (cart_ids) => {
@@ -578,10 +615,10 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
 
                   <div className="section-buttons">
                     <button className="greenbtn" onClick={handleSaveForLaterAllCheckedToCart}>
-                      Save all checked item for later
+                      {saveCheckedLoading ? "Saving..." : "Save all checked item for later"}
                     </button>
                     <button className="bluebtn" onClick={() => moveToSaveAllNoCreditItems()}>
-                      Save all no credit item for later
+                      {saveNoCreditLoading ? "Saving..." : "Save all no credit item for later"}
                     </button>
                   </div>
                 </div>
@@ -717,10 +754,10 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
                       Move all checked item for cart
                     </button> */}
                     <button className="greenbtn" onClick={handleMoveCheckedToCart} >
-                      Move all checked item for cart
+                      {movingLoading ? "Moving..." : "Move all checked item for cart"}
                     </button>
                     <button className="bluebtn"  onClick={() => moveAllNoCreditItemsToCart()}>
-                      Move all no credit item for cart
+                      {noCreditLoading ? "Moving..." : "Move all no credit item for cart"}
                     </button>
                   </div>
                 </div>
@@ -763,14 +800,14 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
               </div>
 
               {offerApplied != 0 ? (
-                  <button className="checkout-btn Remove-btn" onClick={() => removeAppliedOffer(appliedOfferDetails?.id)}>
-                    Remove Offer {appliedOfferDetails?.offer_name}
-                  </button>
-                ) : (
-                  <button className="checkout-btn Offer-btn" onClick={() => setOfferModalOpen(true)}>
-                    Apply Offer
-                  </button>
-                )}
+                <button className="checkout-btn Remove-btn" onClick={() => removeAppliedOffer(appliedOfferDetails?.id)}>
+                  Remove Offer {appliedOfferDetails?.offer_name}
+                </button>
+              ) : (
+                <button className="checkout-btn Offer-btn" onClick={() => setOfferModalOpen(true)}>
+                  Apply Offer
+                </button>
+              )}
 
               <button className="checkout-btn" onClick={handleCheckout}>
                 Checkout
