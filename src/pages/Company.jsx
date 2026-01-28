@@ -10,13 +10,15 @@ import cartllink3 from "../assets/icons/cartllink3b.svg";
 import cartllink4 from "../assets/icons/cartllink4b.svg";
 
 import Modal from "../components/Modal";
+import CartSummary from "../components/CartSummary.jsx";
+
+import { userDetails, getShippingAddress } from "../api/apiRequest";
 
 const Company = () => {
   const [selectedAddress, setSelectedAddress] = useState(0);
-
   const [showTicketModal, setShowTicketModal] = useState(false);
-
   const [noGstin, setNoGstin] = useState(false);
+  const [addresses, setAddresses] = useState([]);
 
   const navigate = useNavigate();
 
@@ -40,52 +42,48 @@ const Company = () => {
     setIsFocused(false); // remove focus after file selection
   };
 
-  const addresses = [
-    {
-      gst: "07AAOCM7588A1Z3",
-      company: "Mazing Retail Private Limited",
-      address1: "Rama Road Industrial Park",
-      address2: "2 Rama Road Industrial Center",
-      postalCode: "700059",
-      city: "West Delhi",
-      state: "Delhi",
+  const mapUserDetailsToAddresses = (addressJson) => {
+    const list = Array.isArray(addressJson?.shipping_address)? addressJson.shipping_address: [];
+    return list.map((a) => ({
+      id: a?.id || "",
+      gst: a?.gstin || "",
+      company: a?.company_name || "",
+      address1: a?.address || "",
+      address2: a?.address_2 || "",
+      postalCode: a?.postal_code || "",
+      city: a?.city || "",
+      state: a?.state || "", // API me state name nahi hai, only state_id
       country: "India",
-      phone: "+91 1234567890",
-    },
-    {
-      gst: "07AAOCM7588A1Z3",
-      company: "Mazing Retail Private Limited",
-      address1: "Rama Road Industrial Park",
-      address2: "2 Rama Road Industrial Center",
-      postalCode: "700059",
-      city: "West Delhi",
-      state: "Delhi",
-      country: "India",
-      phone: "+91 1234567890",
-    },
-    {
-      gst: "07AAOCM7588A1Z3",
-      company: "Mazing Retail Private Limited",
-      address1: "Rama Road Industrial Park",
-      address2: "2 Rama Road Industrial Center",
-      postalCode: "700059",
-      city: "West Delhi",
-      state: "Delhi",
-      country: "India",
-      phone: "+91 1234567890",
-    },
-    {
-      gst: "07AAOCM7588A1Z3",
-      company: "Mazing Retail Private Limited",
-      address1: "Rama Road Industrial Park",
-      address2: "2 Rama Road Industrial Center",
-      postalCode: "700059",
-      city: "West Delhi",
-      state: "Delhi",
-      country: "India",
-      phone: "+91 1234567890",
-    },
-  ];
+      phone: a?.phone || "",
+      // optional extra fields (useful later)
+      id: a?.id,
+      acc_code: a?.acc_code,
+      set_default: a?.set_default,
+      address_id: a?.id,
+      state_id: a?.state_id,
+      city_id: a?.city_id,
+      country_id: a?.country_id,
+    }));
+  };
+
+  const getAddressData = async () => {
+      try {
+        const json = await getShippingAddress(); // <-- ensure this returns parsed JSON
+        if (json?.res) {
+          const mapped = mapUserDetailsToAddresses(json);
+          setAddresses(mapped);
+        } else {
+          setAddresses([]);
+        }
+      } catch (e) {
+        console.error(e);
+        setAddresses([]);
+      }
+  };
+
+  useEffect(() => {
+    getAddressData();
+  }, []);
 
   const [selectedState, setSelectedState] = useState("");
   const [stateDropdownOpen, setStateDropdownOpen] = useState(false);
@@ -127,6 +125,9 @@ const Company = () => {
     }
   };
 
+  const selectedAddressObj = addresses?.[selectedAddress];  // selectedAddress = index
+  const selectedAddressId = selectedAddressObj?.address_id ?? selectedAddressObj?.id ?? 0;
+  // alert(selectedAddressId);
   return (
     <div className="CartBody ConfirmationBody">
       <MainLayout>
@@ -149,22 +150,15 @@ const Company = () => {
                   </Link>
                 </div>
               </div>
-
               <div className="cart-left-rgt">
                 <div className="address-container">
                   {addresses.map((addr, index) => (
-                    <label
-                      key={index}
+                    <label key={index}
                       className={`address-card ${
                         selectedAddress === index ? "selected" : ""
                       }`}
                     >
-                      <input
-                        type="radio"
-                        name="selectedAddress"
-                        checked={selectedAddress === index}
-                        onChange={() => setSelectedAddress(index)}
-                      />
+                      <input type="radio" name="selectedAddress" value={addr.id} checked={selectedAddress === index} onChange={() => setSelectedAddress(index)} />
                       <div className="card-content">
                         <p>
                           <strong>GST IN:</strong> {addr.gst}
@@ -196,49 +190,15 @@ const Company = () => {
                       </div>
                     </label>
                   ))}
-
-                  <button
-                    className="add-address-btn"
-                    onClick={() => setShowTicketModal(true)}
-                  >
-                    Add New Address <span>+</span>
-                  </button>
                 </div>
+                <button className="add-address-btn" onClick={() => setShowTicketModal(true)} >
+                  Add New Address <span>+</span>
+                </button>
+                <p></p>
               </div>
             </div>
-
-            <div className="cart-summary">
-              <div className="cart-panel-header">
-                <button className="cart-close-btn" onClick={handlegohome}>
-                  <FiX />
-                </button>
-              </div>
-              <div className="cart-summary-content">
-                <h3>Summary</h3>
-                <label>
-                  No Credit Item Subtotal:<span>₹ 10,800</span>
-                </label>
-                <label>
-                  Other Item Subtotal:<span>₹ 20,597</span>
-                </label>
-                <label>
-                  Overdue Amount:<span>₹ 9000</span>
-                </label>
-
-                <button className="download-pdf">
-                  <BsCloudArrowDownFill /> Download Pdf
-                </button>
-              </div>
-
-              <div className="cart-panel-footer">
-                <div className="subtotal">
-                  Total Payable: <span>₹ 29,597</span>
-                </div>
-                <button className="checkout-btn" onClick={handleCheckout}>
-                  Procced to Payment
-                </button>
-              </div>
-            </div>
+            {/* Pass selectedAddressId as props to the cartSummary page */}
+            <CartSummary selectedAddressId={selectedAddressId} />
           </div>
         </div>
 

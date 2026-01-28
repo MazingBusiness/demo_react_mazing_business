@@ -187,42 +187,6 @@ export const cart = async () => {
   return data;
 };
 
-// export const updateQuantity = async (id, quantity) => {
-//   const queryParams = new URLSearchParams();
-//   if (id) queryParams.append("id", id);
-//   if (quantity) queryParams.append("quantity", quantity);
-//   const url = `${API_BASE_URL}cart/update-quantity?${queryParams.toString()}`;
-//   const response = await fetch(url, {
-//     method: "POST",
-//     headers: {
-//       "Content-Type": "application/json",
-//     },
-//   });
-//   // const data = await response.json();
-//   return response;
-// };
-
-// export const updateQuantity = async ({ id, quantity }) => {
-//   const header = getHeader();
-//   if (!header) throw new Error("Authorization token missing");
-
-//   const res = await fetch(`${API_BASE_URL}cart/update-quantity`, {
-//     method: "POST",
-//     headers: {
-//       Accept: "application/json",
-//       "Content-Type": "application/json",
-//       ...(header.headers || {}), // Authorization: Bearer xxx
-//     },
-//     body: JSON.stringify({ id, quantity }),
-//   });
-
-//   const data = await res.json();
-//   if (!res.ok || data?.res === false) {
-//     throw new Error(data?.msg || "Update cart failed");
-//   }
-//   return data;
-// };
-
 export const updateQuantity = async ({ id, quantity, product_id, cart_id }) => {
   const header = getHeader();
   if (!header) throw new Error("Authorization token missing");
@@ -479,17 +443,6 @@ export const removeOffer = async (offer_id) => {
   return response;
 };
 
-// export const statementDownload = async () => {
-//   const header = getHeader();
-//   const url = `${API_BASE_URL}user/statement-download`;
-//   const response = await fetch(url, {
-//     method: "GET",
-//     headers: { Accept: "application/json", ...(header.headers || {}) },
-//   });
-//   console.log(response);
-//   return response;
-// };
-
 export const statementDownload = async () => {
   const header = getHeader();
   const url = `${API_BASE_URL}user/statement-download`;
@@ -507,3 +460,44 @@ export const statementDownload = async () => {
   return json; // { pdf_url: "..." }
 };
 
+export const userDetails = async () => {
+  const header = getHeader();
+  const url = `${API_BASE_URL}user/user-details`;
+  const res = await fetch(url, {
+    method: "GET",
+    headers: { Accept: "application/json", ...(header.headers || {}) },
+  });
+  if (!res.ok) {
+    throw new Error(`HTTP ${res.status}`);
+  }
+  const json = await res.json(); // ✅ read response body
+  return json;
+};
+
+export const getShippingAddress = async () => {
+  const header = getHeader();
+  const url = `${API_BASE_URL}cart/shipping-address`;
+  const res = await fetch(url, {
+    method: "GET",
+    headers: { Accept: "application/json", ...(header.headers || {}) },
+  });
+  if (!res.ok) {
+    throw new Error(`HTTP ${res.status}`);
+  }
+  const json = await res.json(); // ✅ read response body
+  return json;
+};
+
+export const updateShippingAddressToCart = async (address_id) => {
+  const header = getHeader();
+  const queryParams = new URLSearchParams();
+  alert(address_id);
+  if (address_id != null) queryParams.append("address_id", String(address_id));
+  const url = `${API_BASE_URL}cart/update-shipping-address-to-cart?${queryParams.toString()}`;
+  const response = await fetch(url, {
+    method: "GET",
+    headers: { Accept: "application/json", ...(header.headers || {}) },
+  });
+  console.log(response);
+  return response;
+};

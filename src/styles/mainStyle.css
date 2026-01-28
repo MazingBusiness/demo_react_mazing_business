@@ -5598,7 +5598,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 
 .add-address-btn {
-  margin-top: 25px;
+  margin-top: -25px;
   background: #004b84;
   color: white;
   padding: 12px 20px;
@@ -5610,7 +5610,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   gap: 8px;
   font-size: 15px;
   cursor: pointer;
-  margin-left: 20px;
+  /* margin-left: 20px; */
   width: 250px;
   font-family: "Poppins", sans-serif;
   display: flex;

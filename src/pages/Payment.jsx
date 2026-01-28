@@ -12,6 +12,7 @@ import cartllink4 from "../assets/icons/cartllink4b.svg";
 import QR from "../assets/images/QR.png";
 
 import Modal from "../components/Modal";
+import CartSummary from "../components/CartSummary.jsx";
 
 const Payment = () => {
   const [agreeToTerms, setAgreeToTerms] = useState(false);
@@ -263,7 +264,7 @@ const Payment = () => {
               </div>
             </div>
 
-            <div className="cart-summary">
+            {/* <div className="cart-summary">
               <div className="cart-panel-header">
                 <button className="cart-close-btn" onClick={handlegohome}>
                   <FiX />
@@ -294,7 +295,8 @@ const Payment = () => {
                   Complete
                 </button>
               </div>
-            </div>
+            </div> */}
+            <CartSummary />
           </div>
         </div>
       </MainLayout>
