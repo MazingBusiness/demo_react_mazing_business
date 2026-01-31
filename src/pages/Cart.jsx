@@ -508,12 +508,13 @@ const Cart = ({ isCartVisible, toggleCart }) => {
                   <Link to="/company" className="deactive">
                     <img src={cartllink2} alt="MenuIcon" /> Shipping Company
                   </Link>
-                  <Link to="/payment" className="deactive">
-                    <img src={cartllink3} alt="MenuIcon" /> Payment
-                  </Link>
                   <Link to="/confirmation" className="deactive">
                     <img src={cartllink4} alt="MenuIcon" /> Confirmation
                   </Link>
+                  <Link to="/payment" className="deactive">
+                    <img src={cartllink3} alt="MenuIcon" /> Payment
+                  </Link>
+                  
                 </div>
               </div>
 

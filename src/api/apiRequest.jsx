@@ -491,7 +491,6 @@ export const getShippingAddress = async () => {
 export const updateShippingAddressToCart = async (address_id) => {
   const header = getHeader();
   const queryParams = new URLSearchParams();
-  alert(address_id);
   if (address_id != null) queryParams.append("address_id", String(address_id));
   const url = `${API_BASE_URL}cart/update-shipping-address-to-cart?${queryParams.toString()}`;
   const response = await fetch(url, {

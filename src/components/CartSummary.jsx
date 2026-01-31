@@ -18,6 +18,7 @@ const CartSummary = ({ isCartVisible, onApplied, afterAppliedRefresh, selectedAd
   const [offerApplied, setofferApplied] = useState(0);
   const [appliedOfferDetails, setAppliedOfferDetails] = useState([]);
   const [downloading, setDownloading] = useState(false);
+  const [butnText, setButnText] = useState("Complete");
 
   const cartPageData = async () => {
     setCartLoading(true);
@@ -57,10 +58,19 @@ const CartSummary = ({ isCartVisible, onApplied, afterAppliedRefresh, selectedAd
   useEffect(() => {
     cartPageData(); // first load when header renders
     const handler = () => cartPageData(); // when cart-updated happens, refresh
+
+    if(location.pathname == '/company'){
+      setButnText("Proces to checkout");
+    } else if(location.pathname == '/confirmation'){
+      setButnText("Proces to confirmation");
+    }else if(location.pathname == '/payment'){
+      setButnText("Complete");
+    }
     window.addEventListener("cart-updated", handler);
     return () => {
       window.removeEventListener("cart-updated", handler);
     };
+    
   }, []);
 
   useEffect(() => {
@@ -92,31 +102,36 @@ const CartSummary = ({ isCartVisible, onApplied, afterAppliedRefresh, selectedAd
   const [checkoutLoading, setCheckoutLoading] = useState(false);
 
   const handleCheckout = async () => {
-    const addressId = Number(selectedAddressId);
-    // ✅ address select validation
-    if (!selectedAddressId || Number(selectedAddressId) <= 0) {
-      alert("Please select shipping address");
-      return;
+    if(location.pathname == "/company"){
+      const addressId = Number(selectedAddressId);
+      // ✅ address select validation
+      if (!selectedAddressId || Number(selectedAddressId) <= 0) {
+        alert("Please select shipping address");
+        return;
+      }
     }
-    // alert(selectedAddressId);
+    
     setCheckoutLoading(true);
     try {
-      // ✅ call API
-      const addressId = Number(selectedAddressId);
-      const res = await updateShippingAddressToCart(addressId);
+      if(location.pathname == "/company"){
+        // ✅ call API
+        const addressId = Number(selectedAddressId);
+        const res = await updateShippingAddressToCart(addressId);
 
-      // If your function returns JSON directly:
-      const json = res?.res !== undefined ? res : await res.json?.();
+        // If your function returns JSON directly:
+        const json = res?.res !== undefined ? res : await res.json?.();
 
-      if (!json?.res) {
-        alert(json?.msg || "Failed to update shipping address");
-        return;
+        if (!json?.res) {
+          alert(json?.msg || "Failed to update shipping address");
+          return;
+        }
       }
 
       // ✅ success -> navigate
       if (isPaymentPage) {
+      }else if(location.pathname == '/company'){
         navigate("/confirmation");
-      } else {
+      } else if(location.pathname == '/confirmation'){
         navigate("/payment");
       }
     } catch (e) {
@@ -216,7 +231,8 @@ const CartSummary = ({ isCartVisible, onApplied, afterAppliedRefresh, selectedAd
             Total Payable: <span>₹ {totalPayable}</span>
           </div>
           <button className="checkout-btn" onClick={handleCheckout}>
-            {isPaymentPage ? "Complete" : "Procced to Payment"}
+            {/* {isPaymentPage ? "Complete" : "Procced to Confirmation"} */}
+            {butnText}
           </button>
         </div>
       </div>
