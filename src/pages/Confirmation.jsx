@@ -76,7 +76,7 @@ const Confirmation = () => {
                   <Link to="/confirmation">
                     <img src={cartllink4} alt="MenuIcon" /> Confirmation
                   </Link>
-                  <Link to="/payment" className="deactive">
+                  <Link className="deactive">
                     <img src={cartllink3} alt="MenuIcon" /> Payment
                   </Link>
                 </div>
@@ -165,7 +165,7 @@ const Confirmation = () => {
                 </button>
               </div>
             </div> */}
-            <CartSummary />
+            <CartSummary canCheckout={agreeToTerms}/>
           </div>
         </div>
       </MainLayout>

@@ -142,10 +142,10 @@ const Company = () => {
                     <img src={cartllink2} alt="MenuIcon" /> Shipping Company
                   </Link>
                   
-                  <Link to="/confirmation" className="deactive">
+                  <Link className="deactive">
                     <img src={cartllink4} alt="MenuIcon" /> Confirmation
                   </Link>
-                  <Link to="/payment" className="deactive">
+                  <Link className="deactive">
                     <img src={cartllink3} alt="MenuIcon" /> Payment
                   </Link>
                 </div>
@@ -198,7 +198,7 @@ const Company = () => {
               </div>
             </div>
             {/* Pass selectedAddressId as props to the cartSummary page */}
-            <CartSummary selectedAddressId={selectedAddressId} />
+            <CartSummary selectedAddressId={selectedAddressId} canCheckout={true} />
           </div>
         </div>
 

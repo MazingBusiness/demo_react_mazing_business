@@ -505,13 +505,13 @@ const Cart = ({ isCartVisible, toggleCart }) => {
                   <Link to="/cart">
                     <img src={cartllink1} alt="MenuIcon" /> Shopping Cart
                   </Link>
-                  <Link to="/company" className="deactive">
+                  <Link  className="deactive">
                     <img src={cartllink2} alt="MenuIcon" /> Shipping Company
                   </Link>
-                  <Link to="/confirmation" className="deactive">
+                  <Link  className="deactive">
                     <img src={cartllink4} alt="MenuIcon" /> Confirmation
                   </Link>
-                  <Link to="/payment" className="deactive">
+                  <Link className="deactive">
                     <img src={cartllink3} alt="MenuIcon" /> Payment
                   </Link>
                   
@@ -597,15 +597,13 @@ const Cart = ({ isCartVisible, toggleCart }) => {
                                         No Credit Item
                                       </span>
                                     )}
-      
+                                  </div>
+                                  <div className="ratingGrp">
                                     {item.applied_offer_id != null && (
                                       <span className="applied-offer-tag" style={{ position: "static" }}>
                                         {appliedOfferDetails?.offer_name} Offer Applied 
                                       </span>
                                     )}
-      
-                                  </div>
-                                  <div className="ratingGrp">
                                     <div className="ratingGrpLft">
                                       {renderWarrantyTag(item.product)}
                                     </div>

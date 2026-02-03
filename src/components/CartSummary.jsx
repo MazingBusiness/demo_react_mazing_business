@@ -3,9 +3,9 @@ import { BsCloudArrowDownFill } from "react-icons/bs";
 import { useNavigate, Link , useLocation } from "react-router-dom";
 import OfferModal from "../components/OfferModal.jsx";
 
-import { cart, removeOffer, statementDownload, updateShippingAddressToCart } from "../api/apiRequest.jsx";
+import { cart, removeOffer, statementDownload, updateShippingAddressToCart, orderSubmit } from "../api/apiRequest.jsx";
 
-const CartSummary = ({ isCartVisible, onApplied, afterAppliedRefresh, selectedAddressId }) => {
+const CartSummary = ({ isCartVisible, onApplied, afterAppliedRefresh, selectedAddressId, canCheckout }) => {
   const [cartItems, setCartItems] = useState([]);
   const [cartSubTotal, setCartSubTotal] = useState(0);
   const [noCreditItemTotalAmount, setNoCreditItemTotalAmount] = useState(0);
@@ -58,10 +58,11 @@ const CartSummary = ({ isCartVisible, onApplied, afterAppliedRefresh, selectedAd
   useEffect(() => {
     cartPageData(); // first load when header renders
     const handler = () => cartPageData(); // when cart-updated happens, refresh
-
     if(location.pathname == '/company'){
+      canCheckout =  "";
       setButnText("Proces to checkout");
     } else if(location.pathname == '/confirmation'){
+      canCheckout = "";
       setButnText("Proces to confirmation");
     }else if(location.pathname == '/payment'){
       setButnText("Complete");
@@ -132,6 +133,7 @@ const CartSummary = ({ isCartVisible, onApplied, afterAppliedRefresh, selectedAd
       }else if(location.pathname == '/company'){
         navigate("/confirmation");
       } else if(location.pathname == '/confirmation'){
+        const res = await orderSubmit();
         navigate("/payment");
       }
     } catch (e) {
@@ -230,7 +232,7 @@ const CartSummary = ({ isCartVisible, onApplied, afterAppliedRefresh, selectedAd
           <div className="subtotal">
             Total Payable: <span>₹ {totalPayable}</span>
           </div>
-          <button className="checkout-btn" onClick={handleCheckout}>
+          <button className={`checkout-btn ${canCheckout ? "" : "disabled"}`} onClick={handleCheckout} disabled= {!canCheckout} >
             {/* {isPaymentPage ? "Complete" : "Procced to Confirmation"} */}
             {butnText}
           </button>

@@ -7360,6 +7360,11 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   cursor: not-allowed;
 }
 
+.checkout-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .warratyBox img {
   margin: 0 auto;
   width: 100%;

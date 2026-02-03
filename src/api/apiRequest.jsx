@@ -500,3 +500,17 @@ export const updateShippingAddressToCart = async (address_id) => {
   console.log(response);
   return response;
 };
+
+export const orderSubmit = async () => {
+  const header = getHeader();
+  const queryParams = new URLSearchParams();
+  queryParams.append("order_from", "web");
+  const url = `${API_BASE_URL}cart/order-submit?${queryParams.toString()}`;
+  const response = await fetch(url, {
+    method: "GET",
+    headers: { Accept: "application/json", ...(header.headers || {}) },
+  });
+  console.log(response);
+  return response;
+};
+
