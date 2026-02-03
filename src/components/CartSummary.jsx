@@ -134,7 +134,9 @@ const CartSummary = ({ isCartVisible, onApplied, afterAppliedRefresh, selectedAd
         navigate("/confirmation");
       } else if(location.pathname == '/confirmation'){
         const res = await orderSubmit();
-        navigate("/payment");
+        const json = res?.res !== undefined ? res : await res.json?.();
+        navigate("/payment", { state: { orderRes: json } });
+        // navigate("/payment");
       }
     } catch (e) {
       console.error(e);

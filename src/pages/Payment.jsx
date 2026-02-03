@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import MainLayout from "../layouts/MainLayout";
 import { FiX, FiChevronDown, FiCheck } from "react-icons/fi";
 import { BsCloudArrowDownFill } from "react-icons/bs";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 
 import cartllink1 from "../assets/icons/cartllink1a.svg";
 import cartllink2 from "../assets/icons/cartllink2a.svg";
@@ -12,7 +12,7 @@ import cartllink4 from "../assets/icons/cartllink4a.svg";
 import tickIcon from "../assets/icons/tickIcon.svg";
 import PaidIcon from "../assets/icons/PaidIcon.svg";
 
-import QR from "../assets/images/QR.png";
+// import QR from "../assets/images/QR.png";
 
 import Modal from "../components/Modal";
 import CartSummary from "../components/CartSummary.jsx";
@@ -21,12 +21,53 @@ const Payment = () => {
   const [agreeToTerms, setAgreeToTerms] = useState(false);
   const [upiId, setUpiId] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("qr"); // 'qr', 'upi', or 'bank
-
   const [showTicketModal, setShowTicketModal] = useState(false);
-
   const [noGstin, setNoGstin] = useState(false);
 
+  const { state } = useLocation();
   const navigate = useNavigate();
+  const orderRes = state?.orderRes;
+  const orderData = orderRes?.order_data;
+  const orderCode = orderRes?.order_code;
+  const QR = orderRes?.qr_code_url;
+  const orderDate = orderRes?.order_data?.created_at;
+  const formatted = orderDate
+  ? new Date(orderDate).toLocaleString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+      timeZone: "Asia/Kolkata",
+    })
+  : "";
+  const shippingAddressRaw  = orderRes?.order_data?.shipping_address;
+  const shipping = (() => {
+    try {
+      return shippingAddressRaw ? JSON.parse(shippingAddressRaw) : null;
+    } catch (e) {
+      console.error("Invalid shipping_address JSON:", e);
+      return null;
+    }
+  })();
+  const grand_total = orderRes?.order_data?.grand_total;
+  const formattedGrandTotal =
+  grand_total !== undefined && grand_total !== null
+    ? new Intl.NumberFormat("en-IN", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }).format(Number(grand_total))
+    : "0.00";
+
+  useEffect(() => {
+    if (!state?.orderRes) {
+      navigate("/confirmation");
+      return;
+    }
+    alert(orderData?.payment_type || "payment_type missing");
+  }, [state, navigate]);
+
 
   const handleCheckout = () => {
     navigate("/confirmation");
@@ -129,6 +170,14 @@ const Payment = () => {
     (addr) => addr.gst.toLowerCase() === gstInput.toLowerCase()
   );
 
+  const lines = orderData?.order_details || [];
+
+  const money = (v) =>
+    new Intl.NumberFormat("en-IN", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(Number(v || 0));
+
   const handleNoGstinChange = (e) => {
     setNoGstin(e.target.checked);
     if (e.target.checked) {
@@ -160,6 +209,47 @@ const Payment = () => {
               </div>
 
               <div className="cart-left-rgt">
+                <div className="payment-methods">
+                  <h2>Payment Type</h2>
+                  <div className="payment-methods-inner">
+                    <div className="payment-methods-inner-lft">
+                      <h5>Pay your amount by scanning the QR Code</h5>
+                      <div className="qrBox">
+                        <img src={QR} alt="qr" />
+                      </div>
+                      <h4>NOTE : This QR Code is valid for next 24 hrs</h4>
+                    </div>
+                    <div className="payment-methods-inner-rgt">
+                      <h5>Pay your amount by entering your @upi ID</h5>
+                      <div className="form-group">
+                        <label>Enter your @upi ID</label>
+                        <input
+                          type="text"
+                          className="full-input"
+                          placeholder="Enter"
+                        />
+                        <button type="submit" className="form-submit">
+                          Verify & Pay
+                        </button>
+                      </div>
+                      <h5>Transfer the amount to this account</h5>
+                      <div className="bank-details">
+                        <p>
+                          <strong>Bank Name:</strong> ICICI BANK
+                        </p>
+                        <p>
+                          <strong>Account Name:</strong> ACE TOOLS PVT LTD
+                        </p>
+                        <p>
+                          <strong>A/C No:</strong> 235605001202
+                        </p>
+                        <p>
+                          <strong>IFSC Code:</strong> ICIC0002356
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
                 <div className="payment-container">
                   <div className="Order-info">
                     <div className="Order-info-lft">
@@ -177,24 +267,28 @@ const Payment = () => {
                       <h5>Payment Summary</h5>
                       <div className="bank-details">
                         <p>
-                          <strong>Order Date:</strong> 23-11-2024 02:42 AM
+                          <strong>Order Date:</strong> {formatted}
                         </p>
                         <p>
-                          <strong>Name: </strong> The Mazing Store
+                          <strong>Name: </strong> {shipping?.name || "-"}
                         </p>
                         <p>
-                          <strong>Email:</strong> mazing@email.com
+                          <strong>Email:</strong> {shipping?.email || "-"}
                         </p>
                         <p>
-                          <strong>Shipping Address: </strong> Plot No. 123,
-                          Lane-4, Jayadev Vihar, Bhubaneswar - 751013, Khordha
-                          District, Odisha, India
+                          <strong>Shipping Address: </strong> {shipping
+                          ? `${shipping.address || ""}${shipping.city ? `, ${shipping.city}` : ""}${
+                              shipping.state ? `, ${shipping.state}` : ""
+                            }${shipping.postal_code ? ` - ${shipping.postal_code}` : ""}${
+                              shipping.country ? `, ${shipping.country}` : ""
+                            }`
+                          : "-"}
                         </p>
                         <p>
                           <strong>Order Status:</strong> Pending
                         </p>
                         <p>
-                          <strong>Total Order Amount:</strong> ₹ 29,597
+                          <strong>Total Order Amount:</strong> ₹ {formattedGrandTotal}
                         </p>
                         <p>
                           <strong>Shipping:</strong> Flat shipping rate
@@ -203,14 +297,13 @@ const Payment = () => {
                     </div>
                   </div>
                 </div>
-
                 <div className="pay-OrderDetails">
                   <h5>Order Details</h5>
                   <h4>
-                    Order Code: <span>20241123-02421121</span>
+                    Order Code: <span>{orderCode}</span>
                   </h4>
-                  <div class="pay-OrderDetails-table">
-                    <div className="statement-summary-mobile">
+                  <div className="pay-OrderDetails-table">
+                    {/* <div className="statement-summary-mobile">
                       <div className="summary-box">
                         <div>
                           <strong>Subtotal:</strong> ₹20,597
@@ -229,7 +322,7 @@ const Payment = () => {
                           <span style={{ color: "#004d84" }}>₹20,597</span>
                         </div>
                       </div>
-                    </div>
+                    </div> */}
 
                     <table className="order-table">
                       <thead>
@@ -242,7 +335,7 @@ const Payment = () => {
                           <th>Price</th>
                         </tr>
                       </thead>
-                      <tbody>
+                      {/* <tbody>
                         <tr>
                           <td data-label="S1 No.">1</td>
                           <td data-label="Product">
@@ -273,99 +366,74 @@ const Payment = () => {
                           <td data-label="Delivery Type">Carrier</td>
                           <td data-label="Price">₹15,800</td>
                         </tr>
+                      </tbody> */}
+                      <tbody>
+                        {lines.length === 0 ? (
+                          <tr>
+                            <td colSpan={6} className="text-center">No items</td>
+                          </tr>
+                        ) : (
+                          lines.map((row, idx) => (
+                            <tr key={row.id ?? idx}>
+                              <td data-label="Sl No.">{idx + 1}</td>
+
+                              <td data-label="Product">
+                                {row?.product?.billing_name || row?.product?.name || "-"}
+                                <div style={{ fontSize: 12, opacity: 0.7 }}>
+                                  Part No: {row?.product?.part_no || "-"}
+                                </div>
+                              </td>
+
+                              <td data-label="Variation">{row?.variation || "-"}</td>
+
+                              <td data-label="Quantity">{row?.quantity ?? 0}</td>
+
+                              <td data-label="Delivery Type">
+                                {orderData?.shipping_type || row?.shipping_type || "-"}
+                              </td>
+
+                              <td data-label="Price">₹{money(row?.price)}</td>
+                            </tr>
+                          ))
+                        )}
                       </tbody>
                       <tfoot>
-                        <tr>
-                          <td></td>
-                          <td></td>
-                          <td></td>
-                          <td>Subtotal</td>
-                          <td></td>
-                          <td>₹20,597</td>
-                        </tr>
-                        <tr>
-                          <td></td>
-                          <td></td>
-                          <td></td>
-                          <td>Shipping</td>
-                          <td></td>
+    <tr>
+      <td></td><td></td><td></td>
+      <td>Subtotal</td>
+      <td></td>
+      <td>₹{money(orderRes?.normal_item_subtotal ?? orderData?.grand_total)}</td>
+    </tr>
 
-                          <td>₹0.0</td>
-                        </tr>
-                        <tr>
-                          <td></td>
-                          <td></td>
-                          <td></td>
-                          <td>Tax</td>
-                          <td></td>
+    <tr>
+      <td></td><td></td><td></td>
+      <td>Shipping</td>
+      <td></td>
+      <td>₹{money(lines.reduce((s, r) => s + Number(r?.shipping_cost || 0), 0))}</td>
+    </tr>
 
-                          <td>₹0.0</td>
-                        </tr>
-                        <tr>
-                          <td></td>
-                          <td></td>
-                          <td></td>
-                          <td>Coupon Discount</td>
-                          <td></td>
+    <tr>
+      <td></td><td></td><td></td>
+      <td>Tax</td>
+      <td></td>
+      <td>₹{money(lines.reduce((s, r) => s + Number(r?.tax || 0), 0))}</td>
+    </tr>
 
-                          <td>₹0.0</td>
-                        </tr>
-                        <tr>
-                          <td></td>
-                          <td></td>
-                          <td></td>
-                          <td>Total</td>
-                          <td></td>
+    <tr>
+      <td></td><td></td><td></td>
+      <td>Coupon Discount</td>
+      <td></td>
+      <td>₹{money(orderData?.coupon_discount)}</td>
+    </tr>
 
-                          <td>₹20,597</td>
-                        </tr>
-                      </tfoot>
+    <tr>
+      <td></td><td></td><td></td>
+      <td><strong>Total</strong></td>
+      <td></td>
+      <td><strong>₹{money(orderData?.grand_total)}</strong></td>
+    </tr>
+  </tfoot>
                     </table>
-                  </div>
-                </div>
-
-                <div className="payment-methods">
-                  <h2>Payment Type</h2>
-
-                  <div className="payment-methods-inner">
-                    <div className="payment-methods-inner-lft">
-                      <h5>Pay your amount by scanning the QR Code</h5>
-                      <div className="qrBox">
-                        <img src={QR} alt="qr" />
-                      </div>
-
-                      <h4>NOTE : This QR Code is valid for next 24 hrs</h4>
-                    </div>
-
-                    <div className="payment-methods-inner-rgt">
-                      <h5>Pay your amount by entering your @upi ID</h5>
-                      <div className="form-group">
-                        <label>Enter your @upi ID</label>
-                        <input
-                          type="text"
-                          className="full-input"
-                          placeholder="Enter"
-                        />
-                        <button type="submit" className="form-submit">
-                          Verify & Pay
-                        </button>
-                      </div>
-                      <h5>Transfer the amount to this account</h5>
-                      <div className="bank-details">
-                        <p>
-                          <strong>Bank Name:</strong> ICICI BANK
-                        </p>
-                        <p>
-                          <strong>Account Name:</strong> ACE TOOLS PVT LTD
-                        </p>
-                        <p>
-                          <strong>A/C No:</strong> 235605001202
-                        </p>
-                        <p>
-                          <strong>IFSC Code:</strong> ICIC0002356
-                        </p>
-                      </div>
-                    </div>
                   </div>
                 </div>
               </div>
@@ -403,7 +471,7 @@ const Payment = () => {
                 </button>
               </div>
             </div> */}
-            <CartSummary />
+            {/* <CartSummary /> */}
           </div>
         </div>
       </MainLayout>
