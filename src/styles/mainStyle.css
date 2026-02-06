@@ -5697,6 +5697,17 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
 
+.payment-success {
+  width: 100%;
+  border-radius: 10px;
+  padding: 20px;
+  position: relative;
+  background: #fff;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  margin-bottom: 17px;
+  text-align: center;
+}
+
 .product-section table {
   width: 100%;
 }

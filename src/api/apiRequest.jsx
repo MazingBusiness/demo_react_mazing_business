@@ -514,3 +514,20 @@ export const orderSubmit = async () => {
   return response;
 };
 
+export const paymentStatus = async (merchant_tran_id) => {
+  const header = getHeader();
+  const queryParams = new URLSearchParams();
+  if (merchant_tran_id != null) queryParams.append("merchant_tran_id", String(merchant_tran_id));
+  const url = `${API_BASE_URL}cart/check-payment-status?${queryParams.toString()}`;
+  const response = await fetch(url, {
+    method: "GET",
+    headers: { Accept: "application/json", ...(header.headers || {}) },
+  });
+  console.log(response);
+  // throws if not 2xx (optional but useful)
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(`paymentStatus failed: ${response.status} ${text}`);
+  }
+  return response.json(); // ✅ { res: false, status: "PENDING" }
+};

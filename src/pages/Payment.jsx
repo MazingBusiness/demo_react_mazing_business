@@ -17,6 +17,8 @@ import PaidIcon from "../assets/icons/PaidIcon.svg";
 import Modal from "../components/Modal";
 import CartSummary from "../components/CartSummary.jsx";
 
+import { paymentStatus } from "../api/apiRequest";
+
 const Payment = () => {
   const [agreeToTerms, setAgreeToTerms] = useState(false);
   const [upiId, setUpiId] = useState("");
@@ -65,7 +67,8 @@ const Payment = () => {
       navigate("/confirmation");
       return;
     }
-    alert(orderData?.payment_type || "payment_type missing");
+    // alert(orderData?.payment_type || "payment_type missing");
+    // alert(merchant_tran_id || "merchant_tran_id");
   }, [state, navigate]);
 
 
@@ -151,17 +154,17 @@ const Payment = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const statesOfIndia = ["Andhra Pradesh", "Arunachal Pradesh"];
+  // const statesOfIndia = ["Andhra Pradesh", "Arunachal Pradesh"];
 
-  const countryofWorld = ["India", "English"];
-  const [selectedCountry, setSelectedCountry] = useState("");
-  const [countryDropdownOpen, setCountryDropdownOpen] = useState(false);
-  const countryRef = useRef();
+  // const countryofWorld = ["India", "English"];
+  // const [selectedCountry, setSelectedCountry] = useState("");
+  // const [countryDropdownOpen, setCountryDropdownOpen] = useState(false);
+  // const countryRef = useRef();
 
-  const cityList = ["Delhi", "Mumbai", "Kolkata", "Bangalore"]; // update as needed
-  const [selectedCity, setSelectedCity] = useState("");
-  const [cityDropdownOpen, setCityDropdownOpen] = useState(false);
-  const cityRef = useRef();
+  // const cityList = ["Delhi", "Mumbai", "Kolkata", "Bangalore"]; // update as needed
+  // const [selectedCity, setSelectedCity] = useState("");
+  // const [cityDropdownOpen, setCityDropdownOpen] = useState(false);
+  // const cityRef = useRef();
 
   const [gstInput, setGstInput] = useState("");
 
@@ -184,6 +187,47 @@ const Payment = () => {
       setGstInput(""); // Clear GSTIN input when checkbox is checked
     }
   };
+
+  // Payment status check
+  const merchant_tran_id = orderRes?.merchant_tran_id;
+  const [payStatus, setPayStatus] = useState("PENDING"); // PENDING | SUCCESS | FAILED (if any)
+  const [checking, setChecking] = useState(false);
+  const [error, setError] = useState("");
+  const intervalRef = useRef(null);
+  useEffect(() => {
+    if (!merchant_tran_id) return;
+    let cancelled = false;
+    const checkOnce = async () => {
+      try {
+        setChecking(true);
+        setError("");
+        const data = await paymentStatus(merchant_tran_id); // {res, status}
+        if (cancelled) return;
+        const status = String(data?.status || "").toUpperCase();
+        if (status) setPayStatus(status);
+        // ✅ stop polling on SUCCESS
+        if (status === "SUCCESS") {
+          if (intervalRef.current) clearInterval(intervalRef.current);
+          intervalRef.current = null;
+        }
+      } catch (e) {
+        if (!cancelled) setError(e?.message || "Payment status check failed");
+      } finally {
+        if (!cancelled) setChecking(false);
+      }
+    };
+
+    // First call immediately
+    checkOnce();
+    // Poll every 2 seconds
+    intervalRef.current = setInterval(checkOnce, 3000);
+    // Cleanup on unmount / merchant id change
+    return () => {
+      cancelled = true;
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    };
+  }, [merchant_tran_id]);
 
   return (
     <div className="CartBody ConfirmationBody">
@@ -209,47 +253,55 @@ const Payment = () => {
               </div>
 
               <div className="cart-left-rgt">
-                <div className="payment-methods">
-                  <h2>Payment Type</h2>
-                  <div className="payment-methods-inner">
-                    <div className="payment-methods-inner-lft">
-                      <h5>Pay your amount by scanning the QR Code</h5>
-                      <div className="qrBox">
-                        <img src={QR} alt="qr" />
+                {payStatus === "SUCCESS" ? (
+                  <div className="payment-success">
+                    <img src={PaidIcon} alt="success" style={{ width: 120 }} />
+                    <h2>Payment Successful</h2>
+                    <p>Your payment has been received. Thank you!</p>
+                  </div>
+                ) : (
+                  <div className="payment-methods">
+                    <h2>Payment Type</h2>
+                    <div className="payment-methods-inner">
+                      <div className="payment-methods-inner-lft">
+                        <h5>Pay your amount by scanning the QR Code</h5>
+                        <div className="qrBox">
+                          <img src={QR} alt="qr" />
+                        </div>
+                        <h4>NOTE : This QR Code is valid for next 24 hrs</h4>
                       </div>
-                      <h4>NOTE : This QR Code is valid for next 24 hrs</h4>
-                    </div>
-                    <div className="payment-methods-inner-rgt">
-                      <h5>Pay your amount by entering your @upi ID</h5>
-                      <div className="form-group">
-                        <label>Enter your @upi ID</label>
-                        <input
-                          type="text"
-                          className="full-input"
-                          placeholder="Enter"
-                        />
-                        <button type="submit" className="form-submit">
-                          Verify & Pay
-                        </button>
-                      </div>
-                      <h5>Transfer the amount to this account</h5>
-                      <div className="bank-details">
-                        <p>
-                          <strong>Bank Name:</strong> ICICI BANK
-                        </p>
-                        <p>
-                          <strong>Account Name:</strong> ACE TOOLS PVT LTD
-                        </p>
-                        <p>
-                          <strong>A/C No:</strong> 235605001202
-                        </p>
-                        <p>
-                          <strong>IFSC Code:</strong> ICIC0002356
-                        </p>
+                      <div className="payment-methods-inner-rgt">
+                        <h5>Pay your amount by entering your @upi ID</h5>
+                        <div className="form-group">
+                          <label>Enter your @upi ID</label>
+                          <input
+                            type="text"
+                            className="full-input"
+                            placeholder="Enter"
+                          />
+                          <button type="submit" className="form-submit">
+                            Verify & Pay
+                          </button>
+                        </div>
+                        <h5>Transfer the amount to this account</h5>
+                        <div className="bank-details">
+                          <p>
+                            <strong>Bank Name:</strong> ICICI BANK
+                          </p>
+                          <p>
+                            <strong>Account Name:</strong> ACE TOOLS PVT LTD
+                          </p>
+                          <p>
+                            <strong>A/C No:</strong> 235605001202
+                          </p>
+                          <p>
+                            <strong>IFSC Code:</strong> ICIC0002356
+                          </p>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
+                )}
                 <div className="payment-container">
                   <div className="Order-info">
                     <div className="Order-info-lft">
@@ -262,7 +314,6 @@ const Payment = () => {
                         </p>
                       </div>
                     </div>
-
                     <div className="Order-info-rgt">
                       <h5>Payment Summary</h5>
                       <div className="bank-details">
@@ -335,38 +386,6 @@ const Payment = () => {
                           <th>Price</th>
                         </tr>
                       </thead>
-                      {/* <tbody>
-                        <tr>
-                          <td data-label="S1 No.">1</td>
-                          <td data-label="Product">
-                            Bosch Rexroth Hydraulic Pump
-                          </td>
-                          <td data-label="Variation">Variation</td>
-                          <td data-label="Quantity">1</td>
-                          <td data-label="Delivery Type">Carrier</td>
-                          <td data-label="Price">₹15,800</td>
-                        </tr>
-                        <tr>
-                          <td data-label="S1 No.">2</td>
-                          <td data-label="Product">
-                            Bosch Rexroth Hydraulic Pump
-                          </td>
-                          <td data-label="Variation">Variation</td>
-                          <td data-label="Quantity">1</td>
-                          <td data-label="Delivery Type">Carrier</td>
-                          <td data-label="Price">₹15,800</td>
-                        </tr>
-                        <tr>
-                          <td data-label="S1 No.">3</td>
-                          <td data-label="Product">
-                            Bosch Rexroth Hydraulic Pump
-                          </td>
-                          <td data-label="Variation">Variation</td>
-                          <td data-label="Quantity">1</td>
-                          <td data-label="Delivery Type">Carrier</td>
-                          <td data-label="Price">₹15,800</td>
-                        </tr>
-                      </tbody> */}
                       <tbody>
                         {lines.length === 0 ? (
                           <tr>
@@ -398,41 +417,41 @@ const Payment = () => {
                         )}
                       </tbody>
                       <tfoot>
-    <tr>
-      <td></td><td></td><td></td>
-      <td>Subtotal</td>
-      <td></td>
-      <td>₹{money(orderRes?.normal_item_subtotal ?? orderData?.grand_total)}</td>
-    </tr>
+                        <tr>
+                          <td></td><td></td><td></td>
+                          <td>Subtotal</td>
+                          <td></td>
+                          <td>₹{money(orderRes?.normal_item_subtotal ?? orderData?.grand_total)}</td>
+                        </tr>
 
-    <tr>
-      <td></td><td></td><td></td>
-      <td>Shipping</td>
-      <td></td>
-      <td>₹{money(lines.reduce((s, r) => s + Number(r?.shipping_cost || 0), 0))}</td>
-    </tr>
+                        <tr>
+                          <td></td><td></td><td></td>
+                          <td>Shipping</td>
+                          <td></td>
+                          <td>₹{money(lines.reduce((s, r) => s + Number(r?.shipping_cost || 0), 0))}</td>
+                        </tr>
 
-    <tr>
-      <td></td><td></td><td></td>
-      <td>Tax</td>
-      <td></td>
-      <td>₹{money(lines.reduce((s, r) => s + Number(r?.tax || 0), 0))}</td>
-    </tr>
+                        <tr>
+                          <td></td><td></td><td></td>
+                          <td>Tax</td>
+                          <td></td>
+                          <td>₹{money(lines.reduce((s, r) => s + Number(r?.tax || 0), 0))}</td>
+                        </tr>
 
-    <tr>
-      <td></td><td></td><td></td>
-      <td>Coupon Discount</td>
-      <td></td>
-      <td>₹{money(orderData?.coupon_discount)}</td>
-    </tr>
+                        <tr>
+                          <td></td><td></td><td></td>
+                          <td>Coupon Discount</td>
+                          <td></td>
+                          <td>₹{money(orderData?.coupon_discount)}</td>
+                        </tr>
 
-    <tr>
-      <td></td><td></td><td></td>
-      <td><strong>Total</strong></td>
-      <td></td>
-      <td><strong>₹{money(orderData?.grand_total)}</strong></td>
-    </tr>
-  </tfoot>
+                        <tr>
+                          <td></td><td></td><td></td>
+                          <td><strong>Total</strong></td>
+                          <td></td>
+                          <td><strong>₹{money(orderData?.grand_total)}</strong></td>
+                        </tr>
+                      </tfoot>
                     </table>
                   </div>
                 </div>
