@@ -63,9 +63,9 @@ const ProfileSidebar = () => {
         </NavLink>
 
         <NavLink
-          to="/profileOrder"
+          to="/profile-order"
           className={`sidebar-menu-item ${
-            isActive("/profileOrder") ? "active" : ""
+            isActive("/profile-order") ? "active" : ""
           }`}
         >
           <span className="menu-icon">
@@ -73,8 +73,17 @@ const ProfileSidebar = () => {
           </span>
           <span className="menu-title">My Order</span>
         </NavLink>
-
-        <NavLink
+        <NavLink to="/statement"
+          className={`sidebar-menu-item ${
+            isActive("/statement") ? "active" : ""
+          }`}
+        >
+          <span className="menu-icon">
+            <img src={icon4} alt="Statement" />
+          </span>
+          <span className="menu-title">Statement</span>
+        </NavLink>
+        {/*<NavLink
           to="/manage-profile"
           className={`sidebar-menu-item ${
             isActive("/manage-profile") ? "active" : ""
@@ -85,20 +94,7 @@ const ProfileSidebar = () => {
           </span>
           <span className="menu-title">Manage Profile</span>
         </NavLink>
-
-        <NavLink
-          to="/statement"
-          className={`sidebar-menu-item ${
-            isActive("/statement") ? "active" : ""
-          }`}
-        >
-          <span className="menu-icon">
-            <img src={icon4} alt="Statement" />
-          </span>
-          <span className="menu-title">Statement</span>
-        </NavLink>
-
-        <NavLink
+         <NavLink
           to="/rewards"
           className={`sidebar-menu-item ${
             isActive("/rewards") ? "active" : ""
@@ -142,7 +138,7 @@ const ProfileSidebar = () => {
             <img src={icon8} alt="Wallet" />
           </span>
           <span className="menu-title">My Wallet</span>
-        </NavLink>
+        </NavLink> */}
       </nav>
 
       <div className="logout-section">

@@ -531,3 +531,82 @@ export const paymentStatus = async (merchant_tran_id) => {
   }
   return response.json(); // ✅ { res: false, status: "PENDING" }
 };
+
+export const getMyOrders = async ({ page = 1, per_page = 15 } = {}) => {
+  try {
+    const header = getHeader?.() || {};
+    const queryParams = new URLSearchParams();
+    queryParams.append("page", String(page));
+    queryParams.append("per_page", String(per_page));
+    const url = `${API_BASE_URL}user/my-order?${queryParams.toString()}`;
+    const response = await fetch(url, {
+      method: "GET",
+      headers: {
+        Accept: "application/json",
+        ...(header.headers || {}), // includes Authorization if your app uses token
+      },
+    });
+    const text = await response.text();
+    let json = null;
+
+    try {
+      json = JSON.parse(text);
+    } catch (e) {
+      // not JSON
+    }
+    if (!response.ok) {
+      return {
+        res: false,
+        msg: json?.message || json?.msg || `HTTP ${response.status}`,
+        debug: { url, status: response.status, body: text },
+      };
+    }
+    return json || { res: false, msg: "Invalid JSON response", debug: { url, body: text } };
+  } catch (err) {
+    return { res: false, msg: err?.message || "Network error" };
+  }
+};
+
+export const getOrderDetails = async (order_id) => {
+  const header = getHeader?.() || {};
+  const url = `${API_BASE_URL}user/order-details?order_id=${order_id}`; 
+  // or: `${API_BASE_URL}/user/my-order/${order_id}` depending on your backend
+
+  const response = await fetch(url, {
+    method: "GET",
+    headers: {
+      Accept: "application/json",
+      ...(header.headers || {}),
+    },
+  });
+  const data = await response.json();
+  return data;
+};
+
+export const downloadInvoice = async (orderId) => {
+  const header = getHeader?.() || {};
+  const url = `${API_BASE_URL}user/download-invoice?id=${encodeURIComponent(orderId)}`;
+
+  const res = await fetch(url, {
+    method: "GET",
+    headers: { Accept: "application/json", ...(header.headers || {}) },
+  });
+
+  return await res.json(); // { pdf_url: "..." }
+};
+
+export const getStatementList = async () => {
+  const header = getHeader?.() || {};
+  const url = `${API_BASE_URL}user/statement-list`;
+
+  const response = await fetch(url, {
+    method: "GET",
+    headers: {
+      Accept: "application/json",
+      ...(header.headers || {}),
+    },
+  });
+
+  const data = await response.json();
+  return data; // { res, msg, data:[], dueAmount, overdueAmount }
+};

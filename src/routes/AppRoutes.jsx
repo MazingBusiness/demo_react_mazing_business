@@ -66,7 +66,7 @@ const AppRoutes = () => (
       <Route path="/profile-order-details" element={<PrivateRoute><ProfileOrderDetails /></PrivateRoute>} />
       <Route path="/manage-profile" element={<PrivateRoute><ManageProfile /></PrivateRoute>} />
       <Route path="/statement" element={<PrivateRoute><ProfileStatement /></PrivateRoute>} />
-      <Route path="/profileStatementDetails" element={<PrivateRoute><ProfileStatementDetails /></PrivateRoute>} />
+      <Route path="/profile-statement-details" element={<PrivateRoute><ProfileStatementDetails /></PrivateRoute>} />
       <Route path="/rewards" element={<PrivateRoute><ProfileRewards /></PrivateRoute>} />
       <Route path="/wishlist" element={<PrivateRoute><ProfileWishlist /></PrivateRoute>} />
       <Route path="/support-tickets" element={<PrivateRoute><ProfileSupportTicket /></PrivateRoute>} />

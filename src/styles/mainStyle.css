@@ -2662,7 +2662,7 @@ a.all-link svg {
   border-radius: 12px;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
   overflow-x: auto;
-  height: 300px;
+  /* height: 300px; */
   overflow-y: auto;
 }
 
@@ -2737,12 +2737,40 @@ a.all-link svg {
   gap: 8px;
 }
 
-.ordertbl-icon-btn {
+/* .ordertbl-icon-btn {
   border: none;
   background: transparent;
   outline: none;
   cursor: pointer;
+} */
+
+.ordertbl-icon-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
+
+.ordertbl-icon-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.btn-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(0, 0, 0, 0.2);
+  border-top-color: rgba(0, 0, 0, 0.75);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 
 .order-table-hr {
   width: 100%;
@@ -2909,12 +2937,47 @@ a.all-link svg {
   color: #004d84;
 }
 
-.invoice-btn {
+/* .invoice-btn {
   border: none;
   outline: none;
   cursor: pointer;
   border-radius: 22px;
   background: none;
+  background: transparent;
+  align-items: center;
+} */
+
+.invoice-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.invoice-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* Spinner */
+.btn-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(0, 0, 0, 0.2);
+  border-top-color: rgba(0, 0, 0, 0.75);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .order-section {
@@ -7517,6 +7580,8 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   justify-content: center;
   align-items: center;
 }
+
+
 
 /* ----------------------------------------- */
 /* ADD MORE PRODUCT BUTTON                   */
