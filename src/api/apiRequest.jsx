@@ -442,7 +442,6 @@ export const removeOffer = async (offer_id) => {
   console.log(response);
   return response;
 };
-
 export const statementDownload = async () => {
   const header = getHeader();
   const url = `${API_BASE_URL}user/statement-download`;
@@ -458,6 +457,22 @@ export const statementDownload = async () => {
 
   const json = await res.json(); // ✅ read response body
   return json; // { pdf_url: "..." }
+};
+
+export const downloadUserStatement = async ({ party_code, data_from = "live" }) => {
+  const params = new URLSearchParams();
+  params.append("party_code", party_code);
+  if (data_from) params.append("data_from", data_from);
+
+  const res = await fetch(
+    `${API_BASE_URL}user/statement-download?${params.toString()}`,
+    {
+      method: "GET",
+      headers: { Accept: "application/json", ...(getHeader()?.headers || {}) },
+    }
+  );
+
+  return res.json(); // { pdf_url: "https://....pdf" }
 };
 
 export const userDetails = async () => {
@@ -609,4 +624,59 @@ export const getStatementList = async () => {
 
   const data = await response.json();
   return data; // { res, msg, data:[], dueAmount, overdueAmount }
+};
+
+export const getStatementDetails = async ({party_code, data_from = "database", from_date = "", to_date = "", }) => {
+  const params = new URLSearchParams();
+  params.append("party_code", party_code); // ✅ mandatory
+  if (data_from) params.append("data_from", data_from);
+  if (from_date) params.append("from_date", from_date);
+  if (to_date) params.append("to_date", to_date);
+
+  const res = await fetch(`${API_BASE_URL}user/statement-details?${params.toString()}`, {
+    method: "GET",
+    headers: { Accept: "application/json", ...(getHeader()?.headers || {}) },
+  });
+
+  return res.json();
+};
+
+export const refreshStatementDetails = async ({party_code, data_from = "live" }) => {
+  const params = new URLSearchParams();
+  params.append("party_code", party_code); // ✅ mandatory
+  if (data_from) params.append("data_from", data_from);
+  const res = await fetch(`${API_BASE_URL}user/refresh-statement?${params.toString()}`, {
+    method: "GET",
+    headers: { Accept: "application/json", ...(getHeader()?.headers || {}) },
+  });
+  return res.json();
+};
+
+export const getTotalOrderCount = async (orderId) => {
+  const header = getHeader?.() || {};
+  const url = `${API_BASE_URL}user/total-count-of-order`;
+
+  const res = await fetch(url, {
+    method: "GET",
+    headers: { Accept: "application/json", ...(header.headers || {}) },
+  });
+
+  return await res.json(); // { pdf_url: "..." }
+};
+
+export const sendStatementWhatsapp = async ({ party_code, data_from = "live" }) => {
+  const params = new URLSearchParams();
+  params.append("party_code", party_code); // ✅ mandatory
+  if (data_from) params.append("data_from", data_from);
+
+  const res = await fetch(
+    `${API_BASE_URL}user/send-statement?${params.toString()}`,
+    {
+      method: "GET",
+      headers: { Accept: "application/json", ...(getHeader()?.headers || {}) },
+    }
+  );
+
+  return res.json(); 
+  // { res: true/false, msg: "...", url: "..." }
 };

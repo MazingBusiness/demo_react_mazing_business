@@ -65,7 +65,10 @@ const ProfileStatement = () => {
 
   const goDetails = (item) => {
     navigate("/profile-statement-details", {
-      state: { acc_code: item.acc_code, data_from: "database" },
+      state: {
+        party_code: item.acc_code,     // ✅ mandatory param
+        data_from: "database",
+      },
     });
   };
 

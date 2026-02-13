@@ -1,24 +1,247 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import UserProfileLayout from "../../layouts/UserProfileLayout";
 import { IoIosArrowBack } from "react-icons/io";
-import { useNavigate, Link } from "react-router-dom";
+import { useLocation, Link } from "react-router-dom";
+
 import Paycust from "../../assets/icons/paycust.svg";
 import DownloadCloud from "../../assets/icons/DownloadCloud.svg";
 import WhatsButton from "../../assets/icons/WhatsButton.svg";
 import calendarIcon from "../../assets/icons/calendar-icon.svg";
 import RefreshIcon from "../../assets/icons/refresh-btn-Icon.svg";
 
+import { getStatementDetails, refreshStatementDetails, downloadUserStatement } from "../../api/apiRequest";
+
+const money = (val) => {
+  const n = Number(val || 0);
+  return n.toLocaleString("en-IN", { style: "currency", currency: "INR" });
+};
+
+const formatDateDMY = (yyyy_mm_dd) => {
+  if (!yyyy_mm_dd) return "";
+  const d = new Date(yyyy_mm_dd);
+  if (Number.isNaN(d.getTime())) return yyyy_mm_dd;
+  return d.toLocaleDateString("en-GB"); // dd/mm/yyyy
+};
+
 const ProfileStatementDetails = () => {
+  const location = useLocation();
+
+  // ✅ coming from navigate state
+  const partyCode = location?.state?.party_code || location?.state?.acc_code || "";
+  const dataFrom = location?.state?.data_from || "database";
+
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [rows, setRows] = useState([]);
+  const [summary, setSummary] = useState({
+    dueAmount: 0,
+    overdueAmount: 0,
+    totalDrBalance: 0,
+    totalCrBalance: 0,
+    clossingDrBalance: 0,
+    clossingCrBalance: 0,
+    grandTotalDrBalance: 0,
+    grandTotalCrBalance: 0,
+  });
 
   const fromInputRef = useRef(null);
   const toInputRef = useRef(null);
 
-  const handleRefresh = () => {
-    setFromDate("");
-    setToDate("");
+  const fetchData = async (opts = {}) => {
+    if (!partyCode) {
+      setError("Party code missing. Please go back and open details again.");
+      return;
+    }
+    setLoading(true);
+    setError("");
+
+    try {
+      const json = await getStatementDetails({
+        party_code: partyCode,
+        data_from: dataFrom,
+        from_date: opts.from_date ?? fromDate,
+        to_date: opts.to_date ?? toDate,
+      });
+
+      if (!json?.res) {
+        setRows([]);
+        setSummary((p) => ({ ...p }));
+        setError(json?.msg || "Failed to fetch statement.");
+        return;
+      }
+
+      setRows(Array.isArray(json.data) ? json.data : []);
+
+      setSummary({
+        dueAmount: json.dueAmount ?? 0,
+        overdueAmount: json.overdueAmount ?? 0,
+        totalDrBalance: json.totalDrBalance ?? 0,
+        totalCrBalance: json.totalCrBalance ?? 0,
+        clossingDrBalance: json.clossingDrBalance ?? 0,
+        clossingCrBalance: json.clossingCrBalance ?? 0,
+        grandTotalDrBalance: json.grandTotalDrBalance ?? 0,
+        grandTotalCrBalance: json.grandTotalCrBalance ?? 0,
+      });
+    } catch (e) {
+      setError(e?.message || "Something went wrong.");
+    } finally {
+      setLoading(false);
+    }
   };
+
+  const refreshStatement = async (opts = {}) => {
+    if (!partyCode) {
+      setError("Party code missing. Please go back and open details again.");
+      return;
+    }
+    setLoading(true);
+    setError("");
+
+    try {
+      const json = await refreshStatementDetails({
+        party_code: partyCode,
+        data_from: 'live'
+      });
+
+      if (!json?.res) {
+        setRows([]);
+        setSummary((p) => ({ ...p }));
+        setError(json?.msg || "Failed to fetch statement.");
+        return;
+      }
+
+      setRows(Array.isArray(json.data) ? json.data : []);
+
+      setSummary({
+        dueAmount: json.dueAmount ?? 0,
+        overdueAmount: json.overdueAmount ?? 0,
+        totalDrBalance: json.totalDrBalance ?? 0,
+        totalCrBalance: json.totalCrBalance ?? 0,
+        clossingDrBalance: json.clossingDrBalance ?? 0,
+        clossingCrBalance: json.clossingCrBalance ?? 0,
+        grandTotalDrBalance: json.grandTotalDrBalance ?? 0,
+        grandTotalCrBalance: json.grandTotalCrBalance ?? 0,
+      });
+    } catch (e) {
+      setError(e?.message || "Something went wrong.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const forceDownload = (fileUrl, fileName = "statement.pdf") => {
+    const a = document.createElement("a");
+    a.href = fileUrl;
+    a.setAttribute("download", fileName); // hint to download
+    a.setAttribute("target", "_blank");   // fallback if browser ignores download
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  };
+
+  const StatementDownloadBtn = ({ party_code, data_from = "live" }) => {
+  const [downloading, setDownloading] = useState(false);
+
+  const downloadStatement = async () => {
+    if (!party_code || downloading) return;
+
+    try {
+      setDownloading(true);
+
+      const r = await downloadUserStatement({ party_code, data_from });
+
+      if (r?.pdf_url) {
+        window.open(r.pdf_url, "_blank", "noopener,noreferrer");
+      } else {
+        console.log("pdf_url missing:", r);
+        alert("PDF link not found");
+      }
+    } catch (err) {
+      console.error("Statement download failed:", err);
+      alert("Failed to download statement");
+    } finally {
+      setDownloading(false);
+    }
+  };
+
+  return (
+    <button
+      className="invoice-btn"
+      type="button"
+      onClick={downloadStatement}
+      disabled={downloading}
+      title="Download Statement"
+      style={{ position: "relative" }}
+    >
+      {/* icon */}
+      <img
+        src={DownloadCloud}
+        alt="download"
+        style={{ opacity: downloading ? 0.25 : 1 }}
+      />
+
+      {/* spinner overlay */}
+      {downloading && (
+        <span
+          className="btn-spinner"
+          style={{
+            position: "absolute",
+            left: "50%",
+            top: "50%",
+            transform: "translate(-50%, -50%)",
+          }}
+        />
+      )}
+    </button>
+  );
+};
+
+  const [downloading, setDownloading] = useState(false);
+  const downloadStatement = async () => {
+    setDownloading(true);
+    try {
+      const data = await statementDownload();
+      if (!data?.pdf_url) throw new Error("pdf_url not found");
+
+      const fileName = data.pdf_url.split("/").pop() || "statement.pdf";
+      forceDownload(data.pdf_url, fileName);
+      setDownloading(false);
+    } catch (e) {
+      console.error(e);
+      alert(e.message || "Download failed");
+    }
+  };
+
+  // ✅ first load
+  useEffect(() => {
+    fetchData({ from_date: "", to_date: "" });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [partyCode]);
+
+  const handleSearch = () => {
+    // optional validation
+    if (fromDate && toDate && new Date(fromDate) > new Date(toDate)) {
+      setError("From Date cannot be greater than To Date.");
+      return;
+    }
+    fetchData();
+  };
+
+  const handleRefresh = () => {
+    refreshStatement()
+  };
+
+  const computedTotals = useMemo(() => {
+    // If API already gives totals, you can skip this.
+    // But sometimes you want totals only from visible transactions
+    const totalDr = rows.reduce((s, r) => s + Number(r?.dramount || 0), 0);
+    const totalCr = rows.reduce((s, r) => s + Number(r?.cramount || 0), 0);
+    return { totalDr, totalCr };
+  }, [rows]);
+
   return (
     <UserProfileLayout>
       <div className="order-details">
@@ -29,19 +252,22 @@ const ProfileStatementDetails = () => {
                 <IoIosArrowBack />
                 My Statement
               </Link>
-              / Party Code: <span>OPEL0100087</span>
+              / Party Code: <span>{partyCode || "-"}</span>
             </div>
           </div>
-
           <div className="orderdetailsHrRgt">
-            <button className="invoice-btn">
+            {/* <button className="invoice-btn" type="button">
               <img src={Paycust} alt="paycust" />
-            </button>
-            <button className="invoice-btn">
-              <img src={DownloadCloud} alt="User" />
-            </button>
-            <button className="invoice-btn">
-              <img src={WhatsButton} alt="User" />
+            </button> */}
+            {/* <button className="invoice-btn" type="button" onClick={() => downloadStatement()}>
+              <img src={DownloadCloud} alt="download" />
+            </button> */}
+            <StatementDownloadBtn party_code={partyCode} data_from="live" />
+            {/* <button clStatementDownloadBtnassName="download-pdf" onClick={() => downloadStatement()}>
+              <BsCloudArrowDownFill /> {downloading ? "Downloading..." : "Download Statement"}
+            </button> */}
+            <button className="invoice-btn" type="button">
+              <img src={WhatsButton} alt="whatsapp" />
             </button>
           </div>
         </div>
@@ -60,7 +286,6 @@ const ProfileStatementDetails = () => {
                 value={fromDate}
                 onChange={(e) => {
                   setFromDate(e.target.value);
-                  // Clear toDate if it becomes invalid
                   if (toDate && new Date(e.target.value) > new Date(toDate)) {
                     setToDate("");
                   }
@@ -91,10 +316,12 @@ const ProfileStatementDetails = () => {
               </span>
             </div>
 
-            <button className="search-btn">Search</button>
+            <button className="search-btn" type="button" onClick={handleSearch} disabled={loading}>
+              {loading ? "Searching..." : "Search"}
+            </button>
           </div>
 
-          <button className="refresh-btn" onClick={handleRefresh}>
+          <button className="refresh-btn" type="button" onClick={handleRefresh} disabled={loading}>
             <img src={RefreshIcon} alt="RefreshIcon" />
           </button>
         </div>
@@ -104,6 +331,8 @@ const ProfileStatementDetails = () => {
             <h2>Statement</h2>
           </div>
         </div>
+
+        {error ? <div className="alert alert-danger">{error}</div> : null}
 
         {/* Table */}
         <div className="order-table-container statement-table-container">
@@ -120,65 +349,83 @@ const ProfileStatementDetails = () => {
                 <th>Overdue By Day</th>
               </tr>
             </thead>
+
             <tbody>
-              <tr>
-                <td>31-07-2024</td>
-                <td>SALES (Partial Overdue)</td>
-                <td>DEL/0001/24-25</td>
-                <td>
-                  <span className="red">₹ 1,606</span>
-                </td>
-                <td>₹ 0</td>
-                <td>₹ 1,606</td>
-                <td>
-                  <span className="dr">Dr</span>
-                </td>
-                <td>302 Days</td>
-              </tr>
-              <tr>
-                <td>31-07-2024</td>
-                <td>SALES (Overdue)</td>
-                <td>DEL/0001/24-25</td>
-                <td className="red">
-                  <span className="red">₹ 8,340</span>
-                </td>
-                <td>₹ 0</td>
-                <td>₹ 9,946</td>
-                <td>
-                  <span className="dr">Dr</span>
-                </td>
-                <td>302 Days</td>
-              </tr>
-              <tr>
-                <td>31-07-2024</td>
-                <td>CREDIT NOTE (DISCOUNT)</td>
-                <td>CN/0002/24-25</td>
-                <td>₹ 0</td>
-                <td>₹ 1,600</td>
-                <td>₹ 1,600</td>
-                <td>
-                  <span className="cr">Cr</span>
-                </td>
-                <td>0 Days</td>
-              </tr>
-              <tr className="total-row">
-                <td colSpan="3">Total</td>
-                <td>₹ 18,286</td>
-                <td>₹ 1,600</td>
-                <td colSpan="3"></td>
-              </tr>
-              <tr className="total-row">
-                <td colSpan="3">Closing Balance</td>
-                <td>₹ 0</td>
-                <td>₹ 18,286</td>
-                <td colSpan="3"></td>
-              </tr>
-              <tr className="total-row">
-                <td colSpan="3">Grand Total</td>
-                <td>₹ 18,286</td>
-                <td>₹ 18,286</td>
-                <td colSpan="3"></td>
-              </tr>
+              {loading ? (
+                <tr>
+                  <td colSpan="8" style={{ textAlign: "center" }}>
+                    Loading...
+                  </td>
+                </tr>
+              ) : rows.length === 0 ? (
+                <tr>
+                  <td colSpan="8" style={{ textAlign: "center" }}>
+                    No records found
+                  </td>
+                </tr>
+              ) : (
+                rows.map((r, idx) => {
+                  const dr = Number(r?.dramount || 0);
+                  const cr = Number(r?.cramount || 0);
+                  const drcr = (r?.dr_or_cr || "").toLowerCase(); // "dr" / "cr"
+                  const invoiceLink = r?.invoice_download_link;
+                  const isClosing = (r?.ledgername || "").trim().toLowerCase() === "closing c/f...";
+
+                  if (!isClosing) {
+                    return (
+                      <tr
+                        key={`${r?.trn_no || "row"}-${idx}`}
+                        style={{ cursor: invoiceLink ? "pointer" : "default" }}
+                        onClick={() => {
+                          if (invoiceLink) window.open(invoiceLink, "_blank", "noopener,noreferrer");
+                        }}
+                        title={invoiceLink ? "Open invoice" : ""}
+                      >
+                        <td>{formatDateDMY(r?.trn_date)}</td>
+                        <td>{r?.vouchertypebasename || r?.ledgername || "-"}</td>
+                        <td>{r?.trn_no || "-"}</td>
+                        <td>
+                          <span className={dr > 0 ? "red" : ""}>{money(dr)}</span>
+                        </td>
+                        <td>{money(cr)}</td>
+                        <td>{money(r?.running_balance ?? r?.balance ?? 0)}</td>
+                        <td>
+                          <span className={drcr === "cr" ? "cr" : "dr"}>
+                            {(r?.dr_or_cr || "-").toString()}
+                          </span>
+                        </td>
+                        <td>{/* If API gives overdue days later, show here */}-</td>
+                      </tr>
+                    );
+                  }
+                })
+              )}
+
+              {/* Totals from API (recommended) */}
+              {!loading && rows.length > 0 ? (
+                <>
+                  <tr className="total-row">
+                    <td colSpan="3">Total</td>
+                    <td>{money(summary.totalDrBalance || computedTotals.totalDr)}</td>
+                    <td>{money(summary.totalCrBalance || computedTotals.totalCr)}</td>
+                    <td colSpan="3"></td>
+                  </tr>
+
+                  <tr className="total-row">
+                    <td colSpan="3">Closing Balance</td>
+                    <td>{money(summary.clossingCrBalance)}</td>
+                    <td>{money(summary.clossingDrBalance)}</td>
+                    <td colSpan="3"></td>
+                  </tr>
+
+                  <tr className="total-row">
+                    <td colSpan="3">Grand Total</td>
+                    <td>{money(summary.grandTotalDrBalance)}</td>
+                    <td>{money(summary.grandTotalCrBalance)}</td>
+                    <td colSpan="3"></td>
+                  </tr>
+                </>
+              ) : null}
             </tbody>
           </table>
         </div>

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import UserProfileLayout from "../../layouts/UserProfileLayout";
 import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
@@ -6,6 +6,8 @@ import dIcon1 from "../../assets/icons/dIcon1.svg";
 import dIcon2 from "../../assets/icons/dIcon2.svg";
 import dIcon3 from "../../assets/icons/dIcon3.svg";
 import Shape from "../../assets/icons/Shape.svg";
+
+import { cart, getTotalOrderCount } from "../../api/apiRequest";
 
 import {
   LineChart,
@@ -51,6 +53,10 @@ const ProfileDashbord = () => {
   const [view, setView] = useState("Monthly");
   const [date, setDate] = useState(new Date());
 
+  const [cartItems, setCartItems] = useState([]);
+  const [cartCount, setCartCount] = useState(0);
+  const [totalOrder, setTotalOrder] = useState(0);
+
   const getChartData = () => {
     if (view === "Weekly") return weeklyData;
     if (view === "Yearly") return yearlyData;
@@ -65,6 +71,49 @@ const ProfileDashbord = () => {
     { date: "6 Jul", time: "20:34", code: "202406828–11320758" },
   ];
 
+  const cartData = async () => {
+    try {
+      const responseData = await cart();
+      if (responseData.res) {
+        const cart_item = responseData.cart_item || [];
+        setCartItems(cart_item);
+        setCartCount(cart_item.length); // ✅ count
+      } else {
+        NotificationManager.error(
+          responseData.msg || "Something went wrong",
+          "",
+          2000
+        );
+      }
+    } catch (error) {
+      console.error("Fetch error:", error);
+      NotificationManager.error("Failed to load Cart", "", 2000);
+    }
+  };
+
+  const fetchTotalOrderCount  = async () => {
+    try {
+      const responseData = await getTotalOrderCount();
+      if (responseData.res) {
+        const totalOrder = responseData.totalOrder || '0';
+        setTotalOrder(totalOrder);
+      } else {
+        NotificationManager.error(
+          responseData.msg || "Something went wrong",
+          "",
+          2000
+        );
+      }
+    } catch (error) {
+      console.error("Fetch error:", error);
+      NotificationManager.error("Failed to load Cart", "", 2000);
+    }
+  };
+  
+  useEffect(() => {
+      cartData(); // first load when header renders
+      fetchTotalOrderCount ();
+  }, []);
   return (
     <UserProfileLayout>
       <div className="dashboard-container">
@@ -73,7 +122,7 @@ const ProfileDashbord = () => {
             <div className="card products">
               <h5>Products</h5>
               <span>In your cart</span>
-              <h2>03</h2>
+              <h2>{cartCount}</h2>
               <div className="card-Shape">
                 <img src={Shape} alt="Shape" />
               </div>
@@ -84,7 +133,7 @@ const ProfileDashbord = () => {
             <div className="card orders">
               <h5>Order</h5>
               <span>Total order placed</span>
-              <h2>530</h2>
+              <h2>{totalOrder}</h2>
               <div className="card-Shape">
                 <img src={Shape} alt="Shape" />
               </div>

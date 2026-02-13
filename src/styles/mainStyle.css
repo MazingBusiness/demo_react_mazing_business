@@ -2937,7 +2937,7 @@ a.all-link svg {
   color: #004d84;
 }
 
-/* .invoice-btn {
+.invoice-btn {
   border: none;
   outline: none;
   cursor: pointer;
@@ -2945,9 +2945,9 @@ a.all-link svg {
   background: none;
   background: transparent;
   align-items: center;
-} */
+}
 
-.invoice-btn {
+/* .invoice-btn {
   position: relative;
   display: inline-flex;
   align-items: center;
@@ -2957,6 +2957,35 @@ a.all-link svg {
   border: none;
   background: transparent;
   cursor: pointer;
+} */
+
+/* default small loader */
+.btn-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(0,0,0,0.2);
+  border-top-color: rgba(0,0,0,0.7);
+  border-radius: 50%;
+  display: inline-block;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.btn-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(0,0,0,0.2);
+  border-top-color: rgba(0,0,0,0.7);
+  border-radius: 50%;
+  display: inline-block;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
 .invoice-btn:disabled {
