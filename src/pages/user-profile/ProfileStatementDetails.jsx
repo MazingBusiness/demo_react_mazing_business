@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import UserProfileLayout from "../../layouts/UserProfileLayout";
 import { IoIosArrowBack } from "react-icons/io";
 import { useLocation, Link } from "react-router-dom";
+import toast from "react-hot-toast";
 
 import Paycust from "../../assets/icons/paycust.svg";
 import DownloadCloud from "../../assets/icons/DownloadCloud.svg";
@@ -9,7 +10,7 @@ import WhatsButton from "../../assets/icons/WhatsButton.svg";
 import calendarIcon from "../../assets/icons/calendar-icon.svg";
 import RefreshIcon from "../../assets/icons/refresh-btn-Icon.svg";
 
-import { getStatementDetails, refreshStatementDetails, downloadUserStatement } from "../../api/apiRequest";
+import { getStatementDetails, refreshStatementDetails, downloadUserStatement, sendStatementWhatsapp } from "../../api/apiRequest";
 
 const money = (val) => {
   const n = Number(val || 0);
@@ -143,77 +144,106 @@ const ProfileStatementDetails = () => {
   };
 
   const StatementDownloadBtn = ({ party_code, data_from = "live" }) => {
-  const [downloading, setDownloading] = useState(false);
+    const [downloading, setDownloading] = useState(false);
 
-  const downloadStatement = async () => {
-    if (!party_code || downloading) return;
+    const downloadStatement = async () => {
+      if (!party_code || downloading) return;
 
-    try {
-      setDownloading(true);
+      try {
+        setDownloading(true);
 
-      const r = await downloadUserStatement({ party_code, data_from });
+        const r = await downloadUserStatement({ party_code, data_from });
 
-      if (r?.pdf_url) {
-        window.open(r.pdf_url, "_blank", "noopener,noreferrer");
-      } else {
-        console.log("pdf_url missing:", r);
-        alert("PDF link not found");
+        if (r?.pdf_url) {
+          window.open(r.pdf_url, "_blank", "noopener,noreferrer");
+        } else {
+          console.log("pdf_url missing:", r);
+          alert("PDF link not found");
+        }
+      } catch (err) {
+        console.error("Statement download failed:", err);
+        alert("Failed to download statement");
+      } finally {
+        setDownloading(false);
       }
-    } catch (err) {
-      console.error("Statement download failed:", err);
-      alert("Failed to download statement");
-    } finally {
-      setDownloading(false);
-    }
+    };
+
+    return (
+        <button
+          className="invoice-btn"
+          type="button"
+          onClick={downloadStatement}
+          disabled={downloading}
+          title="Download Statement"
+          style={{ position: "relative" }}
+        >
+          {/* icon */}
+          <img
+            src={DownloadCloud}
+            alt="download"
+            style={{ opacity: downloading ? 0.25 : 1 }}
+          />
+
+          {/* spinner overlay */}
+          {downloading && (
+            <span
+              className="btn-spinner"
+              style={{
+                position: "absolute",
+                left: "50%",
+                top: "50%",
+                transform: "translate(-50%, -50%)",
+              }}
+            />
+          )}
+        </button>
+      );
   };
 
-  return (
-    <button
-      className="invoice-btn"
-      type="button"
-      onClick={downloadStatement}
-      disabled={downloading}
-      title="Download Statement"
-      style={{ position: "relative" }}
-    >
-      {/* icon */}
-      <img
-        src={DownloadCloud}
-        alt="download"
-        style={{ opacity: downloading ? 0.25 : 1 }}
-      />
+  const SendStatementWhatsappBtn = () => {
+    const [sending, setSending] = useState(false);
 
-      {/* spinner overlay */}
-      {downloading && (
-        <span
-          className="btn-spinner"
-          style={{
-            position: "absolute",
-            left: "50%",
-            top: "50%",
-            transform: "translate(-50%, -50%)",
-          }}
-        />
-      )}
-    </button>
-  );
-};
+    const onSendWhatsapp = async () => {
+      if (sending) return;
+      try {
+        setSending(true);
+        const r = await sendStatementWhatsapp();
+        if (r?.res) toast.success(r?.msg || "Statement sent to WhatsApp");
+        else toast.error(r?.msg || "Failed to send statement");
+      } catch (e) {
+        console.error(e);
+        toast.error("Something went wrong");
+      } finally {
+        setSending(false);
+      }
+    };
 
-  const [downloading, setDownloading] = useState(false);
-  const downloadStatement = async () => {
-    setDownloading(true);
-    try {
-      const data = await statementDownload();
-      if (!data?.pdf_url) throw new Error("pdf_url not found");
+    return (
+      <button
+        className="invoice-btn"
+        type="button"
+        onClick={onSendWhatsapp}
+        disabled={sending}
+        title="Send to WhatsApp"
+        style={{ position: "relative" }}
+      >
+        <img src={WhatsButton} alt="whatsapp" style={{ opacity: sending ? 0.25 : 1 }} />
 
-      const fileName = data.pdf_url.split("/").pop() || "statement.pdf";
-      forceDownload(data.pdf_url, fileName);
-      setDownloading(false);
-    } catch (e) {
-      console.error(e);
-      alert(e.message || "Download failed");
-    }
+        {sending && (
+          <span
+            className="btn-spinner"
+            style={{
+              position: "absolute",
+              left: "50%",
+              top: "50%",
+              transform: "translate(-50%, -50%)",
+            }}
+          />
+        )}
+      </button>
+    );
   };
+
 
   // ✅ first load
   useEffect(() => {
@@ -266,9 +296,10 @@ const ProfileStatementDetails = () => {
             {/* <button clStatementDownloadBtnassName="download-pdf" onClick={() => downloadStatement()}>
               <BsCloudArrowDownFill /> {downloading ? "Downloading..." : "Download Statement"}
             </button> */}
-            <button className="invoice-btn" type="button">
+            {/* <button className="invoice-btn" type="button">
               <img src={WhatsButton} alt="whatsapp" />
-            </button>
+            </button> */}
+            <SendStatementWhatsappBtn />
           </div>
         </div>
 

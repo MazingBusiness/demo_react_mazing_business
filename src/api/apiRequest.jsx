@@ -664,19 +664,24 @@ export const getTotalOrderCount = async (orderId) => {
   return await res.json(); // { pdf_url: "..." }
 };
 
-export const sendStatementWhatsapp = async ({ party_code, data_from = "live" }) => {
-  const params = new URLSearchParams();
-  params.append("party_code", party_code); // ✅ mandatory
-  if (data_from) params.append("data_from", data_from);
-
+export const sendStatementWhatsapp = async () => {
   const res = await fetch(
-    `${API_BASE_URL}user/send-statement?${params.toString()}`,
+    `${API_BASE_URL}user/send-statement`,
     {
       method: "GET",
       headers: { Accept: "application/json", ...(getHeader()?.headers || {}) },
     }
   );
-
   return res.json(); 
-  // { res: true/false, msg: "...", url: "..." }
+};
+
+export const getAllPendingOrderCount = async () => {
+  const res = await fetch(
+    `${API_BASE_URL}user/get-all-pending-order`,
+    {
+      method: "GET",
+      headers: { Accept: "application/json", ...(getHeader()?.headers || {}) },
+    }
+  );
+  return res.json(); 
 };

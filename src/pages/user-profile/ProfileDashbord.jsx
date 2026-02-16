@@ -7,7 +7,7 @@ import dIcon2 from "../../assets/icons/dIcon2.svg";
 import dIcon3 from "../../assets/icons/dIcon3.svg";
 import Shape from "../../assets/icons/Shape.svg";
 
-import { cart, getTotalOrderCount } from "../../api/apiRequest";
+import { cart, getTotalOrderCount, getAllPendingOrderCount } from "../../api/apiRequest";
 
 import {
   LineChart,
@@ -56,6 +56,7 @@ const ProfileDashbord = () => {
   const [cartItems, setCartItems] = useState([]);
   const [cartCount, setCartCount] = useState(0);
   const [totalOrder, setTotalOrder] = useState(0);
+  const [totalPendingOrder, setTotalPendingOrder] = useState(0);
 
   const getChartData = () => {
     if (view === "Weekly") return weeklyData;
@@ -109,6 +110,25 @@ const ProfileDashbord = () => {
       NotificationManager.error("Failed to load Cart", "", 2000);
     }
   };
+
+  const pendingOrderCount  = async () => {
+    try {
+      const responseData = await getAllPendingOrderCount();
+      if (responseData.res) {
+        const totalPendingOrder = responseData.total_pending_order_count || '0';
+        setTotalPendingOrder(total_pending_order_count);
+      } else {
+        NotificationManager.error(
+          responseData.msg || "Something went wrong",
+          "",
+          2000
+        );
+      }
+    } catch (error) {
+      console.error("Fetch error:", error);
+      NotificationManager.error("Failed to load Cart", "", 2000);
+    }
+  };
   
   useEffect(() => {
       cartData(); // first load when header renders
@@ -144,7 +164,7 @@ const ProfileDashbord = () => {
             <div className="card pending">
               <h5>Pending</h5>
               <span>Total pending order</span>
-              <h2>250</h2>
+              <h2>{totalPendingOrder}</h2>
               <div className="card-Shape">
                 <img src={Shape} alt="Shape" />
               </div>

@@ -1,6 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
+import { Toaster } from "react-hot-toast";
 import AppRoutes from "./routes/AppRoutes";
 import "./styles/global.css";
 import "./styles/mainStyle.css";
@@ -20,7 +21,8 @@ import "./styles/mainStyle.css";
 // For Git
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
-  <React.StrictMode>    
+  <React.StrictMode>
+      <Toaster position="top-right" />
       <AppRoutes />
   </React.StrictMode>
 );
