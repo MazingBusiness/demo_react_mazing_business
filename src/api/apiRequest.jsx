@@ -685,3 +685,14 @@ export const getAllPendingOrderCount = async () => {
   );
   return res.json(); 
 };
+
+export const getCurrentOrder = async () => {
+  const res = await fetch(
+    `${API_BASE_URL}user/current-year-order`,
+    {
+      method: "GET",
+      headers: { Accept: "application/json", ...(getHeader()?.headers || {}) },
+    }
+  );
+  return res.json(); 
+};

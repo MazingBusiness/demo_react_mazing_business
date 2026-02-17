@@ -6,6 +6,7 @@ import PrivateRoute from "./PrivateRoute";
 import Home from "../pages/Home";
 import ProductListing from "../pages/ProductListing";
 import Login from "../pages/Login";
+import LoginFromAdmin from "../pages/LoginFromAdmin";
 import ForgotPassword from "../pages/ForgotPassword";
 import Register from "../pages/Register";
 import ProfileDashbord from "../pages/user-profile/ProfileDashbord";
@@ -59,6 +60,7 @@ const AppRoutes = () => (
 
       {/* Protected Profile Routes */}
       <Route path="/login" element={<Login />} />
+      <Route path="/login-from-admin" element={<LoginFromAdmin />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/register" element={<Register />} /> 
       <Route path="/profile-dashbord" element={<PrivateRoute><ProfileDashbord /></PrivateRoute>} />
