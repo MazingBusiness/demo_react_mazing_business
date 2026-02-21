@@ -696,3 +696,17 @@ export const getCurrentOrder = async () => {
   );
   return res.json(); 
 };
+
+export const updateProductQty = async (product_id, quantity) => {
+  const params = new URLSearchParams();
+  params.append("product_id", product_id); // ✅ mandatory
+  params.append("quantity", quantity); // ✅ mandatory
+  const res = await fetch(
+    `${API_BASE_URL}product/update-product-qty?${params.toString()}`,
+    {
+      method: "GET",
+      headers: { Accept: "application/json", ...(getHeader()?.headers || {}) },
+    }
+  );
+  return res.json(); 
+};

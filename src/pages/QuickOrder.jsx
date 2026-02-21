@@ -303,64 +303,6 @@ const QuickOrder = () => {
               showMobileFilters ? "mobile-visible" : ""
             }`}
           >
-            {/* {(selectedCatGs.length > 0 || selectedBrands.length > 0 ||
-              selectedDelivery ||
-              currentMin !== 1500 ||
-              currentMax !== 6000) && (
-              <div className="active-filters">
-                {selectedCatGs.length > 0 && (
-                  <div className="active-part">
-                    <label>Category Groupss:</label>
-                    <div className="active-tag">
-                      {selectedCatGs.map((catG, index) => (
-                        <span key={index}>
-                          {catG}
-                          <button onClick={() => toggleCatG(catG)}>✕</button>
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                {selectedBrands.length > 0 && (
-                  <div className="active-part">
-                    <label>Brands:</label>
-                    <div className="active-tag">
-                      {selectedBrands.map((brand, index) => (
-                        <span key={index}>
-                          {brand}
-                          <button onClick={() => toggleBrand(brand)}>✕</button>
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                {selectedDelivery && (
-                  <div className="active-part">
-                    <label>Delivery:</label>
-                    <div className="active-tag">
-                      <span>
-                        {selectedDelivery}
-                        <button onClick={clearDelivery}>✕</button>
-                      </span>
-                    </div>
-                  </div>
-                )}
-                {(currentMin !== 1500 || currentMax !== 6000) && (
-                  <div className="active-part">
-                    <label>Price:</label>
-                    <div className="active-tag">
-                      <span>
-                        ₹{currentMin} - ₹{currentMax}
-                        <button onClick={clearPrice}>✕</button>
-                      </span>
-                    </div>
-                  </div>
-                )}
-                <button className="clear-all-btn" onClick={clearAll}>
-                  Remove All Filters
-                </button>
-              </div>
-            )} */}
 
             <div className="filters">
 

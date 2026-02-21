@@ -3,74 +3,50 @@ import { FaStar, FaStarHalfAlt, FaRegStar } from "react-icons/fa";
 import "react-responsive-carousel/lib/styles/carousel.min.css";
 import { Carousel } from "react-responsive-carousel";
 
-// import { NotificationManager } from "react-notifications"; // if using it
-
 import fastDeliveryIcon from "../assets/icons/fast-delivery.svg";
 import warrantyIcon from "../assets/icons/warranty.jpeg";
 
 import { FiHeart, FiX } from "react-icons/fi";
-
 import CartbtnIcon from "../assets/icons/cartbtnIcon.svg";
-
 import { GoDotFill } from "react-icons/go";
 
-import { getProductDetails , addToCart } from "../api/apiRequest";
-import { getLoggedInUser, getAuthToken } from '../utils/authUtils';
+import { getProductDetails, addToCart, updateProductQty } from "../api/apiRequest";
 
 const ProductModal = ({ product, isOpen, onClose }) => {
   const modalRef = useRef(null);
+
   const [productDetails, setProductDetails] = useState(null);
   const [productImages, setProductImages] = useState([]);
-  const [productThumbImages, setProductThumbImages] = useState([]);
-  const [productPrice, setProductPrice] = useState('0');
-  const [minBulkQty, setMinBulkQty] = useState('0');
-  const [bulkPrice, setBulkPrice] = useState('0');
-  const [totalPrice, setTotalPrice] = useState('0');
 
-  // total price calculation
+  // qty
   const [quantity, setQuantity] = useState("");
-  const bulkQty = productDetails?.piece_by_carton ?? 0;
-  const normalPrice = productDetails?.discount_price ?? 0;
-  // const bulkPrice = productDetails?.bulk_discount_price ?? normalPrice;
-  const { type, unitPrice, computedTotal } = useMemo(() => {
-    const qtyNum = Number(quantity) || 0;
-    if (qtyNum <= 0) {
-      return {
-        computedTotal: "",
-        type: "piece",
-        unitPrice: normalPrice,
-      };
-    }
 
-    // Decide which price to use
-    const useBulk = bulkQty > 0 && qtyNum >= bulkQty;
-    const chosenType = useBulk ? "bulk" : "piece";
-    const chosenPrice = useBulk ? bulkPrice : normalPrice;
-    setProductPrice(chosenPrice);
+  // ✅ price state (base + server-adjusted)
+  const [priceState, setPriceState] = useState({
+    normal: 0, // normal/piece price
+    bulk: 0,   // bulk price
+  });
 
-    return {
-      computedTotal: (qtyNum * chosenPrice).toFixed(2),
-      type: chosenType,
-      unitPrice: chosenPrice,
-    };
-  }, [quantity, bulkQty, normalPrice, bulkPrice]);
+  // ✅ alert message (like your cart slide)
+  const [qtyAlert, setQtyAlert] = useState("");
 
-  useEffect(() => {
-    setTotalPrice(computedTotal);
-  }, [computedTotal]);
+  // ✅ loader when price is being checked
+  const [checkingPrice, setCheckingPrice] = useState(false);
 
-   const handleQuantityChange = (e) => {
-    setQuantity(e.target.value);
-  };
+  // debounce ref
+  const qtyTimerRef = useRef(null);
+  const lastCheckedQtyRef = useRef(null);
 
-  // const images = [product1, image2, image3, image4, image5];
+  const productId = product?.id;
+
+  // ratings static (your original)
   const rating = 3.5;
   const totalRatings = 12;
 
-  const renderRating = (rating) => {
+  const renderRating = (ratingValue) => {
     const stars = [];
-    const fullStars = Math.floor(rating);
-    const hasHalfStar = rating % 1 >= 0.5;
+    const fullStars = Math.floor(ratingValue);
+    const hasHalfStar = ratingValue % 1 >= 0.5;
 
     for (let i = 0; i < fullStars; i++) {
       stars.push(<FaStar key={`full-${i}`} className="star-icon full-star" />);
@@ -82,13 +58,196 @@ const ProductModal = ({ product, isOpen, onClose }) => {
 
     const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
     for (let i = 0; i < emptyStars; i++) {
-      stars.push(
-        <FaRegStar key={`empty-${i}`} className="star-icon empty-star" />
-      );
+      stars.push(<FaRegStar key={`empty-${i}`} className="star-icon empty-star" />);
     }
 
     return stars;
   };
+
+  // ✅ derive bulkQty from productDetails
+  const bulkQty = Number(productDetails?.piece_by_carton || 0);
+
+  // ✅ compute selected price + total (NO setState inside useMemo)
+  const { type, unitPrice, totalPrice } = useMemo(() => {
+    const qtyNum = Math.max(0, Number(quantity) || 0);
+
+    // choose bulk or normal
+    const useBulk = bulkQty > 0 && qtyNum >= bulkQty;
+    const chosenType = useBulk ? "bulk" : "piece";
+
+    const normal = Number(priceState.normal || 0);
+    const bulk = Number(priceState.bulk || normal);
+
+    const chosenUnit = useBulk ? bulk : normal;
+
+    return {
+      type: chosenType,
+      unitPrice: chosenUnit,
+      totalPrice: qtyNum > 0 ? (qtyNum * chosenUnit).toFixed(2) : "",
+    };
+  }, [quantity, bulkQty, priceState.normal, priceState.bulk]);
+
+  // ✅ small helper to safely pick server prices from updateProductQty response
+  const extractPricesFromUpdateQty = (data, fallbackNormal, fallbackBulk) => {
+    // possible keys depending on your backend:
+    const normalCandidates = [
+      data?.discount_price,
+      data?.unit_price,
+      data?.price,
+      data?.new_price,
+      data?.product_price,
+      data?.updated_price,
+      data?.final_price,
+    ];
+
+    const bulkCandidates = [
+      data?.bulk_discount_price,
+      data?.bulk_price,
+      data?.bulk_unit_price,
+      data?.updated_bulk_price,
+    ];
+
+    const normal = Number(normalCandidates.find((v) => v !== undefined && v !== null && v !== "")) || fallbackNormal;
+    const bulk = Number(bulkCandidates.find((v) => v !== undefined && v !== null && v !== "")) || fallbackBulk || normal;
+
+    return { normal, bulk };
+  };
+
+  // ✅ call updateProductQty (debounced) whenever qty changes
+  const runUpdateProductQty = async (pid, qtyNum) => {
+    if (!pid || !qtyNum || qtyNum <= 0) return;
+
+    // prevent duplicate check for same qty
+    if (lastCheckedQtyRef.current === qtyNum) return;
+    lastCheckedQtyRef.current = qtyNum;
+
+    setCheckingPrice(true);
+    try {
+      const data = await updateProductQty(pid, qtyNum);
+
+      // message
+      const msg = String(data?.increasePriceText || data?.msg || "").trim();
+      setQtyAlert(msg || "");
+
+      // update prices if server returns new values
+      setPriceState((prev) => {
+        const fallbackNormal = Number(prev.normal || 0);
+        const fallbackBulk = Number(prev.bulk || prev.normal || 0);
+
+        const next = extractPricesFromUpdateQty(data, fallbackNormal, fallbackBulk);
+
+        // only update if changed
+        if (Number(next.normal) === Number(prev.normal) && Number(next.bulk) === Number(prev.bulk)) {
+          return prev;
+        }
+        return next;
+      });
+    } catch (e) {
+      console.error("updateProductQty error:", e);
+      // optional: keep old price, clear msg
+      // setQtyAlert("");
+    } finally {
+      setCheckingPrice(false);
+    }
+  };
+
+  const handleQuantityChange = (e) => {
+    const raw = e.target.value;
+    setQuantity(raw);
+
+    const pid = productDetails?.id;
+    const qtyNum = Math.max(0, Number(raw) || 0);
+
+    // clear previous timer
+    if (qtyTimerRef.current) {
+      clearTimeout(qtyTimerRef.current);
+      qtyTimerRef.current = null;
+    }
+
+    // debounce API call
+    qtyTimerRef.current = setTimeout(() => {
+      runUpdateProductQty(pid, qtyNum);
+    }, 450);
+  };
+
+  const handleQuantityBlur = () => {
+    const pid = productDetails?.id;
+    const qtyNum = Math.max(0, Number(quantity) || 0);
+
+    if (qtyTimerRef.current) {
+      clearTimeout(qtyTimerRef.current);
+      qtyTimerRef.current = null;
+    }
+
+    runUpdateProductQty(pid, qtyNum);
+  };
+
+  // ✅ fetch product details when modal opens
+  useEffect(() => {
+    if (!isOpen || !productId) return;
+
+    const fetchDetails = async () => {
+      try {
+        const apiResponseData = await getProductDetails(productId);
+        if (apiResponseData?.res) {
+          const list = apiResponseData?.data || [];
+          const firstProduct = Array.isArray(list) ? list[0] : list;
+
+          setProductDetails(firstProduct);
+          setProductImages(firstProduct?.images || []);
+
+          const initialNormal = Number(firstProduct?.discount_price || 0);
+          const initialBulk = Number(firstProduct?.bulk_discount_price || initialNormal);
+
+          setPriceState({
+            normal: initialNormal,
+            bulk: initialBulk,
+          });
+
+          // initial qty
+          const minQty = Number(firstProduct?.min_qty || 1);
+          setQuantity(String(minQty));
+
+          // ✅ also run updateProductQty once on open (so price/discount is correct)
+          // (debounced is ok, but we want immediate on open)
+          lastCheckedQtyRef.current = null;
+          await runUpdateProductQty(firstProduct?.id, minQty);
+        }
+      } catch (error) {
+        console.error("Fetch error:", error);
+      }
+    };
+
+    fetchDetails();
+  }, [isOpen, productId]);
+
+  // cleanup debounce on unmount
+  useEffect(() => {
+    return () => {
+      if (qtyTimerRef.current) clearTimeout(qtyTimerRef.current);
+      qtyTimerRef.current = null;
+    };
+  }, []);
+
+  // outside click
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (modalRef.current && !modalRef.current.contains(event.target)) {
+        onClose();
+      }
+    };
+
+    if (isOpen) document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isOpen, onClose]);
+
+  // prevent body scroll
+  useEffect(() => {
+    document.body.style.overflow = isOpen ? "hidden" : "unset";
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [isOpen]);
 
   const handleAddToCart = async () => {
     try {
@@ -100,112 +259,23 @@ const ProductModal = ({ product, isOpen, onClose }) => {
 
       const res = await addToCart({ product_id: pid, quantity: qty, type });
 
-      // ✅ tell whole app: cart changed
       window.dispatchEvent(new Event("cart-updated"));
       alert(res?.msg || "Added to cart");
 
-      // optional: close modal or reset qty
       setQuantity("");
       onClose();
     } catch (err) {
       console.error(err);
-      alert(err.message || "Failed to add to cart");
-    }
-  };
-  const getDiscount = async () => {
-    try {
-      const pid = productDetails?.id;
-      const qty = Number(quantity);
-
-      if (!pid) return alert("Product not loaded");
-      if (!qty || qty <= 0) return alert("Enter valid quantity");
-
-      const res = await addToCart({ product_id: pid, quantity: qty, type });
-
-      // ✅ tell whole app: cart changed
-      window.dispatchEvent(new Event("cart-updated"));
-      alert(res?.msg || "Added to cart");
-
-      // optional: close modal or reset qty
-      setQuantity("");
-      onClose();
-    } catch (err) {
-      console.error(err);
-      alert(err.message || "Failed to add to cart");
+      alert(err?.message || "Failed to add to cart");
     }
   };
 
-  const productId = product?.id;
-  useEffect(() => {
-    if (!isOpen || !productId) return;
-    const fetchDetails = async () => {
-      try {
-        const apiResponseData = await getProductDetails(productId);
-        // const apiResponseData = await proDetailsapiRes.json();
-        if (apiResponseData.res) {
-          const list = apiResponseData?.data || [];
-          const firstProduct = Array.isArray(list) ? list[0] : list;
-          setProductDetails(firstProduct);
-          setProductImages(firstProduct.images || []);
-          setProductThumbImages(firstProduct.thumb_img);
-          setProductPrice(firstProduct.discount_price);
-          setMinBulkQty(firstProduct.piece_by_carton);
-          setBulkPrice(firstProduct.bulk_discount_price);
-          setQuantity(firstProduct.min_qty);
-          if(firstProduct.min_qty < firstProduct.piece_by_carton){
-            setTotalPrice(firstProduct.min_qty * productPrice);
-          }else{
-            setTotalPrice(firstProduct.min_qty * bulkPrice);
-          }
-          
-        }
-      } catch (error) {
-        console.error("Fetch error:", error);
-      }
-    };
-    fetchDetails();
-  }, [isOpen, productId]);
-  
-  // Handle outside click
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (modalRef.current && !modalRef.current.contains(event.target)) {
-        onClose();
-      }
-    };
-    if (isOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [isOpen, onClose]);
-
-  // Prevent body scroll when modal is open
-  useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "unset";
-    }
-
-    return () => {
-      document.body.style.overflow = "unset";
-    };
-  }, [isOpen]);
-
-  // 🛡️ If closed OR no product, render nothing
+  // If closed OR no product, render nothing
   if (!isOpen || !product) return null;
-
-  // if (!isOpen) return null;
 
   return (
     <div className={`product-modal-overlay ${isOpen ? "open" : ""}`}>
-      <div
-        className={`product-modal-box ${isOpen ? "open" : ""}`}
-        ref={modalRef}
-      >
+      <div className={`product-modal-box ${isOpen ? "open" : ""}`} ref={modalRef}>
         <button className="product-modal-close" onClick={onClose}>
           <FiX />
         </button>
@@ -217,14 +287,8 @@ const ProductModal = ({ product, isOpen, onClose }) => {
               {/* Breadcrumb */}
               <div className="breadcrumb">
                 {productDetails?.category_group?.name}
-                <em>
-                  <GoDotFill />
-                </em>
+                <em><GoDotFill /></em>
                 {productDetails?.category?.name}
-                {/* <em>
-                  <GoDotFill />
-                </em>
-                <span className="current">HiKOKI</span> */}
               </div>
 
               <Carousel
@@ -283,15 +347,14 @@ const ProductModal = ({ product, isOpen, onClose }) => {
                     <span className="rating-count">{totalRatings} Reviews</span>
                   </div>
                 </div>
+
                 {productDetails?.fast_delivery_tag == 1 && (
                   <div className="delivery">
                     <img
                       src={fastDeliveryIcon}
                       alt="Fast Delivery"
                       loading="lazy"
-                      onError={(e) => {
-                        e.target.style.display = "none";
-                      }}
+                      onError={(e) => (e.target.style.display = "none")}
                     />
                     <p>
                       Estimate Shipping Time <span>5-6 Days</span>
@@ -301,69 +364,133 @@ const ProductModal = ({ product, isOpen, onClose }) => {
               </div>
 
               <div className="product-price">
-                <span className="old-price">₹{parseFloat(productDetails?.mrp).toFixed(2)}</span>
-                <span className="new-price">₹{productPrice}</span>
+                <span className="old-price">
+                  ₹{Number(productDetails?.mrp || 0).toFixed(2)}
+                </span>
+
+                {/* ✅ this now reflects server updated price */}
+                <span className="new-price">₹{Number(unitPrice || 0).toFixed(2)}</span>
+
                 <span className="unit">/Pc</span>
+
+                {/* ✅ small loader while calling updateProductQty */}
+                {checkingPrice && (
+                  <span style={{ marginLeft: 10, fontSize: 12, fontWeight: 600 }}>
+                    Updating price...
+                  </span>
+                )}
               </div>
+
+              {/* ✅ ALERT like CartSlide */}
+              {!!qtyAlert && (
+                <div
+                  style={{
+                    marginTop: 8,
+                    padding: "6px 8px",
+                    border: "1px solid #ff4d4f",
+                    background: "#fff1f0",
+                    color: "#ff4d4f",
+                    borderRadius: 6,
+                    fontSize: 12,
+                    fontWeight: 600,
+                  }}
+                >
+                  {qtyAlert}
+                </div>
+              )}
+
               {productDetails?.stocks != null && (
                 <div className="product-stock">
-                  {product.stocks.map((warehouse) => (
-                    <div className="stock-item" key={warehouse.warehouse_id} // 👈 unique key
-                    >
+                  {(productDetails?.stocks || []).map((warehouse) => (
+                    <div className="stock-item" key={warehouse.warehouse_id}>
                       {warehouse.warehouse_name} <span>{warehouse.qty}</span>
                     </div>
                   ))}
                 </div>
               )}
+
               {productDetails?.is_warranty == 1 && (
-              <div className="warranty-div">
-                <p className="warranty-text">
-                  <img src={warrantyIcon} alt="Warranty" loading="lazy"
-                      onError={(e) => {
-                        e.target.style.display = "none";
-                      }}
+                <div className="warranty-div">
+                  <p className="warranty-text">
+                    <img
+                      src={warrantyIcon}
+                      alt="Warranty"
+                      loading="lazy"
+                      onError={(e) => (e.target.style.display = "none")}
                     />
-                  <span className="highlight">{"    "}{productDetails?.warranty_duration} Months Warranty</span>
-                </p>
-              </div>
+                    <span className="highlight">
+                      {"    "}{productDetails?.warranty_duration} Months Warranty
+                    </span>
+                  </p>
+                </div>
               )}
+
               <div className="bulk-discount">
                 <p>
                   <span className="red">Bulk Quantity Discount:</span> Purchase{" "}
                   {productDetails?.piece_by_carton} or more and get each for{" "}
-                  <span className="highlight">₹{productDetails?.discount_price}</span> instead of{" "}
-                  <span className="highlight">₹{productDetails?.bulk_discount_price}</span>
+                  {/* ✅ show both prices correctly */}
+                  <span className="highlight">₹{Number(priceState.bulk || 0).toFixed(2)}</span>{" "}
+                  instead of{" "}
+                  <span className="highlight">₹{Number(priceState.normal || 0).toFixed(2)}</span>
                 </p>
-                <button className="discount-btn">Get Discount</button>
+                <button className="discount-btn" type="button">
+                  Get Discount
+                </button>
               </div>
 
               <div className="quantity-section">
                 <div>
                   <label>Quantity</label>
-                  <input type="number" name="quantity" id="quantity" placeholder="Enter quantity" value={quantity} onChange={handleQuantityChange} />
+                  <input
+                    type="number"
+                    name="quantity"
+                    id="quantity"
+                    placeholder="Enter quantity"
+                    value={quantity}
+                    onChange={handleQuantityChange}
+                    onBlur={handleQuantityBlur}
+                    min="1"
+                  />
                 </div>
+
                 <div>
                   <label>Total Price</label>
-                  <input type="text" id="total_price" name="total_price" placeholder="Amount" value={totalPrice}  disabled />
+                  <input
+                    type="text"
+                    id="total_price"
+                    name="total_price"
+                    placeholder="Amount"
+                    value={totalPrice}
+                    disabled
+                  />
+
+                  {/* hidden values */}
                   <input type="hidden" name="bulk_qty" id="bulk_qty" value={bulkQty} />
-                  <input type="hidden" name="bulk_price" id="bulk_price" value={bulkPrice} />
+                  <input type="hidden" name="bulk_price" id="bulk_price" value={priceState.bulk} />
+
+                  {/* ✅ this now reflects server-updated chosen unit price */}
                   <input type="hidden" name="price" id="price" value={unitPrice} />
+
                   <input type="hidden" name="type" id="type" value={type} />
-                  <input type="hidden" name="product_id" id="product_id" value={productDetails?.id} />
+                  <input type="hidden" name="product_id" id="product_id" value={productDetails?.id || ""} />
                 </div>
               </div>
 
               <div className="action-buttons">
                 <button className="add-to-cart" onClick={handleAddToCart}>
-                  <img src={CartbtnIcon} alt="cartbtnIcon" className="cartbtnIcon"  />{" "} Add to Cart
+                  <img src={CartbtnIcon} alt="cartbtnIcon" className="cartbtnIcon" />{" "}
+                  Add to Cart
                 </button>
-                <button className="modal-wishlist-btn">
+
+                <button className="modal-wishlist-btn" type="button">
                   <FiHeart />
                 </button>
               </div>
             </div>
           </div>
         </div>
+
       </div>
     </div>
   );
