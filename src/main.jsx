@@ -2,7 +2,6 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
-import { HashRouter } from "react-router-dom";
 import AppRoutes from "./routes/AppRoutes";
 import "./styles/global.css";
 import "./styles/mainStyle.css";
@@ -24,8 +23,6 @@ const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
   <React.StrictMode>
       <Toaster position="top-right" />
-      <HashRouter>
-        <AppRoutes />
-      </HashRouter>
+      <AppRoutes />
   </React.StrictMode>
 );
