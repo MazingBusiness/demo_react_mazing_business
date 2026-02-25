@@ -112,7 +112,7 @@ export const login = async (login_info) => {
     });
     return response;
 }
-// --Login API start--
+
 export const loginFromAdmin = async (login_info) => {
     const response = await fetch(`${API_BASE_URL}user/login-from-admin`, {
         method: 'POST',
