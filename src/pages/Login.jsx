@@ -1,7 +1,7 @@
 import React, { useState, useRef } from "react";
 import LoginHeader from "../layouts/LoginHeader";
 import bg from "../assets/images/BG.jpg";
-import { login, sendOtpForLogin } from "../api/apiRequestChild";
+
 import { Link,useNavigate } from "react-router-dom";
 
 import facebookIcon from "../assets/icons/fbIcon.svg";
@@ -12,6 +12,8 @@ import indiaFlag from "../assets/icons/flag-icon/ind.svg";
 import usaFlag from "../assets/icons/flag-icon/ind.svg";
 import uaeFlag from "../assets/icons/flag-icon/ind.svg";
 import { HiChevronDown } from "react-icons/hi";
+
+import { login, sendOtpForLogin } from "../api/apiRequestChild";
 
 const Login = () => {
   

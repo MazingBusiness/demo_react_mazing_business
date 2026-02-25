@@ -112,7 +112,17 @@ export const login = async (login_info) => {
     });
     return response;
 }
-
+// --Login API start--
+export const loginFromAdmin = async (login_info) => {
+    const response = await fetch(`${API_BASE_URL}user/login-from-admin`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(login_info),
+    });
+    return response;
+}
 // Send OTP for login
 export const sendOtpForLogin = async (phone) => {
   const response = await fetch(`${API_BASE_URL}user/send-otp-for-login`, {

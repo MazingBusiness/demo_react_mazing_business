@@ -60,7 +60,11 @@ const AppRoutes = () => (
 
       {/* Protected Profile Routes */}
       <Route path="/login" element={<Login />} />
+      {/* <Route path="/login-from-admin" element={<LoginFromAdmin />} /> */}
+
       <Route path="/login-from-admin" element={<LoginFromAdmin />} />
+      <Route path="*" element={<div style={{ padding: 20 }}>NO ROUTE MATCHED</div>} />
+
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/register" element={<Register />} /> 
       <Route path="/profile-dashbord" element={<PrivateRoute><ProfileDashbord /></PrivateRoute>} />
