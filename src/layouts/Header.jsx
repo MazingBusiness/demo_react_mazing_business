@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { FiX, FiChevronDown } from "react-icons/fi";
-import { NavLink,useNavigate, Link } from "react-router-dom";
+import { NavLink, useNavigate, Link } from "react-router-dom";
 
 import searchIcon from "../assets/icons/SearchIcon.svg";
 import userIcon from "../assets/icons/HrIcon1.svg";
@@ -19,11 +19,24 @@ import Logo from "../assets/images/Logo.svg";
 
 import MegaMenu from "./MegaMenu";
 import SearchModal from "../components/SearchModal";
-
-import CartSlide from "../components/CartSlide"; // adjust path if needed
+import CartSlide from "../components/CartSlide";
 
 import { cart } from "../api/apiRequest";
+// import { NotificationManager } from "react-notifications"; // if you're using it
 
+// ✅ helper: read staff id safely from localStorage
+function getStoredStaffId() {
+  const raw = localStorage.getItem("mazingBusinessStaffId");
+  if (!raw) return "";
+
+  try {
+    const parsed = JSON.parse(raw); // because you saved JSON.stringify(staff_id)
+    return String(parsed || "");
+  } catch {
+    // fallback if it was stored as plain string
+    return String(raw || "").replace(/^"|"$/g, "");
+  }
+}
 
 const Header = () => {
   const [searchText, setSearchText] = useState("");
@@ -34,40 +47,11 @@ const Header = () => {
   const [cartCount, setCartCount] = useState(0);
   const [cartSubTotal, setCartSubTotal] = useState(0);
 
-  {/** store login credentials */}
+  /** store login credentials */
   const [userInfo, setUserInfo] = useState(null);
 
   const [isCartVisible, setIsCartVisible] = useState(false);
   const toggleCart = () => setIsCartVisible(!isCartVisible);
-
-  const cartData = async () => {
-    try {
-      const responseData = await cart();
-      if (responseData.res) {
-        const cart_item = responseData.cart_item || [];
-        const cartSubTotal = responseData.other_item_total_amount || '0';
-        setCartItems(cart_item);
-        setCartCount(cart_item.length); // ✅ count
-        setCartSubTotal(cartSubTotal);
-      } else {
-        NotificationManager.error(
-          responseData.msg || "Something went wrong",
-          "",
-          2000
-        );
-      }
-    } catch (error) {
-      console.error("Fetch error:", error);
-      NotificationManager.error("Failed to load Cart", "", 2000);
-    }
-  };
-
-  {/** User Logout */}
-  const handleLogout = () => {
-    localStorage.removeItem("mazingBusinessLoginInfo");
-    setUserInfo(null);
-    navigate("/login");
-  };
 
   const [selectedLang, setSelectedLang] = useState({
     code: "en",
@@ -86,7 +70,51 @@ const Header = () => {
 
   const handleSearchChange = (e) => setSearchText(e.target.value);
   const handleClear = () => setSearchText("");
-  
+
+  // ✅ Switch Back link logic (staff_id from localStorage)
+  const staffId = useMemo(() => getStoredStaffId(), []);
+  const switchBackHref = useMemo(() => {
+    if (!staffId) return "";
+    return `https://mazingbusiness.com/switch_back_from_react/${encodeURIComponent(
+      staffId
+    )}`;
+  }, [staffId]);
+
+  const handleSwitchBack = () => {
+    // ✅ optional cleanup so React session doesn't stay stuck in impersonation
+    localStorage.removeItem("mazingBusinessLoginInfo");
+    localStorage.removeItem("mazingBusinessStaffId");
+
+    // go to Laravel URL
+    window.location.href = switchBackHref;
+  };
+
+  const cartData = async () => {
+    try {
+      const responseData = await cart();
+      if (responseData.res) {
+        const cart_item = responseData.cart_item || [];
+        const cartSubTotalVal = responseData.other_item_total_amount || "0";
+        setCartItems(cart_item);
+        setCartCount(cart_item.length);
+        setCartSubTotal(cartSubTotalVal);
+      } else {
+        // NotificationManager.error(responseData.msg || "Something went wrong", "", 2000);
+      }
+    } catch (error) {
+      console.error("Fetch error:", error);
+      // NotificationManager.error("Failed to load Cart", "", 2000);
+    }
+  };
+
+  /** User Logout */
+  const handleLogout = () => {
+    localStorage.removeItem("mazingBusinessLoginInfo");
+    localStorage.removeItem("mazingBusinessStaffId");
+    setUserInfo(null);
+    navigate("/login");
+  };
+
   useEffect(() => {
     const stored = localStorage.getItem("mazingBusinessLoginInfo");
     if (stored) {
@@ -128,15 +156,14 @@ const Header = () => {
     document.body.style.overflow = shouldLockScroll ? "hidden" : "auto";
 
     return () => {
-      document.body.style.overflow = "auto"; // reset on unmount
+      document.body.style.overflow = "auto";
     };
   }, [showMegaMenu, isSearchOpen, isCartVisible]);
 
   useEffect(() => {
-    cartData(); // first load when header renders
+    cartData();
 
-    const handler = () => cartData(); // when cart-updated happens, refresh
-
+    const handler = () => cartData();
     window.addEventListener("cart-updated", handler);
 
     return () => {
@@ -150,7 +177,9 @@ const Header = () => {
         <div className="maincontainer">
           <div className="top-headerLft">
             <div className="logo">
-              <NavLink to="/" ><img src={Logo} alt="Logo" /></NavLink>
+              <NavLink to="/">
+                <img src={Logo} alt="Logo" />
+              </NavLink>
             </div>
           </div>
 
@@ -183,20 +212,28 @@ const Header = () => {
 
           <div className="top-headerRgt">
             <div className="header-icons">
-              
+              {/* ✅ Switch Back: show only if staffId exists */}
+              {staffId ? (
+                <a href="#" className="switchBackLink" onClick={(e) => { e.preventDefault(); handleSwitchBack(); }} >
+                  Switch Back
+                </a>
+              ) : null}
+
               <Link to="/profile-dashbord">
-              <button className="icon-btn">
-                <img src={userIcon} alt="User" />
-              </button>
+                <button className="icon-btn">
+                  <img src={userIcon} alt="User" />
+                </button>
               </Link>
 
-              <button className="icon-btn badge-container">
+              <button className="icon-btn badge-container" type="button">
                 <img src={wishlistIcon} alt="Wishlist" />
                 <span className="badge">0</span>
               </button>
+
               <button
                 className="icon-btn badge-container cart-item"
                 onClick={toggleCart}
+                type="button"
               >
                 <img src={cartIcon} alt="Cart" />
                 <span className="badge">{cartCount}</span>
@@ -217,6 +254,7 @@ const Header = () => {
           <button
             className="category-btn"
             onClick={() => setShowMegaMenu((prev) => !prev)}
+            type="button"
           >
             <img src={MenuBarIcon} alt="MenuBarIcon" /> Shop by Category
           </button>
@@ -259,6 +297,7 @@ const Header = () => {
             <button
               className="language-toggle"
               onClick={() => setIsLangOpen(!isLangOpen)}
+              type="button"
             >
               <img
                 src={selectedLang.flag}
@@ -300,7 +339,6 @@ const Header = () => {
           />
         )}
         <div className={`mega-menu-wrapper ${showMegaMenu ? "open" : ""}`}>
-          {/* <MegaMenu /> */}
           <MegaMenu setShowMegaMenu={setShowMegaMenu} />
         </div>
       </div>
@@ -320,4 +358,5 @@ const Header = () => {
     </header>
   );
 };
+
 export default Header;

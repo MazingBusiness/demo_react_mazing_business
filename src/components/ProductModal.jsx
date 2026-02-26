@@ -23,23 +23,23 @@ const ProductModal = ({ product, isOpen, onClose }) => {
 
   // ✅ price state (base + server-adjusted)
   const [priceState, setPriceState] = useState({
-    normal: 0, // normal/piece price
-    bulk: 0,   // bulk price
+    normal: 0,
+    bulk: 0,
   });
 
-  // ✅ alert message (like your cart slide)
+  // ✅ alert message
   const [qtyAlert, setQtyAlert] = useState("");
 
   // ✅ loader when price is being checked
   const [checkingPrice, setCheckingPrice] = useState(false);
 
-  // debounce ref
+  // debounce refs
   const qtyTimerRef = useRef(null);
   const lastCheckedQtyRef = useRef(null);
 
   const productId = product?.id;
 
-  // ratings static (your original)
+  // ratings static
   const rating = 3.5;
   const totalRatings = 12;
 
@@ -67,11 +67,10 @@ const ProductModal = ({ product, isOpen, onClose }) => {
   // ✅ derive bulkQty from productDetails
   const bulkQty = Number(productDetails?.piece_by_carton || 0);
 
-  // ✅ compute selected price + total (NO setState inside useMemo)
+  // ✅ compute selected price + total
   const { type, unitPrice, totalPrice } = useMemo(() => {
     const qtyNum = Math.max(0, Number(quantity) || 0);
 
-    // choose bulk or normal
     const useBulk = bulkQty > 0 && qtyNum >= bulkQty;
     const chosenType = useBulk ? "bulk" : "piece";
 
@@ -87,9 +86,8 @@ const ProductModal = ({ product, isOpen, onClose }) => {
     };
   }, [quantity, bulkQty, priceState.normal, priceState.bulk]);
 
-  // ✅ small helper to safely pick server prices from updateProductQty response
+  // ✅ helper to safely pick server prices from updateProductQty response
   const extractPricesFromUpdateQty = (data, fallbackNormal, fallbackBulk) => {
-    // possible keys depending on your backend:
     const normalCandidates = [
       data?.discount_price,
       data?.unit_price,
@@ -107,8 +105,14 @@ const ProductModal = ({ product, isOpen, onClose }) => {
       data?.updated_bulk_price,
     ];
 
-    const normal = Number(normalCandidates.find((v) => v !== undefined && v !== null && v !== "")) || fallbackNormal;
-    const bulk = Number(bulkCandidates.find((v) => v !== undefined && v !== null && v !== "")) || fallbackBulk || normal;
+    const normal =
+      Number(normalCandidates.find((v) => v !== undefined && v !== null && v !== "")) ||
+      fallbackNormal;
+
+    const bulk =
+      Number(bulkCandidates.find((v) => v !== undefined && v !== null && v !== "")) ||
+      fallbackBulk ||
+      normal;
 
     return { normal, bulk };
   };
@@ -125,18 +129,15 @@ const ProductModal = ({ product, isOpen, onClose }) => {
     try {
       const data = await updateProductQty(pid, qtyNum);
 
-      // message
       const msg = String(data?.increasePriceText || data?.msg || "").trim();
       setQtyAlert(msg || "");
 
-      // update prices if server returns new values
       setPriceState((prev) => {
         const fallbackNormal = Number(prev.normal || 0);
         const fallbackBulk = Number(prev.bulk || prev.normal || 0);
 
         const next = extractPricesFromUpdateQty(data, fallbackNormal, fallbackBulk);
 
-        // only update if changed
         if (Number(next.normal) === Number(prev.normal) && Number(next.bulk) === Number(prev.bulk)) {
           return prev;
         }
@@ -144,8 +145,6 @@ const ProductModal = ({ product, isOpen, onClose }) => {
       });
     } catch (e) {
       console.error("updateProductQty error:", e);
-      // optional: keep old price, clear msg
-      // setQtyAlert("");
     } finally {
       setCheckingPrice(false);
     }
@@ -158,13 +157,11 @@ const ProductModal = ({ product, isOpen, onClose }) => {
     const pid = productDetails?.id;
     const qtyNum = Math.max(0, Number(raw) || 0);
 
-    // clear previous timer
     if (qtyTimerRef.current) {
       clearTimeout(qtyTimerRef.current);
       qtyTimerRef.current = null;
     }
 
-    // debounce API call
     qtyTimerRef.current = setTimeout(() => {
       runUpdateProductQty(pid, qtyNum);
     }, 450);
@@ -180,6 +177,26 @@ const ProductModal = ({ product, isOpen, onClose }) => {
     }
 
     runUpdateProductQty(pid, qtyNum);
+  };
+
+  // ✅ NEW: Get Discount button handler
+  const handleGetDiscount = async () => {
+    const pid = productDetails?.id;
+    if (!pid) return;
+
+    const targetQty = bulkQty > 0 ? bulkQty : 1;
+
+    // ✅ set qty immediately in UI
+    setQuantity(String(targetQty));
+
+    // ✅ cancel pending debounce and force server check now
+    if (qtyTimerRef.current) {
+      clearTimeout(qtyTimerRef.current);
+      qtyTimerRef.current = null;
+    }
+    lastCheckedQtyRef.current = null;
+
+    await runUpdateProductQty(pid, targetQty);
   };
 
   // ✅ fetch product details when modal opens
@@ -208,8 +225,7 @@ const ProductModal = ({ product, isOpen, onClose }) => {
           const minQty = Number(firstProduct?.min_qty || 1);
           setQuantity(String(minQty));
 
-          // ✅ also run updateProductQty once on open (so price/discount is correct)
-          // (debounced is ok, but we want immediate on open)
+          // initial server sync
           lastCheckedQtyRef.current = null;
           await runUpdateProductQty(firstProduct?.id, minQty);
         }
@@ -270,13 +286,12 @@ const ProductModal = ({ product, isOpen, onClose }) => {
     }
   };
 
-  // If closed OR no product, render nothing
   if (!isOpen || !product) return null;
 
   return (
     <div className={`product-modal-overlay ${isOpen ? "open" : ""}`}>
       <div className={`product-modal-box ${isOpen ? "open" : ""}`} ref={modalRef}>
-        <button className="product-modal-close" onClick={onClose}>
+        <button className="product-modal-close" onClick={onClose} type="button">
           <FiX />
         </button>
 
@@ -284,10 +299,11 @@ const ProductModal = ({ product, isOpen, onClose }) => {
           <div className="product-modal-content">
             {/* Left - Carousel */}
             <div className="product-modal-carousel">
-              {/* Breadcrumb */}
               <div className="breadcrumb">
                 {productDetails?.category_group?.name}
-                <em><GoDotFill /></em>
+                <em>
+                  <GoDotFill />
+                </em>
                 {productDetails?.category?.name}
               </div>
 
@@ -364,16 +380,12 @@ const ProductModal = ({ product, isOpen, onClose }) => {
               </div>
 
               <div className="product-price">
-                <span className="old-price">
-                  ₹{Number(productDetails?.mrp || 0).toFixed(2)}
-                </span>
+                <span className="old-price">₹{Number(productDetails?.mrp || 0).toFixed(2)}</span>
 
-                {/* ✅ this now reflects server updated price */}
                 <span className="new-price">₹{Number(unitPrice || 0).toFixed(2)}</span>
 
                 <span className="unit">/Pc</span>
 
-                {/* ✅ small loader while calling updateProductQty */}
                 {checkingPrice && (
                   <span style={{ marginLeft: 10, fontSize: 12, fontWeight: 600 }}>
                     Updating price...
@@ -381,7 +393,6 @@ const ProductModal = ({ product, isOpen, onClose }) => {
                 )}
               </div>
 
-              {/* ✅ ALERT like CartSlide */}
               {!!qtyAlert && (
                 <div
                   style={{
@@ -419,7 +430,8 @@ const ProductModal = ({ product, isOpen, onClose }) => {
                       onError={(e) => (e.target.style.display = "none")}
                     />
                     <span className="highlight">
-                      {"    "}{productDetails?.warranty_duration} Months Warranty
+                      {"    "}
+                      {productDetails?.warranty_duration} Months Warranty
                     </span>
                   </p>
                 </div>
@@ -429,12 +441,13 @@ const ProductModal = ({ product, isOpen, onClose }) => {
                 <p>
                   <span className="red">Bulk Quantity Discount:</span> Purchase{" "}
                   {productDetails?.piece_by_carton} or more and get each for{" "}
-                  {/* ✅ show both prices correctly */}
                   <span className="highlight">₹{Number(priceState.bulk || 0).toFixed(2)}</span>{" "}
                   instead of{" "}
                   <span className="highlight">₹{Number(priceState.normal || 0).toFixed(2)}</span>
                 </p>
-                <button className="discount-btn" type="button">
+
+                {/* ✅ UPDATED BUTTON */}
+                <button className="discount-btn" type="button" onClick={handleGetDiscount}>
                   Get Discount
                 </button>
               </div>
@@ -465,22 +478,17 @@ const ProductModal = ({ product, isOpen, onClose }) => {
                     disabled
                   />
 
-                  {/* hidden values */}
                   <input type="hidden" name="bulk_qty" id="bulk_qty" value={bulkQty} />
                   <input type="hidden" name="bulk_price" id="bulk_price" value={priceState.bulk} />
-
-                  {/* ✅ this now reflects server-updated chosen unit price */}
                   <input type="hidden" name="price" id="price" value={unitPrice} />
-
                   <input type="hidden" name="type" id="type" value={type} />
                   <input type="hidden" name="product_id" id="product_id" value={productDetails?.id || ""} />
                 </div>
               </div>
 
               <div className="action-buttons">
-                <button className="add-to-cart" onClick={handleAddToCart}>
-                  <img src={CartbtnIcon} alt="cartbtnIcon" className="cartbtnIcon" />{" "}
-                  Add to Cart
+                <button className="add-to-cart" onClick={handleAddToCart} type="button">
+                  <img src={CartbtnIcon} alt="cartbtnIcon" className="cartbtnIcon" /> Add to Cart
                 </button>
 
                 <button className="modal-wishlist-btn" type="button">

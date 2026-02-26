@@ -3009,6 +3009,17 @@ a.all-link svg {
   }
 }
 
+.switchBackLink {
+  color: #fff;
+  cursor: pointer;
+  margin-right: 10px;
+  text-decoration: none;
+  font-weight: 500;
+}
+.switchBackLink:hover {
+  text-decoration: underline;
+}
+
 .order-section {
   background: #fff;
   border-radius: 8px;

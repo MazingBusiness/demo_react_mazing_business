@@ -2,7 +2,14 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { loginFromAdmin } from "../api/apiRequestChild";
 
-function getParamsFromHash() {
+function getParams() {
+  // ✅ supports BrowserRouter: /login-from-admin?user_id=...&staff_id=...
+  const sp = new URLSearchParams(window.location.search);
+  const u1 = sp.get("user_id");
+  const s1 = sp.get("staff_id");
+  if (u1 && s1) return { user_id: u1, staff_id: s1 };
+
+  // ✅ supports HashRouter: #/login-from-admin?user_id=...&staff_id=...
   const hash = window.location.hash || "";
   const idx = hash.indexOf("?");
   if (idx === -1) return { user_id: "", staff_id: "" };
@@ -21,42 +28,56 @@ export default function LoginFromAdmin() {
   const [err, setErr] = useState("");
 
   useEffect(() => {
+    let alive = true;
+
     (async () => {
-      const { user_id, staff_id } = getParamsFromHash();
+      const { user_id, staff_id } = getParams();
 
       if (!user_id || !staff_id) {
-        setErr("Missing user_id or staff_id in URL.");
+        if (alive) setErr("Missing user_id or staff_id in URL.");
         return;
       }
 
       try {
-        // ✅ send object, not string
         const payload = { user_id, staff_id };
 
         const res = await loginFromAdmin(payload);
         const data = await res.json().catch(() => ({}));
 
-        // ✅ handle backend error
         if (!res.ok || data?.res === false) {
-          setErr(data?.msg || data?.message || `Login failed (HTTP ${res.status})`);
+          if (alive) {
+            setErr(
+              data?.msg ||
+                data?.message ||
+                `Login failed (HTTP ${res.status})`
+            );
+          }
           return;
         }
 
-        // ✅ success: save login info
         localStorage.setItem("mazingBusinessLoginInfo", JSON.stringify(data));
+        localStorage.setItem("mazingBusinessStaffId", JSON.stringify(staff_id));
 
-        // ✅ optional: clean hash query
+        // ✅ clean URL (hash)
         if (window.location.hash.includes("?")) {
           window.history.replaceState({}, "", window.location.hash.split("?")[0]);
         }
 
-        // ✅ redirect
+        // ✅ clean URL (search)
+        if (window.location.search.includes("?")) {
+          window.history.replaceState({}, "", window.location.pathname + window.location.hash);
+        }
+
         navigate("/quick-order", { replace: true });
       } catch (e) {
         console.error(e);
-        setErr("Something went wrong.");
+        if (alive) setErr("Something went wrong.");
       }
     })();
+
+    return () => {
+      alive = false; // prevent setState after unmount
+    };
   }, [navigate]);
 
   if (err) return <div style={{ padding: 20, color: "red" }}>{err}</div>;
