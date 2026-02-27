@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef , useMemo} from "react";
 import LoginHeader from "../layouts/LoginHeader";
 import bg from "../assets/images/BG.jpg";
 
@@ -65,29 +65,39 @@ const Login = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleLogin = async () => {
-    
+ const handleLogin = async () => {
     if (!validate()) return;
 
     try {
       const login_info = useEmail
-      ? { email, password }
-      : { email: "", phone: selectedCountry.code + mobile, password }; //  added `email: ""`
+        ? { email, password }
+        : { email: "", phone: selectedCountry.code + mobile, password };
 
       const res = await login(login_info);
       const data = await res.json();
-      console.log("Login API Response:", data);
 
-      if (data && data.id) {
+      const staffId = data?.id;
+
+      if (staffId) {
+        if (data.user_type === "staff") {
+          const redirectToAdmin = `https://mazingbusiness.com/switch_back_from_react/${encodeURIComponent(staffId)}`;
+          window.location.href = redirectToAdmin;
+          return; // ✅ stop further execution
+        }
+
         localStorage.setItem("mazingBusinessLoginInfo", JSON.stringify(data));
-        navigate("/profileDashbord");
-      } else if (data && data.res === false) {
-        setErrors({ general: data.msg || "Login failed" });
-        setTimeout(() => setErrors({}), 3000);
-      } else {
-        setErrors({ general: data.message || "Login failed" });
-        setTimeout(() => setErrors({}), 3000);
+        navigate("/quick-order");
+        return;
       }
+
+      // ✅ error handling
+      const msg =
+        (data && data.res === false && data.msg) ||
+        data?.message ||
+        "Login failed";
+
+      setErrors({ general: msg });
+      setTimeout(() => setErrors({}), 3000);
     } catch (error) {
       console.error("Login error:", error);
       setErrors({ general: "Something went wrong. Please try again." });

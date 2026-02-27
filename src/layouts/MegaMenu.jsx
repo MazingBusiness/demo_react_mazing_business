@@ -100,7 +100,7 @@ const MegaMenu = ({ setShowMegaMenu }) => {
 
         {/* Main Body */}
         <div className="menu-body">
-          <div className="menu-items">
+          {/* <div className="menu-items">
             {columns.map((col, colIdx) => (
               <div className="menu-column" key={colIdx}>
                 {col.map((item, idx) => (
@@ -122,6 +122,31 @@ const MegaMenu = ({ setShowMegaMenu }) => {
                 ))}
               </div>
             ))}
+          </div> */}
+
+          <div className="menu-items">
+            <div className="menu-items-scroll">
+              {columns.map((col, colIdx) => (
+                <div className="menu-column" key={colIdx}>
+                  {col.map((item) => (
+                    <Link
+                      key={item.cat_id}
+                      to="/product-listing"
+                      state={{ slug: item.slug, cat_id: item.cat_id }}
+                      onClick={() => setShowMegaMenu(false)}
+                    >
+                      <div className="menu-item">
+                        <span className="menu-item-img">
+                          <img src={item.img} alt={item.name} />
+                        </span>
+                        <span>{item.name}</span>
+                        {item.isNew && <span className="badge-new">New</span>}
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              ))}
+            </div>
           </div>
 
           <div className="menu-image">

@@ -27,6 +27,7 @@ const ProfileSidebar = () => {
   // Handle Logout
   const handleLogout = () => {
     localStorage.removeItem("mazingBusinessLoginInfo"); // Clear token
+    localStorage.removeItem("mazingBusinessStaffId"); // Clear token
     navigate("/login"); // Redirect to login
   };
 

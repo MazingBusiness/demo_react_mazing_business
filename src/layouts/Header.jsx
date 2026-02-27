@@ -28,7 +28,6 @@ import { cart } from "../api/apiRequest";
 function getStoredStaffId() {
   const raw = localStorage.getItem("mazingBusinessStaffId");
   if (!raw) return "";
-
   try {
     const parsed = JSON.parse(raw); // because you saved JSON.stringify(staff_id)
     return String(parsed || "");

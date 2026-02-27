@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import MainLayout from "../layouts/MainLayout";
 import { BsCloudArrowDownFill } from "react-icons/bs";
 import { useNavigate, Link } from "react-router-dom";
@@ -30,7 +30,46 @@ import {
   removeOffer,
   statementDownload,
   updateProductQty,
+  updateCartItemPrice,
 } from "../api/apiRequest";
+
+// ✅ helper: read staff id safely from localStorage
+function getStoredStaffId() {
+  const raw = localStorage.getItem("mazingBusinessStaffId");
+  if (!raw) return "";
+
+  let val = "";
+  try {
+    val = JSON.parse(raw); // if stored using JSON.stringify(...)
+  } catch {
+    val = raw;
+  }
+
+  const decoded = safeBase64Decode(val);
+
+  // if decode succeeded return decoded, else return original string
+  return decoded ? String(decoded) : String(val || "");
+}
+
+function safeBase64Decode(input) {
+  if (!input) return "";
+
+  try {
+    // remove quotes if any
+    const s = String(input).trim().replace(/^"|"$/g, "");
+
+    // handle base64url (sometimes "-" "_" instead of "+" "/")
+    const b64 = s.replace(/-/g, "+").replace(/_/g, "/");
+
+    // add missing padding
+    const padded = b64.padEnd(b64.length + (4 - (b64.length % 4)) % 4, "=");
+
+    return atob(padded);
+  } catch (e) {
+    // not valid base64 or decode failed
+    return "";
+  }
+}
 
 /** ✅ helpers (no hooks here) */
 const renderWarrantyTag = (product) => {
@@ -64,6 +103,7 @@ const fastDeliveryTag = (product) => {
 };
 
 const Cart = ({ isCartVisible, toggleCart }) => {
+
   const [cartItems, setCartItems] = useState([]);
   const [selectedCartIds, setSelectedCartIds] = useState([]);   // ✅ cart selection
   const [selectedSavedIds, setSelectedSavedIds] = useState([]); // ✅ saved selection
@@ -99,6 +139,42 @@ const Cart = ({ isCartVisible, toggleCart }) => {
   const [savedItems, setSavedItems] = useState([]);
 
   const navigate = useNavigate();
+
+  // Edit Price -----
+  const staffId = useMemo(() => getStoredStaffId(), []);
+  const PRICE_EDIT_STAFF = useMemo(() => new Set(["180", "169", "25606"]), []);
+  const canEditPrice = PRICE_EDIT_STAFF.has(String(staffId || ""));
+  const [editPriceById, setEditPriceById] = useState({});      // { [itemId]: "123" }
+  const [priceUpdatingById, setPriceUpdatingById] = useState({}); // { [itemId]: true/false }
+  useEffect(() => {
+    const map = {};
+    cartItems.forEach((it) => (map[it.id] = String(it.price ?? "")));
+    setEditPriceById(map);
+  }, [cartItems]);
+
+  // Create handler for Update button
+  const handleUpdatePrice = async (itemId) => {
+    const priceStr = editPriceById[itemId];
+    const priceNum = Number(priceStr);
+    if (!Number.isFinite(priceNum) || priceNum <= 0) {
+      alert("Enter valid price");
+      return;
+    }
+    try {
+      setPriceUpdatingById((p) => ({ ...p, [itemId]: true }));
+      await updateCartItemPrice({ id: itemId, price: priceNum });
+      // ✅ update UI locally (or call your fetchCart())
+      setCartItems((prev) =>
+        prev.map((x) => (x.id === itemId ? { ...x, price: priceNum } : x))
+      );
+    } catch (err) {
+      console.error(err);
+      alert(err?.message || "Price update failed");
+    } finally {
+      setPriceUpdatingById((p) => ({ ...p, [itemId]: false }));
+    }
+  };
+  // Edit Price End ---------
 
   /**
    * ✅ refs for debounce + latest cartItems
@@ -655,7 +731,36 @@ const Cart = ({ isCartVisible, toggleCart }) => {
                                 </td>
 
                                 <td className="cartprice" data-label="Price">
-                                  ₹ {item.price}
+                                  {canEditPrice ? (
+                                    <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                                      <span>₹</span>
+
+                                      <input
+                                        type="number"
+                                        min="0"
+                                        step="0.01"
+                                        value={editPriceById[item.id] ?? ""}
+                                        onChange={(e) =>
+                                          setEditPriceById((p) => ({ ...p, [item.id]: e.target.value }))
+                                        }
+                                        style={{ width: 90, padding: "6px 8px" }}
+                                      />
+
+                                      <button type="button" onClick={() => handleUpdatePrice(item.id)} disabled={!!priceUpdatingById[item.id]}
+                                        style={{
+                                          padding: "6px 10px",
+                                          borderRadius: 6,
+                                          border: "1px solid #ddd",
+                                          cursor: "pointer",
+                                          background: "aqua"
+                                        }}
+                                      >
+                                        {priceUpdatingById[item.id] ? "Updating..." : "Update"}
+                                      </button>
+                                    </div>
+                                  ) : (
+                                    <>₹ {item.price}</>
+                                  )}
                                 </td>
 
                                 <td className="narrow3" data-label="Quantity">

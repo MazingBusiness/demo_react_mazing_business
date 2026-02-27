@@ -214,6 +214,32 @@ export const updateQuantity = async ({ id, quantity, product_id, cart_id }) => {
   return data;
 };
 
+export const updateCartItemPrice = async ({ id, price }) => {
+  const header = getHeader();
+  if (!header) throw new Error("Authorization token missing");
+
+  if (!id) throw new Error("Missing id for update price");
+
+  const res = await fetch(`${API_BASE_URL}cart/update-price`, {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+      ...(header.headers || {}),
+    },
+    body: JSON.stringify({
+      id,
+      price: Number(price),
+    }),
+  });
+
+  const data = await res.json();
+  if (!res.ok || data?.res === false) {
+    throw new Error(data?.msg || "Update price failed");
+  }
+  return data;
+};
+
 
 export const addToCart = async ({ product_id, quantity, type }) => {
   const header = getHeader();
