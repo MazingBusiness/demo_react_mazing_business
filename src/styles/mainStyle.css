@@ -924,6 +924,30 @@ a.right-link {
   position: relative;
 }
 
+/* Button loader (right side) */
+.checkout-btn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.checkout-btn .btn-loader {
+  position: absolute;
+  right: 14px;
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255,255,255,0.35);
+  border-top-color: rgba(255,255,255,1);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
 /* wrapper */
 .mega-menu-wrapper {
   position: absolute;
@@ -938,7 +962,7 @@ a.right-link {
   transform: translateY(20px);
   transition: all 0.3s ease;
 
-  z-index: 999;
+  z-index: 999999;
   padding-top: 25px;
 }
 

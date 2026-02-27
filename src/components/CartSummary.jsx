@@ -60,10 +60,10 @@ const CartSummary = ({ isCartVisible, onApplied, afterAppliedRefresh, selectedAd
     const handler = () => cartPageData(); // when cart-updated happens, refresh
     if(location.pathname == '/company'){
       canCheckout =  "";
-      setButnText("Proces to checkout");
+      setButnText("Proceed to checkout");
     } else if(location.pathname == '/confirmation'){
       canCheckout = "";
-      setButnText("Proces to confirmation");
+      setButnText("Proceed to confirmation");
     }else if(location.pathname == '/payment'){
       setButnText("Complete");
     }
@@ -103,6 +103,7 @@ const CartSummary = ({ isCartVisible, onApplied, afterAppliedRefresh, selectedAd
   const [checkoutLoading, setCheckoutLoading] = useState(false);
 
   const handleCheckout = async () => {
+    if (checkoutLoading) return;
     if(location.pathname == "/company"){
       const addressId = Number(selectedAddressId);
       // ✅ address select validation
@@ -110,6 +111,7 @@ const CartSummary = ({ isCartVisible, onApplied, afterAppliedRefresh, selectedAd
         alert("Please select shipping address");
         return;
       }
+      
     }
     
     setCheckoutLoading(true);
@@ -234,9 +236,13 @@ const CartSummary = ({ isCartVisible, onApplied, afterAppliedRefresh, selectedAd
           <div className="subtotal">
             Total Payable: <span>₹ {totalPayable}</span>
           </div>
-          <button className={`checkout-btn ${canCheckout ? "" : "disabled"}`} onClick={handleCheckout} disabled= {!canCheckout} >
-            {/* {isPaymentPage ? "Complete" : "Procced to Confirmation"} */}
+          <button
+            className={`checkout-btn ${canCheckout && !checkoutLoading ? "" : "disabled"}`}
+            onClick={handleCheckout}
+            disabled={!canCheckout || checkoutLoading}
+          >
             {butnText}
+            {checkoutLoading && <span className="btn-loader" />}
           </button>
         </div>
       </div>

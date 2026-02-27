@@ -1,6 +1,7 @@
 import React from "react";
 import { FiX, FiChevronRight } from "react-icons/fi";
 import product1 from "../assets/images/product.jpg";
+import { getQuickOrderProduct } from "../api/apiRequest";
 
 const products = [
   {
@@ -48,6 +49,94 @@ const products = [
 ];
 
 const SearchModal = ({ searchText, onChange, onClear, onClose }) => {
+
+  const [cat_groups, setCatgroup] = useState(initialCatGroups);
+  const [categories, setCategories] = useState(initialCategories);
+  const [brands, setBrands] = useState(initialBrands);
+  const [search_text, setSearchText] = useState(initialSearchText);
+  const [min_price, setMinPrice] = useState(initialMinPrice);
+  const [max_price, setMaxPrice] = useState(initialMaxPrice);
+  const [location_id, setLocationId] = useState(initialLocationId);
+  const [inhouse_product, setInhouseProduct] = useState(initialInhouseProduct);
+  const [categoryName, setCategoryName] = useState("");
+  const [categoryGroupName, setCategoryGroupName] = useState("");
+
+  const getQuickOrderProductRecord = async (page = 1) => {
+    try {
+      setLoading(true);
+      // alert(filters.delivery);
+      const apiRes = await getQuickOrderProduct(
+        filters.cat_groups,
+        filters.categories,
+        filters.brands,
+        filters.search_text,
+        filters.min_price,
+        filters.max_price,
+        filters.location_id,
+        filters.inhouse_product,
+        price_sort,
+        filters.delivery,
+        page        
+      );
+
+      const responseData = await apiRes.json();
+
+      if (responseData.res) {
+        const productList = responseData.data?.data || [];
+        const total = responseData.data?.total || 0;
+
+        setTotalRecord(total);
+
+        const transformedData = productList.map((item) => {
+          const noCredit = item.cash_and_carry_item === 1;
+          const fastDeliveryTag = item.fast_delivery_tag === 1;
+          const hasWarranty = item.is_warranty === 1;
+
+          const rating = item.rating && item.rating !== 0 ? item.rating : 4;
+          const totalRatings =
+            Array.isArray(item.reviews) && item.reviews.length > 0
+              ? item.reviews.length
+              : 20;
+
+          return {
+            id: item.id,
+            name: item.name,
+            img: item.thumb_img?.file_name || no_image,
+            oldPrice: item.mrp ? `₹${parseFloat(item.mrp).toFixed(2)}` : "₹0.00",
+            newPrice: item.discount_price
+              ? `₹${parseFloat(String(item.discount_price).replace(/₹/g, "")).toFixed(2)}`
+              : "₹0.00",
+            rating,
+            totalRatings,
+            sold: `${Math.floor(Math.random() * 50 + 1)}/${Math.floor(
+              Math.random() * 200 + 50
+            )}`,
+            fastDeliveryTag,
+            is_warranty: hasWarranty,
+            noCredit,
+            discount: item.discount ? `${item.discount}%` : "20%",
+            user_id: user?.id || null,
+            category_group: item.category_group?.name,
+            category: item.category?.name,
+            fast_delivery_tag: item.fast_delivery_tag,
+            stocks: item.stocks,
+            reviews: item.reviews,
+          };
+        });
+
+        // ✅ IMPORTANT: append for page>1, replace for page=1
+        setProducts((prev) => (page === 1 ? transformedData : [...prev, ...transformedData]));
+
+        const computedTotalPages = Math.ceil(total / productsPerPage) || 1;
+        setHasMore(page < computedTotalPages);
+      }
+    } catch (error) {
+      console.error("Fetch error:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const filteredProducts = products.filter((product) =>
     product.name.toLowerCase().includes(searchText.toLowerCase())
   );
