@@ -253,6 +253,9 @@ const Payment = () => {
               </div>
 
               <div className="cart-left-rgt">
+                <Link to="/" className="back-home-btn">
+                  ← Back to Home
+                </Link>
                 {payStatus === "SUCCESS" ? (
                   <div className="payment-success">
                     <img src={PaidIcon} alt="success" style={{ width: 120 }} />
