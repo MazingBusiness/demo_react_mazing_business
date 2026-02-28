@@ -5,9 +5,9 @@ import ProductDetailsSidebar from "./ProductDetailsSidebar";
 const ProductDetailsBottom = () => {
   return (
     <div className="ProductDetailsBottomwrapper">
-      <div className="sidebarFilters">
+      {/* <div className="sidebarFilters">
         <ProductDetailsSidebar />
-      </div>
+      </div> */}
       <div className="productGrid">
         <ProductDetailsGrid />
       </div>

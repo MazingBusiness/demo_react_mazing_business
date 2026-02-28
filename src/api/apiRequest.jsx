@@ -736,3 +736,16 @@ export const updateProductQty = async (product_id, quantity) => {
   );
   return res.json(); 
 };
+
+export const productDetails = async (slug) => {
+  const params = new URLSearchParams();
+  params.append("slug", slug); // ✅ mandatory
+  const res = await fetch(
+    `${API_BASE_URL}product/product-details?${params.toString()}`,
+    {
+      method: "GET",
+      headers: { Accept: "application/json", ...(getHeader()?.headers || {}) },
+    }
+  );
+  return res.json(); 
+};

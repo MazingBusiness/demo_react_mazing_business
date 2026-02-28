@@ -1,204 +1,358 @@
-import React from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { FiX, FiChevronRight } from "react-icons/fi";
-import product1 from "../assets/images/product.jpg";
+import { useNavigate } from "react-router-dom";
+
+import no_image from "../assets/images/no-image.png";
 import { getQuickOrderProduct } from "../api/apiRequest";
+import { getLoggedInUser } from "../utils/authUtils";
 
-const products = [
-  {
-    id: 1,
-    name: "Power Safe Connectors",
-    price: 2000,
-    discountedPrice: 1800,
-    img: product1,
-  },
-  {
-    id: 2,
-    name: "Power Wash Cleaning Equipment",
-    price: 2000,
-    discountedPrice: 1800,
-    img: product1,
-  },
-  {
-    id: 3,
-    name: "Power Machines Turbines",
-    price: 2000,
-    discountedPrice: 1800,
-    img: product1,
-  },
-  {
-    id: 4,
-    name: "Golden Power Batteries",
-    price: 2000,
-    discountedPrice: 1800,
-    img: product1,
-  },
-  {
-    id: 5,
-    name: "Power Film Solar Panels",
-    price: 2000,
-    discountedPrice: 1800,
-    img: product1,
-  },
-  {
-    id: 6,
-    name: "Power Lock Connectors",
-    price: 2000,
-    discountedPrice: 1800,
-    img: product1,
-  },
-];
+/**
+ * SearchModal.jsx
+ * - Dynamic API search as user types (debounced)
+ * - Infinite scroll inside modal list (IntersectionObserver)
+ * - Clickable items → navigates to Product Details page
+ *
+ * Notes:
+ * 1) Update PRODUCT_DETAILS_PATH if your route is different.
+ *    Common options:
+ *      - `/product/${slug}`  (slug)
+ *      - `/product-details/${id}` (id)
+ *      - `/product/${id}` (id)
+ *
+ * 2) Uses same getQuickOrderProduct signature as QuickOrderGrid:
+ *    getQuickOrderProduct(cat_groups, categories, brands, search_text, min_price, max_price, location_id, inhouse_product, price_sort, delivery, page)
+ */
 
-const SearchModal = ({ searchText, onChange, onClear, onClose }) => {
+const productsPerPage = 16;
 
-  const [cat_groups, setCatgroup] = useState(initialCatGroups);
-  const [categories, setCategories] = useState(initialCategories);
-  const [brands, setBrands] = useState(initialBrands);
-  const [search_text, setSearchText] = useState(initialSearchText);
-  const [min_price, setMinPrice] = useState(initialMinPrice);
-  const [max_price, setMaxPrice] = useState(initialMaxPrice);
-  const [location_id, setLocationId] = useState(initialLocationId);
-  const [inhouse_product, setInhouseProduct] = useState(initialInhouseProduct);
-  const [categoryName, setCategoryName] = useState("");
-  const [categoryGroupName, setCategoryGroupName] = useState("");
+// ✅ Change this if your product detail route differs
+const PRODUCT_DETAILS_PATH = (p) => {
+  // If your API provides slug, prefer it:
+  if (p?.slug) return `/product-details/${p.slug}`;
+  // fallback:
+  return `/product-details/${p.id}`;
+};
 
-  const getQuickOrderProductRecord = async (page = 1) => {
+const SearchModal = ({
+  searchText,
+  onChange,
+  onClear,
+  onClose,
+
+  /**
+   * Optional: pass filters from parent if you want the search
+   * to respect current filters (cat/brand/location/etc.).
+   * If not passed, it will still work with only searchText.
+   */
+  filters = {},
+}) => {
+  const navigate = useNavigate();
+  const user = getLoggedInUser();
+
+  const [items, setItems] = useState([]);
+  const [totalRecord, setTotalRecord] = useState(0);
+  const [page, setPage] = useState(1);
+
+  const [loading, setLoading] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+
+  const [apiError, setApiError] = useState("");
+
+  // list scroll + observer
+  const listRef = useRef(null);
+  const loaderRef = useRef(null);
+  const observerRef = useRef(null);
+
+  // debounce timer
+  const debounceRef = useRef(null);
+
+  const price_sort = useMemo(() => "popularity", []); // keep consistent
+
+  const buildTransformed = (productList = []) => {
+    return productList.map((item) => {
+      const rating = item.rating && item.rating !== 0 ? item.rating : 4;
+
+      return {
+        id: item.id,
+        slug: item.slug, // if available in API
+        name: item.name,
+        img: item.thumb_img?.file_name || no_image,
+
+        mrp: item.mrp ?? 0,
+        discount_price: item.discount_price ?? 0,
+
+        // show/hide price like QuickOrderGrid
+        user_id: user?.id || null,
+
+        rating,
+        reviews: item.reviews,
+        category_group: item.category_group?.name,
+        category: item.category?.name,
+
+        raw: item,
+      };
+    });
+  };
+
+  const fetchProducts = async (search, reqPage = 1) => {
+    // prevent empty search spam
+    const q = String(search || "").trim();
+    if (!q) {
+      setItems([]);
+      setTotalRecord(0);
+      setPage(1);
+      setHasMore(false);
+      setApiError("");
+      return;
+    }
+
     try {
+      setApiError("");
       setLoading(true);
-      // alert(filters.delivery);
+
+      const q = String(searchText || "").trim();
+
       const apiRes = await getQuickOrderProduct(
         filters.cat_groups,
         filters.categories,
         filters.brands,
-        filters.search_text,
+        q,                      // ✅ search_text (4th param)
         filters.min_price,
         filters.max_price,
         filters.location_id,
         filters.inhouse_product,
         price_sort,
-        filters.delivery,
-        page        
+        filters.delivery,       // ✅ keep as-is as per your working API
+        reqPage                 // ✅ page
       );
 
       const responseData = await apiRes.json();
 
-      if (responseData.res) {
-        const productList = responseData.data?.data || [];
-        const total = responseData.data?.total || 0;
-
-        setTotalRecord(total);
-
-        const transformedData = productList.map((item) => {
-          const noCredit = item.cash_and_carry_item === 1;
-          const fastDeliveryTag = item.fast_delivery_tag === 1;
-          const hasWarranty = item.is_warranty === 1;
-
-          const rating = item.rating && item.rating !== 0 ? item.rating : 4;
-          const totalRatings =
-            Array.isArray(item.reviews) && item.reviews.length > 0
-              ? item.reviews.length
-              : 20;
-
-          return {
-            id: item.id,
-            name: item.name,
-            img: item.thumb_img?.file_name || no_image,
-            oldPrice: item.mrp ? `₹${parseFloat(item.mrp).toFixed(2)}` : "₹0.00",
-            newPrice: item.discount_price
-              ? `₹${parseFloat(String(item.discount_price).replace(/₹/g, "")).toFixed(2)}`
-              : "₹0.00",
-            rating,
-            totalRatings,
-            sold: `${Math.floor(Math.random() * 50 + 1)}/${Math.floor(
-              Math.random() * 200 + 50
-            )}`,
-            fastDeliveryTag,
-            is_warranty: hasWarranty,
-            noCredit,
-            discount: item.discount ? `${item.discount}%` : "20%",
-            user_id: user?.id || null,
-            category_group: item.category_group?.name,
-            category: item.category?.name,
-            fast_delivery_tag: item.fast_delivery_tag,
-            stocks: item.stocks,
-            reviews: item.reviews,
-          };
-        });
-
-        // ✅ IMPORTANT: append for page>1, replace for page=1
-        setProducts((prev) => (page === 1 ? transformedData : [...prev, ...transformedData]));
-
-        const computedTotalPages = Math.ceil(total / productsPerPage) || 1;
-        setHasMore(page < computedTotalPages);
+      if (!responseData?.res) {
+        setApiError(responseData?.message || "Something went wrong.");
+        return;
       }
-    } catch (error) {
-      console.error("Fetch error:", error);
+
+      const productList = responseData.data?.data || [];
+      const total = responseData.data?.total || 0;
+
+      setTotalRecord(total);
+
+      const transformed = buildTransformed(productList);
+
+      setItems((prev) => (reqPage === 1 ? transformed : [...prev, ...transformed]));
+
+      const computedTotalPages = Math.ceil(total / productsPerPage) || 1;
+      setHasMore(reqPage < computedTotalPages);
+    } catch (e) {
+      console.error(e);
+      setApiError("Failed to load products. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
-  const filteredProducts = products.filter((product) =>
-    product.name.toLowerCase().includes(searchText.toLowerCase())
-  );
+  // ✅ Debounced API call on typing
+  useEffect(() => {
+    // reset pagination for new query
+    setPage(1);
+    setHasMore(true);
+
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+
+    debounceRef.current = setTimeout(() => {
+      fetchProducts(searchText, 1);
+    }, 350);
+
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    searchText,
+    filters.cat_groups,
+    filters.categories,
+    filters.brands,
+    filters.min_price,
+    filters.max_price,
+    filters.location_id,
+    filters.inhouse_product,
+    filters.delivery,
+  ]);
+
+  // ✅ Load next page when `page` increments (but not for page=1 which is handled above)
+  useEffect(() => {
+    if (page <= 1) return;
+    fetchProducts(searchText, page);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page]);
+
+  // ✅ Infinite scroll INSIDE modal list
+  useEffect(() => {
+    if (!loaderRef.current) return;
+
+    // clean old observer
+    if (observerRef.current) observerRef.current.disconnect();
+
+    observerRef.current = new IntersectionObserver(
+      (entries) => {
+        const first = entries[0];
+        if (first.isIntersecting && hasMore && !loading) {
+          setPage((p) => p + 1);
+        }
+      },
+      {
+        root: listRef.current || null, // important: observe inside scroll container
+        rootMargin: "150px",
+        threshold: 0.1,
+      }
+    );
+
+    observerRef.current.observe(loaderRef.current);
+
+    return () => {
+      if (observerRef.current) observerRef.current.disconnect();
+    };
+  }, [hasMore, loading]);
 
   const highlightText = (text) => {
-    const lowerSearch = searchText.toLowerCase();
-    return text.split(" ").map((word, i) => {
-      const lowerWord = word.toLowerCase();
-      if (lowerWord.includes(lowerSearch) && searchText !== "") {
-        const start = lowerWord.indexOf(lowerSearch);
-        const end = start + lowerSearch.length;
+    const q = String(searchText || "").trim().toLowerCase();
+    if (!q) return text;
 
+    // highlight by splitting on space (simple but works)
+    return String(text)
+      .split(" ")
+      .map((word, i) => {
+        const lw = word.toLowerCase();
+        const idx = lw.indexOf(q);
+        if (idx === -1) return <span key={i}>{word} </span>;
+
+        const end = idx + q.length;
         return (
           <span key={i}>
-            {word.slice(0, start)}
-            <span className="highlight">{word.slice(start, end)}</span>
+            {word.slice(0, idx)}
+            <span className="highlight">{word.slice(idx, end)}</span>
             {word.slice(end)}{" "}
           </span>
         );
-      }
-      return <span key={i}>{word} </span>;
-    });
+      });
+  };
+
+  const onItemClick = (p) => {
+    // close modal first (optional)
+    onClose?.();
+    // navigate to product details
+    navigate(PRODUCT_DETAILS_PATH(p));
   };
 
   return (
-    <div className="search-modal-backdrop">
-      <div className="search-modal">
-        {/* Results Section */}
-        {searchText && (
+    <div
+      className="search-modal-backdrop"
+      onClick={() => {
+        // click outside closes
+        onClear?.();
+        onClose?.();
+      }}
+    >
+      <div
+        className="search-modal"
+        onClick={(e) => e.stopPropagation()} // prevent backdrop close when clicking inside
+      >
+        {/* Results */}
+        {String(searchText || "").trim() !== "" && (
           <div className="results-wrapper">
-            {filteredProducts.length > 0 ? (
+            {apiError ? (
+              <div className="no-results">{apiError}</div>
+            ) : (
               <>
-                <h2>Found {filteredProducts.length} Products</h2>
-                <div className="results-container">
-                  {filteredProducts.map((product) => (
-                    <div className="result-item" key={product.id}>
-                      <img src={product.img} alt={product.name} />
-                      <div className="result-item-product-info">
-                        <div className="product-info-lft">
-                          <p>{highlightText(product.name)}</p>
-                          <p className="price">
-                            <del>₹{product.price}</del>{" "}
-                            <span className="discount">
-                              ₹{product.discountedPrice}
+                <h2>
+                  {loading && page === 1
+                    ? "Searching…"
+                    : `Found ${totalRecord} Products`}
+                </h2>
+
+                <div className="results-container" ref={listRef}>
+                  {items.length > 0 ? (
+                    <>
+                      {items.map((product) => (
+                        <button
+                          type="button"
+                          className="result-item"
+                          key={product.id}
+                          onClick={() => onItemClick(product)}
+                          style={{
+                            width: "100%",
+                            textAlign: "left",
+                            background: "#ffffff",
+                            border: "none",
+                            padding: 0,
+                            cursor: "pointer",
+                          }}
+                        >
+                          <img
+                            src={product.img}
+                            alt={product.name}
+                            onError={(e) => {
+                              e.target.onerror = null;
+                              e.target.src = no_image;
+                            }}
+                          />
+
+                          <div className="result-item-product-info">
+                            <div className="product-info-lft">
+                              <p>{highlightText(product.name)}</p>
+
+                              {/* Price rules similar to your grid */}
+                              {product.user_id != null ? (
+                                <p className="price">
+                                  <del>
+                                    ₹{Number(product.mrp || 0).toFixed(2)}
+                                  </del>{" "}
+                                  <span className="discount">
+                                    ₹{Number(product.discount_price || 0).toFixed(2)}
+                                  </span>
+                                </p>
+                              ) : (
+                                <p className="price">
+                                  <span className="discount">
+                                    Register to check prices
+                                  </span>
+                                </p>
+                              )}
+                            </div>
+
+                            <span className="arrow-btn" aria-hidden="true">
+                              <FiChevronRight />
                             </span>
-                          </p>
-                        </div>
-                        <button className="arrow-btn">
-                          <FiChevronRight />
+                          </div>
                         </button>
-                      </div>
-                    </div>
-                  ))}
+                      ))}
+
+                      {/* Infinite loader sentinel */}
+                      <div ref={loaderRef} style={{ height: 1 }} />
+
+                      {loading && (
+                        <div className="no-results" style={{ padding: "10px 0" }}>
+                          Loading…
+                        </div>
+                      )}
+
+                      {!hasMore && !loading && items.length > 0 && (
+                        <div className="no-results" style={{ padding: "10px 0" }}>
+                          You reached the end.
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    !loading && <div className="no-results">No products found</div>
+                  )}
                 </div>
               </>
-            ) : (
-              <div className="no-results">No products found</div>
             )}
           </div>
         )}
 
-        {/* Search Input Section */}
+        {/* Search Input */}
         <div className="search-input-wrapper">
           <input
             type="text"
@@ -210,9 +364,11 @@ const SearchModal = ({ searchText, onChange, onClear, onClose }) => {
           <button
             className="close-btn"
             onClick={() => {
-              onClear();
-              onClose();
+              onClear?.();
+              onClose?.();
             }}
+            aria-label="Close search"
+            type="button"
           >
             <FiX />
           </button>

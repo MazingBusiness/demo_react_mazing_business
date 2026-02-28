@@ -1,41 +1,146 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { FaStar, FaStarHalfAlt, FaRegStar } from "react-icons/fa";
-import product1 from "../assets/images/product.jpg";
-import MainLayout from "../layouts/MainLayout";
 import { GoDotFill } from "react-icons/go";
+import { useParams } from "react-router-dom";
+
+import MainLayout from "../layouts/MainLayout";
 import fastDeliveryIcon from "../assets/icons/fast-delivery.svg";
 
-import ProductGrid from "../components/ProductGrid";
 import ProductDetailsBottom from "../components/ProductDetailsBottom";
+import { productDetails } from "../api/apiRequest";
 
 const ProductDetails = () => {
+  const { slug } = useParams();
+
   const [activeTab, setActiveTab] = useState("specs");
+  const [loading, setLoading] = useState(true);
+  const [btnLoading, setBtnLoading] = useState(false);
+  const [err, setErr] = useState("");
 
-  const rating = 3.5;
-  const totalRatings = 12;
+  const [product, setProduct] = useState(null);
+  const [apiAttributes, setApiAttributes] = useState([]);
 
-  // ⭐ Render Rating
+  // ⭐ Rating UI
   const renderRating = (rating) => {
+    const r = Number(rating || 0);
     const stars = [];
-    const fullStars = Math.floor(rating);
-    const hasHalfStar = rating % 1 >= 0.5;
+    const fullStars = Math.floor(r);
+    const hasHalfStar = r % 1 >= 0.5;
 
     for (let i = 0; i < fullStars; i++) {
       stars.push(<FaStar key={`full-${i}`} className="star-icon full-star" />);
     }
-
     if (hasHalfStar) {
       stars.push(<FaStarHalfAlt key="half" className="star-icon half-star" />);
     }
 
     const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
     for (let i = 0; i < emptyStars; i++) {
-      stars.push(
-        <FaRegStar key={`empty-${i}`} className="star-icon empty-star" />
-      );
+      stars.push(<FaRegStar key={`empty-${i}`} className="star-icon empty-star" />);
     }
-
     return stars;
+  };
+
+  // ✅ Compute rating if product.rating = 0
+  const computedRating = useMemo(() => {
+    if (!product) return 0;
+    const apiRating = Number(product.rating || 0);
+    if (apiRating > 0) return apiRating;
+
+    const reviews = Array.isArray(product.reviews) ? product.reviews : [];
+    if (!reviews.length) return 0;
+
+    const sum = reviews.reduce((acc, r) => acc + Number(r.rating || 0), 0);
+    return sum / reviews.length;
+  }, [product]);
+
+  const totalRatings = useMemo(() => {
+    const reviews = Array.isArray(product?.reviews) ? product.reviews : [];
+    return reviews.length;
+  }, [product]);
+
+  // ✅ Specs
+  const specs = useMemo(() => {
+    if (!product) return [];
+
+    const rows = [
+      { label: "HSN Code", value: product?.hsncode },
+      { label: "GST Rate", value: product?.tax ? `${product.tax}%` : "" },
+      { label: "Group", value: product?.category_group?.name || "" },
+      { label: "Category", value: product?.category?.name || "" },
+      { label: "Part No", value: product?.part_no || "" },
+      { label: "Unit", value: product?.unit || "" },
+      { label: "MRP", value: product?.mrp ? `₹ ${product.mrp}` : "" },
+      { label: "Shipping Days", value: product?.est_shipping_days ? `${product.est_shipping_days} Days` : "" },
+      { label: "Warranty", value: String(product?.is_warranty) === "1" ? "Yes" : "No" },
+      { label: "Warranty Duration", value: product?.warranty_duration ? `${product.warranty_duration} Months` : "" },
+    ];
+
+    return rows.filter((r) => String(r.value || "").trim() !== "");
+  }, [product]);
+
+  const productName = product?.name || "Product";
+  const descriptionText = product?.description || "";
+
+  // ✅ image
+  const mainImage =
+    product?.thumb_img?.file_name ||
+    product?.images?.[0]?.file_name ||
+    "";
+
+  const crumbGroup = product?.category_group?.name || "Category Group";
+  const crumbCategory = product?.category?.name || "Category";
+
+  // ✅ FIXED FETCH
+  const fetchProduct = async () => {
+    setLoading(true);
+    setErr("");
+    setProduct(null);
+    setApiAttributes([]);
+
+    try {
+      const cleanSlug = decodeURIComponent(String(slug || "").trim());
+      if (!cleanSlug) throw new Error("Slug missing in URL");
+
+      // ✅ IMPORTANT: pass STRING (not object)
+      const payload = await productDetails(cleanSlug);
+
+      console.log("API RESPONSE:", payload);
+
+      const ok = payload?.res === true || payload?.res === 1 || payload?.res === "true";
+      if (!ok) {
+        throw new Error(payload?.msg || "API returned res=false");
+      }
+
+      const p = Array.isArray(payload?.data) ? payload.data[0] : null;
+      if (!p) throw new Error("Product not found in payload.data[0]");
+
+      setProduct(p);
+      setApiAttributes(Array.isArray(payload?.attributes) ? payload.attributes : []);
+    } catch (e) {
+      setErr(e?.message || "Failed to load product");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchProduct();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [slug]);
+
+  const handleAddToCart = async () => {
+    try {
+      if (!product?.id) return;
+      setBtnLoading(true);
+
+      console.log("Add to cart:", product.id);
+      // call your addToCart API here
+    } catch (e) {
+      alert(e?.message || "Add to cart failed");
+    } finally {
+      setBtnLoading(false);
+    }
   };
 
   return (
@@ -43,142 +148,179 @@ const ProductDetails = () => {
       <div className="maincontainer">
         <div className="product-details-conte">
           <div className="product-details">
-            {/* Left Section - Image */}
+            {/* Left */}
             <div className="product-details-left">
-              {/* Breadcrumb */}
               <div className="breadcrumb">
-                Offer Price Items
-                <em>
-                  <GoDotFill />
-                </em>
-                Power Tools
-                <em>
-                  <GoDotFill />
-                </em>
-                <span className="current">Air Blower</span>
+                {crumbGroup}
+                <em><GoDotFill /></em>
+                {crumbCategory}
+                <em><GoDotFill /></em>
+                <span className="current">{productName}</span>
               </div>
 
-              <img src={product1} alt="Product" className="main-product-img" />
+              {loading ? (
+                <div style={{ padding: 20 }}>Loading...</div>
+              ) : err ? (
+                <div style={{ padding: 20, color: "red" }}>{err}</div>
+              ) : (
+                <>
+                  {mainImage ? (
+                    <img
+                      src={mainImage}
+                      alt={productName}
+                      className="main-product-img"
+                      onError={(e) => {
+                        // ✅ don’t hide everything; just show a placeholder style
+                        e.currentTarget.src = "https://via.placeholder.com/500x500?text=No+Image";
+                      }}
+                    />
+                  ) : (
+                    <div style={{ padding: 20 }}>No Image</div>
+                  )}
+                </>
+              )}
             </div>
 
-            {/* Right Section - Info */}
+            {/* Right */}
             <div className="product-details-right">
               <div className="product-modal-info-top">
                 <div className="product-modal-info-top-lft">
-                  <h2>Product Name</h2>
+                  <h2>{loading ? "Loading..." : productName}</h2>
 
                   <div className="product-rating">
-                    {renderRating(rating)}
+                    {renderRating(computedRating)}
                     <span className="rating-count">{totalRatings} Reviews</span>
                   </div>
                 </div>
+
                 <div className="delivery">
-                  <img
-                    src={fastDeliveryIcon}
-                    alt="Fast Delivery"
-                    loading="lazy"
-                    onError={(e) => {
-                      e.target.style.display = "none";
-                    }}
-                  />
-                  <p>
-                    Estimate Shipping Time <span>5-6 Days</span>
-                  </p>
+                  {product?.fast_delivery_tag == 1 && (
+                    <>
+                      <img
+                        src={fastDeliveryIcon}
+                        alt="Fast Delivery"
+                        loading="lazy"
+                        onError={(e) => {
+                          e.currentTarget.style.display = "none";
+                        }}
+                      />
+                      <p>
+                        Estimate Shipping Time{" "}
+                        <span>
+                          {product?.est_shipping_days
+                            ? `${product.est_shipping_days} Days`
+                            : "5-6 Days"}
+                        </span>
+                      </p>
+                    </>
+                  )}
                 </div>
               </div>
 
-              {/* Tabs */}
-              <div className="tabs">
-                <button
-                  className={activeTab === "specs" ? "tab active" : "tab"}
-                  onClick={() => setActiveTab("specs")}
+              {/* Tabs + button */}
+              <div
+                className="tabs-row"
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: 12,
+                  marginTop: 10,
+                }}
+              >
+                <div className="tabs" style={{ margin: 0 }}>
+                  <button
+                    className={activeTab === "specs" ? "tab active" : "tab"}
+                    onClick={() => setActiveTab("specs")}
+                    type="button"
+                  >
+                    Specifications
+                  </button>
+
+                  <button
+                    className={activeTab === "desc" ? "tab active" : "tab"}
+                    onClick={() => setActiveTab("desc")}
+                    type="button"
+                  >
+                    Descriptions
+                  </button>
+                </div>
+
+                {/* <button
+                  type="button"
+                  onClick={handleAddToCart}
+                  disabled={btnLoading || loading || !!err}
+                  className="add-to-cart-btn"
                 >
-                  Specifications
-                </button>
-                <button
-                  className={activeTab === "desc" ? "tab active" : "tab"}
-                  onClick={() => setActiveTab("desc")}
-                >
-                  Descriptions
-                </button>
+                  {btnLoading ? "Adding..." : "Add to Cart"}
+                </button> */}
               </div>
 
-              {/* Tab Content */}
+              {/* Content */}
               {activeTab === "specs" ? (
                 <div className="specs-table">
                   <div className="specs-grid">
-                    <div className="spec-row">
-                      <h3>HSN Code</h3>
-                      <p>84672900</p>
-                    </div>
-                    <div className="spec-row">
-                      <h3>GST Rate</h3>
-                      <p>18%</p>
-                    </div>
-                    <div className="spec-row">
-                      <h3>Group</h3>
-                      <p>Power Tools Spares</p>
-                    </div>
-                    <div className="spec-row">
-                      <h3>Imported By</h3>
-                      <p>Not Available</p>
-                    </div>
-                    <div className="spec-row">
-                      <h3>Power Input</h3>
-                      <p>550 Watts</p>
-                    </div>
-                    <div className="spec-row">
-                      <h3>Drilling Mode</h3>
-                      <p>Rotary + Impact</p>
-                    </div>
-                    <div className="spec-row">
-                      <h3>Category</h3>
-                      <p>Category Name</p>
-                    </div>
-                    <div className="spec-row">
-                      <h3>Contact By</h3>
-                      <p>Not Available</p>
-                    </div>
-                    <div className="spec-row">
-                      <h3>No Load Speed</h3>
-                      <p>0 - 2,900 rpm</p>
-                    </div>
+                    {loading ? (
+                      <div style={{ padding: 12 }}>Loading...</div>
+                    ) : (
+                      <>
+                        {specs.map((row, idx) => (
+                          <div className="spec-row" key={idx}>
+                            <h3>{row.label}</h3>
+                            <p>{String(row.value)}</p>
+                          </div>
+                        ))}
+
+                        {apiAttributes.map((a, idx) => (
+                          <div className="spec-row" key={`attr-${idx}`}>
+                            <h3>{a.attribute_name}</h3>
+                            <p>{a.attribute_value}</p>
+                          </div>
+                        ))}
+                      </>
+                    )}
                   </div>
                 </div>
               ) : (
                 <div className="desc-section">
-                  <p>
-                    The HiKOKI DV13VSS is a compact and powerful 13 mm impact
-                    drill designed for both professional and DIY applications.
-                    With its 550W motor, this drill delivers excellent
-                    performance in a wide range of materials including wood,
-                    steel, and concrete. It features a dual-mode operation —
-                    rotary drilling and impact drilling — making it versatile
-                    for home renovation, construction, and workshop use.
-                  </p>
-                  <p>
-                    The variable speed trigger ensures precise control, while
-                    the forward/reverse switch allows for easy screwdriving and
-                    bit removal. The keyed chuck provides a secure grip for
-                    various drill bits up to 13 mm in diameter. Its lightweight
-                    and ergonomic design reduces fatigue, making it ideal for
-                    prolonged use.
-                  </p>
-                  <p>
-                    Backed by HiKOKI’s reputation for durability and innovation,
-                    the DV13VSS combines performance, reliability, and comfort
-                    in one efficient tool.
-                  </p>
+                  {loading ? (
+                    <div style={{ padding: 12 }}>Loading...</div>
+                  ) : (
+                    <p style={{ margin: 0 }}>
+                      {descriptionText ? descriptionText : "No description available."}
+                    </p>
+                  )}
                 </div>
               )}
             </div>
           </div>
 
           <div className="product-details-bottom">
-            <ProductDetailsBottom />
+            <ProductDetailsBottom product={product} />
           </div>
         </div>
       </div>
+
+      <style>{`
+        .add-to-cart-btn{
+          background: #0b3b73;
+          color: #fff;
+          border: none;
+          border-radius: 12px;
+          padding: 12px 18px;
+          font-weight: 700;
+          min-width: 190px;
+          height: 48px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+        }
+        .add-to-cart-btn:disabled{
+          opacity: 0.7;
+          cursor: not-allowed;
+        }
+      `}</style>
     </MainLayout>
   );
 };
