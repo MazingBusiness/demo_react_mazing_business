@@ -1,8 +1,5 @@
 import React, { useState } from "react";
-import {
-  products,
-  renderRating,
-  renderProductImage,
+import { products, renderRating, renderProductImage,
 } from "../data/productDetailUtils.jsx";
 
 import fastDeliveryIcon from "../assets/icons/fast-delivery.svg";

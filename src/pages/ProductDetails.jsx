@@ -6,19 +6,23 @@ import { useParams } from "react-router-dom";
 import MainLayout from "../layouts/MainLayout";
 import fastDeliveryIcon from "../assets/icons/fast-delivery.svg";
 
-import ProductDetailsBottom from "../components/ProductDetailsBottom";
 import { productDetails } from "../api/apiRequest";
+
+// ✅ Use the SAME ProductModal file used in QuickOrder
+import ProductModal from "../components/ProductModal";
 
 const ProductDetails = () => {
   const { slug } = useParams();
 
   const [activeTab, setActiveTab] = useState("specs");
   const [loading, setLoading] = useState(true);
-  const [btnLoading, setBtnLoading] = useState(false);
   const [err, setErr] = useState("");
 
   const [product, setProduct] = useState(null);
   const [apiAttributes, setApiAttributes] = useState([]);
+
+  // ✅ Modal open state
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // ⭐ Rating UI
   const renderRating = (rating) => {
@@ -36,7 +40,9 @@ const ProductDetails = () => {
 
     const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
     for (let i = 0; i < emptyStars; i++) {
-      stars.push(<FaRegStar key={`empty-${i}`} className="star-icon empty-star" />);
+      stars.push(
+        <FaRegStar key={`empty-${i}`} className="star-icon empty-star" />
+      );
     }
     return stars;
   };
@@ -64,6 +70,7 @@ const ProductDetails = () => {
     if (!product) return [];
 
     const rows = [
+      { label: "Part Number", value: product?.part_no },
       { label: "HSN Code", value: product?.hsncode },
       { label: "GST Rate", value: product?.tax ? `${product.tax}%` : "" },
       { label: "Group", value: product?.category_group?.name || "" },
@@ -71,9 +78,22 @@ const ProductDetails = () => {
       { label: "Part No", value: product?.part_no || "" },
       { label: "Unit", value: product?.unit || "" },
       { label: "MRP", value: product?.mrp ? `₹ ${product.mrp}` : "" },
-      { label: "Shipping Days", value: product?.est_shipping_days ? `${product.est_shipping_days} Days` : "" },
-      { label: "Warranty", value: String(product?.is_warranty) === "1" ? "Yes" : "No" },
-      { label: "Warranty Duration", value: product?.warranty_duration ? `${product.warranty_duration} Months` : "" },
+      {
+        label: "Shipping Days",
+        value: product?.est_shipping_days
+          ? `${product.est_shipping_days} Days`
+          : "",
+      },
+      {
+        label: "Warranty",
+        value: String(product?.is_warranty) === "1" ? "Yes" : "No",
+      },
+      {
+        label: "Warranty Duration",
+        value: product?.warranty_duration
+          ? `${product.warranty_duration} Months`
+          : "",
+      },
     ];
 
     return rows.filter((r) => String(r.value || "").trim() !== "");
@@ -84,14 +104,11 @@ const ProductDetails = () => {
 
   // ✅ image
   const mainImage =
-    product?.thumb_img?.file_name ||
-    product?.images?.[0]?.file_name ||
-    "";
+    product?.thumb_img?.file_name || product?.images?.[0]?.file_name || "";
 
   const crumbGroup = product?.category_group?.name || "Category Group";
   const crumbCategory = product?.category?.name || "Category";
 
-  // ✅ FIXED FETCH
   const fetchProduct = async () => {
     setLoading(true);
     setErr("");
@@ -102,15 +119,11 @@ const ProductDetails = () => {
       const cleanSlug = decodeURIComponent(String(slug || "").trim());
       if (!cleanSlug) throw new Error("Slug missing in URL");
 
-      // ✅ IMPORTANT: pass STRING (not object)
       const payload = await productDetails(cleanSlug);
 
-      console.log("API RESPONSE:", payload);
-
-      const ok = payload?.res === true || payload?.res === 1 || payload?.res === "true";
-      if (!ok) {
-        throw new Error(payload?.msg || "API returned res=false");
-      }
+      const ok =
+        payload?.res === true || payload?.res === 1 || payload?.res === "true";
+      if (!ok) throw new Error(payload?.msg || "API returned res=false");
 
       const p = Array.isArray(payload?.data) ? payload.data[0] : null;
       if (!p) throw new Error("Product not found in payload.data[0]");
@@ -129,19 +142,17 @@ const ProductDetails = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slug]);
 
-  const handleAddToCart = async () => {
-    try {
-      if (!product?.id) return;
-      setBtnLoading(true);
-
-      console.log("Add to cart:", product.id);
-      // call your addToCart API here
-    } catch (e) {
-      alert(e?.message || "Add to cart failed");
-    } finally {
-      setBtnLoading(false);
+  // ✅ Add to Cart -> open modal
+  const handleAddToCart = () => {
+    if (!product?.id) {
+      console.log("No product id yet:", product);
+      return;
     }
+    console.log("Opening modal for product:", product.id);
+    setIsModalOpen(true);
   };
+
+  const closeModal = () => setIsModalOpen(false);
 
   return (
     <MainLayout>
@@ -169,9 +180,11 @@ const ProductDetails = () => {
                       src={mainImage}
                       alt={productName}
                       className="main-product-img"
+                      style={{ cursor: "pointer" }}
+                      onClick={() => product?.id && setIsModalOpen(true)}
                       onError={(e) => {
-                        // ✅ don’t hide everything; just show a placeholder style
-                        e.currentTarget.src = "https://via.placeholder.com/500x500?text=No+Image";
+                        e.currentTarget.src =
+                          "https://via.placeholder.com/500x500?text=No+Image";
                       }}
                     />
                   ) : (
@@ -246,14 +259,15 @@ const ProductDetails = () => {
                   </button>
                 </div>
 
-                {/* <button
+                {/* ✅ FORCE: only disable while loading or no product */}
+                <button
                   type="button"
                   onClick={handleAddToCart}
-                  disabled={btnLoading || loading || !!err}
+                  disabled={loading || !product?.id}
                   className="add-to-cart-btn"
                 >
-                  {btnLoading ? "Adding..." : "Add to Cart"}
-                </button> */}
+                  Add to Cart
+                </button>
               </div>
 
               {/* Content */}
@@ -294,12 +308,37 @@ const ProductDetails = () => {
               )}
             </div>
           </div>
-
-          <div className="product-details-bottom">
-            <ProductDetailsBottom product={product} />
-          </div>
         </div>
       </div>
+
+      {/* ✅ ProductModal (compat mode: pass all common props) */}
+      {isModalOpen && (
+        <ProductModal
+          // Most common
+          open={isModalOpen}
+          onClose={closeModal}
+
+          // Other common variations
+          isOpen={isModalOpen}
+          setIsOpen={setIsModalOpen}
+          show={isModalOpen}
+          setShow={setIsModalOpen}
+
+          // Product identifiers
+          productId={product?.id}
+          id={product?.id}
+          slug={slug}
+
+          // Some modals expect full product object
+          product={product}
+          selectedProduct={product}
+          item={product}
+
+          // optional callbacks
+          onOpen={() => setIsModalOpen(true)}
+          onRequestClose={closeModal}
+        />
+      )}
 
       <style>{`
         .add-to-cart-btn{

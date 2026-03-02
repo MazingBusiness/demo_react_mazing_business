@@ -356,7 +356,7 @@ const SearchModal = ({
         <div className="search-input-wrapper">
           <input
             type="text"
-            placeholder="Search for products, categories, or brands"
+            placeholder="Search for products"
             value={searchText}
             onChange={onChange}
             autoFocus

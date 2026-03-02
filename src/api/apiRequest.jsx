@@ -749,3 +749,19 @@ export const productDetails = async (slug) => {
   );
   return res.json(); 
 };
+
+/**
+ * ✅ Product details by SLUG (for ProductDetails page)
+ * NOTE: Change endpoint path to match your Laravel route.
+ */
+export const getProductDetailsBySlug = async (slug) => {
+  const params = new URLSearchParams();
+  params.append("slug", slug);
+
+  const res = await fetch(`${API_BASE_URL}product/details?${params.toString()}`, {
+    method: "GET",
+    ...getHeader(),
+  });
+
+  return res.json();
+};
