@@ -64,7 +64,7 @@ const Header = () => {
 
   const languages = [
     { code: "en", name: "English", flag: flagEN },
-    { code: "fr", name: "French", flag: flagFR },
+    // { code: "fr", name: "French", flag: flagFR },
   ];
 
   const handleSearchChange = (e) => setSearchText(e.target.value);
@@ -259,7 +259,7 @@ const Header = () => {
           </button>
 
           <ul className="nav-links">
-            <li>
+            {/* <li>
               <Link to="/">
                 <img src={MenuIcon1} alt="MenuIcon" /> Deals Today
               </Link>
@@ -289,7 +289,7 @@ const Header = () => {
               <Link to="/">
                 <img src={MenuIcon6} alt="MenuIcon" /> Recently Viewed
               </Link>
-            </li>
+            </li> */}
           </ul>
 
           <div className="language-selector" ref={langDropdownRef}>

@@ -18,6 +18,7 @@ import { getLoggedInUser, getAuthToken } from '../utils/authUtils';
 const PowerToolsSlider = () => {
   const [products, setProducts] = useState([]);
   const sliderRef = useRef(null); // Properly define the ref at the component level
+  const [catGId, setCatGId] = useState("");
 
   const allPowerToolsCategoryItems = async () => {
     try {
@@ -28,6 +29,7 @@ const PowerToolsSlider = () => {
       if (responseData.res) {
         // Flatten all child categories from all parent categories
         const transformedData = responseData.data.flatMap((category) => {
+          setCatGId(category.id);          
           return category.child_category.map((child) => ({
             id: child.id,
             name: child.name,
@@ -182,8 +184,9 @@ const PowerToolsSlider = () => {
             {products.map((product) => (
               <Link
                 key={product.id}
-                to="/product-listing"
-                state={{ slug: product.slug, cat_id: product.id }}
+                // to="/product-listing"
+                to="/quick-order"
+                state={{ slug: product.slug, cat_id: product.id, cat_g_id: catGId }}
               >
                 <div key={product.id} className="product-slide">
                   <div className="product-card">

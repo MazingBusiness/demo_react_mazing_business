@@ -19,8 +19,8 @@ const ProductListing = () => {
   // 👇 derive from router state every render
   const slug = state?.slug || "";
   const cat_id = state?.cat_id || "";
+  const parent_cat_id = state?.parent_cat_id || "";
   const brand_id = state?.brand_id || "";
-
   const [currentPage, setCurrentPage] = useState(1);
 
   const [brands, setBrands] = useState([]); // renamed to avoid confusion

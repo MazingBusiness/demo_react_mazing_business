@@ -48,7 +48,7 @@ const AppRoutes = () => (
       <Route path="/company" element={<Company />} />
       <Route path="/product-details/:slug" element={<ProductDetails />} />
       <Route path="/productDetailswithslider" element={<ProductDetailsWithSlider />} />
-      <Route path="/quickOrder" element={<QuickOrder />} />
+      <Route path="/quick-order" element={<QuickOrder />} />
       <Route path="/about" element={<About />} />
       <Route path="/contact" element={<Contact />} />
 

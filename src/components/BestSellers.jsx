@@ -361,7 +361,7 @@ const BestSellers = () => {
                 <div className="product-card">
                   {renderProductImage(product)}
                   <div className="product-info">
-                    <h4 className="h4-font">{product.name.length > 40 ? product.name.substring(0, 40) + "..." : product.name}</h4>
+                    <h4 className="h4-font" title={product.name}>{product.name.length > 40 ? product.name.substring(0, 40) + "..." : product.name}</h4>
                     {product.user_id != null && (
                       <div className="prices">
                         <span className="old">{product.oldPrice}</span>
