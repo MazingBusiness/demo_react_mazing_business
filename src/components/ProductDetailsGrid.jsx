@@ -10,7 +10,11 @@ import { GoDotFill } from "react-icons/go";
 
 import CartIcon from "../assets/icons/CartIcon.svg";
 
+import { getLoggedInUser, getAuthToken } from '../utils/authUtils';
+
 const ProductDetailsGrid = () => {
+  const user = getLoggedInUser();
+  const user_id = user?.id || null;
   const [sortBy, setSortBy] = useState("Popularity");
   const [currentPage, setCurrentPage] = useState(1);
   const productsPerPage = 8;
@@ -86,17 +90,16 @@ const ProductDetailsGrid = () => {
                         }}
                       />
                     </div>
-
-                    <button
-                      className="cart-btn"
-                      aria-label="Add to cart"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        openModal(product); // ✅ open modal here
-                      }}
-                    >
-                      <img src={CartIcon} alt="CartIcon" />
-                    </button>
+                    {user_id != null && (
+                      <button className="cart-btn" aria-label="Add to cart"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openModal(product); // ✅ open modal here
+                        }}
+                      >
+                        <img src={CartIcon} alt="CartIcon" />
+                      </button>
+                    )}
                   </div>
                 </div>
 
@@ -117,11 +120,12 @@ const ProductDetailsGrid = () => {
                   ></div>
                 </div>
                 <div className="sold">Sold: {product.sold}</div>
-
-                <div className="QuantityBox">
-                  <input type="number" placeholder="Enter quantity" />
-                  <button className="add-to-cart">Buy Now</button>
-                </div>
+                {user_id != null && (
+                  <div className="QuantityBox">
+                    <input type="number" placeholder="Enter quantity" />
+                    <button className="add-to-cart">Buy Now</button>
+                  </div>
+                )}
               </div>
             </div>
           </div>

@@ -721,6 +721,52 @@ a.right-link {
   justify-content: center;
 }
 
+.add-to-cart-btn{
+  background: #0b3b73;
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 12px 18px;
+  font-weight: 700;
+  min-width: 190px;
+  height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.add-to-cart-btn:disabled{
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.before-reg-btn{
+  background: #004080;
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 12px 18px;
+  font-weight: 700;
+  min-width: 190px;
+  height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.before-reg-btn:hover{
+  opacity: 0.95;
+}
+
+.spec-row-full{
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+}
+
 .no-results {
   padding: 20px;
   text-align: center;
