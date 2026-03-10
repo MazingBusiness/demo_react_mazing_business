@@ -7,19 +7,21 @@ import no_image from "../assets/images/no-image.png";
 import fastDeliveryIcon from "../assets/icons/fast-delivery.svg";
 import HeartIcon from "../assets/icons/HeartIcon.svg";
 import CartIcon from "../assets/icons/CartIcon.svg";
+import warrantyIcon from "../assets/icons/warranty.jpeg";
 
 import { FaStar, FaRegStar, FaStarHalfAlt } from "react-icons/fa";
 import { FiChevronRight } from "react-icons/fi";
 import { Link, useNavigate } from "react-router-dom";
 
+import ProductModal from "../components/ProductModal.jsx";
 import { getBestSellerProducts } from "../api/apiRequest";
 import { getLoggedInUser } from "../utils/authUtils";
-// import { NotificationManager } from "react-notifications"; // uncomment if you use it
 
 const renderRating = (rating) => {
   const stars = [];
-  const fullStars = Math.floor(rating);
-  const hasHalfStar = rating % 1 >= 0.5;
+  const numericRating = Number(rating) || 0;
+  const fullStars = Math.floor(numericRating);
+  const hasHalfStar = numericRating % 1 >= 0.5;
 
   for (let i = 0; i < fullStars; i++) {
     stars.push(<FaStar key={`full-${i}`} className="star-icon full-star" />);
@@ -41,8 +43,13 @@ const renderRating = (rating) => {
 
 const BestSellers = () => {
   const [products, setProducts] = useState([]);
+  const [selectedProduct, setSelectedProduct] = useState(null);
+
   const sliderRef = useRef(null);
   const navigate = useNavigate();
+
+  const openModal = (product) => setSelectedProduct(product);
+  const closeModal = () => setSelectedProduct(null);
 
   const allBestSellerItems = async () => {
     try {
@@ -50,11 +57,15 @@ const BestSellers = () => {
       const responseData = await apiRes.json();
       const user = getLoggedInUser();
 
-      if (responseData.res) {
-        const transformedData = responseData.data.map((item) => {
-          const noCredit = item.cash_and_carry_item == 1;
-          const fastDeliveryTag = item.fast_delivery_tag == 1;
-          const rating = item.rating && item.rating !== 0 ? item.rating : 4;
+      if (responseData?.res) {
+        const transformedData = (responseData?.data || []).map((item) => {
+          const noCredit = Number(item.cash_and_carry_item) === 1;
+          const fastDeliveryTag = Number(item.fast_delivery_tag) === 1;
+          const hasWarranty = Number(item.is_warranty) === 1;
+
+          const rating =
+            item.rating && Number(item.rating) !== 0 ? Number(item.rating) : 4;
+
           const totalRatings =
             Array.isArray(item.reviews) && item.reviews.length > 0
               ? item.reviews.length
@@ -62,6 +73,7 @@ const BestSellers = () => {
 
           return {
             id: item.id,
+            slug: item?.slug || "",
             name: item.name,
             img: item.thumb_img?.file_name || no_image,
             oldPrice: item.mrp
@@ -73,27 +85,68 @@ const BestSellers = () => {
                 ).toFixed(2)}`
               : "₹0.00",
             discount: item.discount || 0,
-            rating: rating,
-            totalRatings: totalRatings,
+            rating,
+            totalRatings,
             sold: `${Math.floor(Math.random() * 50 + 1)}/${Math.floor(
               Math.random() * 200 + 50
             )}`,
-            fastDeliveryTag: fastDeliveryTag,
-            noCredit: noCredit,
+            fastDeliveryTag,
+            is_warranty: hasWarranty,
+            noCredit,
             user_id: user?.id || null,
-            slug: item?.slug || "",
+
+            // ProductModal ke liye
+            category_group: item.category_group?.name || "",
+            category: item.category?.name || "",
+            fast_delivery_tag: item.fast_delivery_tag || 0,
+            stocks: item.stocks || [],
+            reviews: item.reviews || [],
           };
         });
 
         setProducts(transformedData);
       } else {
-        console.error(responseData.msg || "Something went wrong");
-        // NotificationManager.error(responseData.msg || "Something went wrong", "", 2000);
+        console.error(responseData?.msg || "Something went wrong");
+        setProducts([]);
       }
     } catch (error) {
       console.error("Fetch error:", error);
-      // NotificationManager.error("Failed to load offers", "", 2000);
+      setProducts([]);
     }
+  };
+
+  const fastDeliveryTag = (product) => {
+    if (!product.fastDeliveryTag) return null;
+
+    return (
+      <div className="delivery">
+        <img
+          src={fastDeliveryIcon}
+          alt="Fast Delivery"
+          loading="lazy"
+          onError={(e) => {
+            e.target.style.display = "none";
+          }}
+        />
+      </div>
+    );
+  };
+
+  const renderWarrantyTag = (product) => {
+    if (!product.is_warranty) return null;
+
+    return (
+      <div className="delivery">
+        <img
+          src={warrantyIcon}
+          alt="Warranty"
+          loading="lazy"
+          onError={(e) => {
+            e.target.style.display = "none";
+          }}
+        />
+      </div>
+    );
   };
 
   const [sliderState, setSliderState] = useState({
@@ -123,7 +176,7 @@ const BestSellers = () => {
 
   const settings = {
     dots: false,
-    infinite: true,
+    infinite: products.length > 6,
     speed: 500,
     autoplay: true,
     autoplaySpeed: 3000,
@@ -172,7 +225,7 @@ const BestSellers = () => {
     navigate("/login");
   };
 
-  const renderProductImage = (product) => {
+  const renderProductImage = (product, onCartClick = () => {}) => {
     return (
       <div className="product-img">
         <Link to={`/product-details/${product.slug}`}>
@@ -189,6 +242,7 @@ const BestSellers = () => {
           ) : (
             <div className="image-placeholder">
               <span>No Image</span>
+              <img src={no_image} alt="No Image" loading="lazy" />
             </div>
           )}
         </Link>
@@ -199,15 +253,23 @@ const BestSellers = () => {
               className="wishlist-btn"
               aria-label="Add to wishlist"
               type="button"
-              onClick={(e) => e.stopPropagation()}
+              onClick={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+              }}
             >
               <img src={HeartIcon} alt="HeartIcon" />
             </button>
+
             <button
               className="cart-btn"
               aria-label="Add to cart"
               type="button"
-              onClick={(e) => e.stopPropagation()}
+              onClick={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                onCartClick(product);
+              }}
             >
               <img src={CartIcon} alt="CartIcon" />
             </button>
@@ -244,6 +306,7 @@ const BestSellers = () => {
                 >
                   ❮
                 </button>
+
                 <button
                   className={`custom-arrow next-arrow ${
                     isNextDisabled ? "disabled" : ""
@@ -265,7 +328,7 @@ const BestSellers = () => {
             {products.map((product) => (
               <div key={product.id} className="product-slide">
                 <div className="product-card">
-                  {renderProductImage(product)}
+                  {renderProductImage(product, openModal)}
 
                   <div className="product-info">
                     <h4 className="h4-font" title={product.name}>
@@ -273,7 +336,7 @@ const BestSellers = () => {
                         to={`/product-details/${product.slug}`}
                         style={{ textDecoration: "none", color: "inherit" }}
                       >
-                        {product.name.length > 40
+                        {product.name?.length > 40
                           ? product.name.substring(0, 40) + "..."
                           : product.name}
                       </Link>
@@ -291,26 +354,20 @@ const BestSellers = () => {
                     <div className="ratingGrp">
                       <div className="ratingGrpLft">
                         {product.user_id != null && (
-                          <div className="discount">OFF {product.discount}</div>
+                          <div className="discount">OFF {product.discount}%</div>
                         )}
+
                         <div className="rating">
                           {renderRating(product.rating)}
                           <span className="rating-count">
                             ({product.totalRatings})
                           </span>
                         </div>
+
+                        {renderWarrantyTag(product)}
                       </div>
 
-                      <div className="delivery">
-                        <img
-                          src={fastDeliveryIcon}
-                          alt="Fast Delivery"
-                          loading="lazy"
-                          onError={(e) => {
-                            e.target.style.display = "none";
-                          }}
-                        />
-                      </div>
+                      {fastDeliveryTag(product)}
                     </div>
 
                     {product.user_id != null && (
@@ -343,6 +400,12 @@ const BestSellers = () => {
           </Slider>
         </div>
       </div>
+
+      <ProductModal
+        product={selectedProduct}
+        isOpen={!!selectedProduct}
+        onClose={closeModal}
+      />
     </div>
   );
 };

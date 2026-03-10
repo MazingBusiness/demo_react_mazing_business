@@ -208,49 +208,56 @@ const TopCatGroups = () => {
 
           <Slider ref={sliderRef} {...settings}>
             {products.map((product) => (
-              <div key={product.id} className="product-slide">
-                <div className="product-card">
-                  {renderProductImage(product)}
-                  <div className="product-info">
-                    <h4>{product.name}</h4>
-                    {/* <div className="prices">
-                      <span className="old">{product.oldPrice}</span>
-                      <span className="new">{product.newPrice}</span>
-                    </div> */}
+              <Link
+                  key={product.id}
+                  // to="/product-listing"
+                  to="/quick-order"
+                  state={{ slug: product.slug, cat_g_id: product.id }}
+                >
+                <div key={product.id} className="product-slide">
+                  <div className="product-card">
+                    {renderProductImage(product)}
+                    <div className="product-info">
+                      <h4>{product.name}</h4>
+                      {/* <div className="prices">
+                        <span className="old">{product.oldPrice}</span>
+                        <span className="new">{product.newPrice}</span>
+                      </div> */}
 
-                    {/* <div className="ratingGrp">
-                      <div className="ratingGrpLft">
-                        <div className="discount">OFF {product.discount}</div>
-                        <div className="rating">
-                          {renderRating(product.rating)}
-                          <span className="rating-count">
-                            ({product.totalRatings})
-                          </span>
+                      {/* <div className="ratingGrp">
+                        <div className="ratingGrpLft">
+                          <div className="discount">OFF {product.discount}</div>
+                          <div className="rating">
+                            {renderRating(product.rating)}
+                            <span className="rating-count">
+                              ({product.totalRatings})
+                            </span>
+                          </div>
                         </div>
-                      </div>
 
-                      <div className="delivery">
-                        <img
-                          src={fastDeliveryIcon}
-                          alt="Fast Delivery"
-                          loading="lazy"
-                          onError={(e) => {
-                            e.target.style.display = "none";
-                          }}
-                        />
-                      </div>
-                    </div> */}
+                        <div className="delivery">
+                          <img
+                            src={fastDeliveryIcon}
+                            alt="Fast Delivery"
+                            loading="lazy"
+                            onError={(e) => {
+                              e.target.style.display = "none";
+                            }}
+                          />
+                        </div>
+                      </div> */}
 
-                    {/* <div className="progress-bar">
-                      <div
-                        className="progress"
-                        style={{ width: `${Math.random() * 100}%` }}
-                      ></div>
+                      {/* <div className="progress-bar">
+                        <div
+                          className="progress"
+                          style={{ width: `${Math.random() * 100}%` }}
+                        ></div>
+                      </div>
+                      <div className="sold">Sold: {product.sold}</div> */}
                     </div>
-                    <div className="sold">Sold: {product.sold}</div> */}
                   </div>
                 </div>
-              </div>
+              </Link>
             ))}
           </Slider>
         </div>

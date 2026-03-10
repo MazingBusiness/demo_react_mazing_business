@@ -19,6 +19,7 @@ const QuickOrder = () => {
 
   const incomingCatId = incomingState?.cat_id ? Number(incomingState.cat_id) : null;
   const incomingCatGId = incomingState?.cat_g_id ? Number(incomingState.cat_g_id) : null;
+  const incomingBrandId = incomingState?.brand_id ? Number(incomingState.brand_id) : null;
 
   const [selectedCatGIds, setSelectedCatGIds] = useState([]);
   const [selectedChildCatIds, setSelectedChildCatIds] = useState([]);
@@ -150,7 +151,7 @@ const QuickOrder = () => {
     return (allCategoryGroups || []).map((g) => ({
       ...g,
       child_category: [...(g.child_category || [])].sort((a, b) =>
-        (a?.name || "").localeCompare(b?.name || "", undefined, {
+        (a?.name || "").localeCompare((b?.name || ""), undefined, {
           sensitivity: "base",
         })
       ),
@@ -186,12 +187,27 @@ const QuickOrder = () => {
 
     setSelectedCatGIds(nextGroupIds);
     setSelectedChildCatIds(nextChildIds);
-    setSelectedBrands([]);
     setSelectedDelivery(null);
     setSearchText("");
   }, [incomingState, incomingCatGId, incomingCatId, groupsWithSortedChildren]);
 
-  // ✅ ensure selected category group is visible even if initially hidden
+  useEffect(() => {
+    if (!incomingState) return;
+    if (!incomingBrandId) return;
+    if (!allBrands.length) return;
+
+    const brandExists = allBrands.some(
+      (brand) => Number(brand.id) === Number(incomingBrandId)
+    );
+
+    if (brandExists) {
+      setSelectedBrands([Number(incomingBrandId)]);
+    } else {
+      setSelectedBrands([]);
+    }
+  }, [incomingState, incomingBrandId, allBrands]);
+
+  // ensure selected category group is visible even if initially hidden
   useEffect(() => {
     if (!selectedCatGIds.length || !groupsWithSortedChildren.length) return;
 
@@ -205,6 +221,21 @@ const QuickOrder = () => {
       setShowMoreCatG(selectedIndex + 1);
     }
   }, [selectedCatGIds, groupsWithSortedChildren, showMoreCatG]);
+
+  // ensure selected brand is visible even if initially hidden
+  useEffect(() => {
+    if (!selectedBrands.length || !allBrands.length) return;
+
+    const firstSelectedBrandId = selectedBrands[0];
+
+    const selectedIndex = allBrands.findIndex(
+      (brand) => Number(brand.id) === Number(firstSelectedBrandId)
+    );
+
+    if (selectedIndex !== -1 && selectedIndex + 1 > showMoreBrands) {
+      setShowMoreBrands(selectedIndex + 1);
+    }
+  }, [selectedBrands, allBrands, showMoreBrands]);
 
   const toggleCatG = (groupId) => {
     setSelectedCatGIds((prev) => {
@@ -233,7 +264,11 @@ const QuickOrder = () => {
     );
   };
 
-  const clearBrand = () => setSelectedBrands([]);
+  const clearBrand = () => {
+    setSelectedBrands([]);
+    setShowMoreBrands(5);
+  };
+
   const clearDelivery = () => setSelectedDelivery(null);
 
   const clearCatG = () => {

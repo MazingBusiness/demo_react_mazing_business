@@ -174,15 +174,22 @@ const BrandCarousel = () => {
 
           <Slider ref={sliderRef} {...settings}>
             {products.map((product) => (
-              <div key={product.id} className="product-slide">
-                <div className="brand-card">
-                  {renderProductImage(product)}
-                  <div className="product-info">
-                    <h3>{product.name}</h3>
-                    <p>{product.count}</p>
+              <Link
+                key={product.id}
+                // to="/product-listing"
+                to="/quick-order"
+                state={{ slug: product.slug, brand_id: product.id }}
+              >
+                <div key={product.id} className="product-slide">
+                  <div className="brand-card">
+                    {renderProductImage(product)}
+                    <div className="product-info">
+                      <h3>{product.name}</h3>
+                      <p>{product.count}</p>
+                    </div>
                   </div>
                 </div>
-              </div>
+              </Link>
             ))}
           </Slider>
         </div>
