@@ -6,6 +6,7 @@ import BannerSection from "../components/BannerSection";
 import BrandCarousel from "../components/BrandCarousel";
 import OfferItems from "../components/OfferItems";
 import BestSellers from "../components/BestSellers";
+import NewArrivals from "../components/NewArrivals";
 import HandTools from "../components/HandTools";
 import TopCategoryGroup from "../components/TopCategoryGroup";
 
@@ -45,7 +46,7 @@ const Home = () => {
         <BrandCarousel />
         <PowerToolsSlider />
         <BestSellers />
-
+        <NewArrivals />
         <div className="maincontainer">
           <div className="promo-section">
             <div className="promo-card style1">

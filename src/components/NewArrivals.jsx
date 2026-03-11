@@ -13,9 +13,9 @@ import { FaStar, FaRegStar, FaStarHalfAlt } from "react-icons/fa";
 import { FiChevronRight } from "react-icons/fi";
 import { Link, useNavigate } from "react-router-dom";
 
-import ProductModal from "../components/ProductModal.jsx";
-import { getBestSellerProducts } from "../api/apiRequest";
-import { getLoggedInUser } from "../utils/authUtils";
+import ProductModal from "./ProductModal.jsx";
+import { getNewArrivalProducts } from "../api/apiRequest.jsx";
+import { getLoggedInUser } from "../utils/authUtils.js";
 
 const renderRating = (rating) => {
   const stars = [];
@@ -41,7 +41,18 @@ const renderRating = (rating) => {
   return stars;
 };
 
-const BestSellers = () => {
+const formatPrice = (value) => {
+  const numeric = Number(value || 0);
+  return `₹${numeric.toFixed(2)}`;
+};
+
+const normalizePriceString = (value) => {
+  if (!value) return "₹0.00";
+  const numeric = String(value).replace(/[^\d.]/g, "");
+  return `₹${Number(numeric || 0).toFixed(2)}`;
+};
+
+const NewArrivals = () => {
   const [products, setProducts] = useState([]);
   const [selectedProduct, setSelectedProduct] = useState(null);
 
@@ -51,40 +62,76 @@ const BestSellers = () => {
   const openModal = (product) => setSelectedProduct(product);
   const closeModal = () => setSelectedProduct(null);
 
-  const allBestSellerItems = async () => {
+  const fetchNewArrivalItems = async () => {
     try {
-      const apiRes = await getBestSellerProducts();
+      const apiRes = await getNewArrivalProducts();
       const responseData = await apiRes.json();
       const user = getLoggedInUser();
 
-      if (responseData?.res) {
-        const transformedData = (responseData?.data || []).map((item) => {
-          const noCredit = Number(item.cash_and_carry_item) === 1;
-          const fastDeliveryTag = Number(item.fast_delivery_tag) === 1;
-          const hasWarranty = Number(item.is_warranty) === 1;
+      if (responseData?.res && Array.isArray(responseData?.data)) {
+        const transformedData = responseData.data.map((item) => {
+          const product = item?.product || {};
+          const reviews = Array.isArray(product?.reviews) ? product.reviews : [];
+
+          const noCredit = Number(product?.cash_and_carry_item) === 1;
+          const fastDeliveryTag = Number(item?.fast_delivery_tag) === 1;
+          const hasWarranty = Number(product?.is_warranty) === 1;
 
           const rating =
-            item.rating && Number(item.rating) !== 0 ? Number(item.rating) : 4;
+            Number(product?.rating) > 0 ? Number(product?.rating) : 4;
 
-          const totalRatings =
-            Array.isArray(item.reviews) && item.reviews.length > 0
-              ? item.reviews.length
-              : 20;
+          const totalRatings = reviews.length > 0 ? reviews.length : 20;
+
+          const oldPriceValue = Number(item?.mrp || product?.mrp || 0);
+          const newPriceValue = item?.discount_price
+            ? normalizePriceString(item.discount_price)
+            : formatPrice(oldPriceValue);
+
+          const modalProduct = {
+            ...product,
+            id: product?.id || item?.product_id || item?.id,
+            new_arrival_id: item?.id,
+            product_id: item?.product_id || product?.id || null,
+            slug: product?.slug || "",
+            part_no: product?.part_no || item?.part_no || "",
+            name: product?.name || item?.item_name || "",
+            item_name: product?.name || item?.item_name || "",
+            thumb_img: item?.thumb_img || null,
+            img: item?.thumb_img?.file_name || no_image,
+            image: item?.thumb_img?.file_name || no_image,
+            oldPrice: formatPrice(oldPriceValue),
+            newPrice: newPriceValue,
+            display_mrp: formatPrice(oldPriceValue),
+            display_discount_price: newPriceValue,
+            discount_price: item?.discount_price || newPriceValue,
+            discount: Number(item?.discount || 0),
+            fast_delivery_tag: item?.fast_delivery_tag || 0,
+            is_warranty: hasWarranty ? 1 : 0,
+            reviews,
+            stocks: product?.stocks || [],
+            current_stock: product?.current_stock || 0,
+            cash_and_carry_item: product?.cash_and_carry_item || 0,
+            rating: Number(product?.rating || 0),
+            totalRatings,
+            category_group_id: item?.category_group_id || product?.group_id || "",
+            category_id: item?.category_id || product?.category_id || "",
+            brand_id: item?.brand_id || product?.brand_id || "",
+          };
 
           return {
-            id: item.id,
-            slug: item?.slug || "",
-            name: item.name,
-            img: item.thumb_img?.file_name || no_image,
-            oldPrice: item.mrp
-              ? `₹${parseFloat(item.mrp.toString()).toFixed(2)}`
-              : "₹0.00",
-            newPrice: item.discount_price
-              ? `₹${parseFloat(
-                  item.discount_price.toString().replace(/₹/g, "")
-                ).toFixed(2)}`
-              : "₹0.00",
-            discount: item.discount || 0,
+            id: product?.id || item?.product_id || item?.id,
+            new_arrival_id: item?.id,
+            product_id: item?.product_id || product?.id || null,
+            slug: product?.slug || "",
+            part_no: item?.part_no || product?.part_no || "",
+            name: product?.name || item?.item_name || "",
+            img: item?.thumb_img?.file_name || no_image,
+            thumb_img: item?.thumb_img || null,
+
+            oldPrice: formatPrice(oldPriceValue),
+            newPrice: newPriceValue,
+            discount: Number(item?.discount || 0),
+
             rating,
             totalRatings,
             sold: `${Math.floor(Math.random() * 50 + 1)}/${Math.floor(
@@ -95,12 +142,21 @@ const BestSellers = () => {
             noCredit,
             user_id: user?.id || null,
 
-            // ProductModal ke liye
-            category_group: item.category_group?.name || "",
-            category: item.category?.name || "",
-            fast_delivery_tag: item.fast_delivery_tag || 0,
-            stocks: item.stocks || [],
-            reviews: item.reviews || [],
+            category_group_id: item?.category_group_id || "",
+            category_id: item?.category_id || "",
+            brand_id: item?.brand_id || "",
+            fast_delivery_tag: item?.fast_delivery_tag || 0,
+
+            stocks: product?.stocks || [],
+            reviews,
+            rating_raw: product?.rating || 0,
+            mrp: oldPriceValue,
+            current_stock: product?.current_stock || 0,
+            num_of_sale: product?.num_of_sale || 0,
+            cash_and_carry_item: product?.cash_and_carry_item || 0,
+
+            productData: product,
+            modalProduct,
           };
         });
 
@@ -115,7 +171,7 @@ const BestSellers = () => {
     }
   };
 
-  const fastDeliveryTag = (product) => {
+  const renderFastDeliveryTag = (product) => {
     if (!product.fastDeliveryTag) return null;
 
     return (
@@ -151,12 +207,12 @@ const BestSellers = () => {
 
   const [sliderState, setSliderState] = useState({
     currentSlide: 0,
-    slideCount: products.length,
+    slideCount: 0,
     isMobile: false,
   });
 
   useEffect(() => {
-    allBestSellerItems();
+    fetchNewArrivalItems();
   }, []);
 
   useEffect(() => {
@@ -178,7 +234,7 @@ const BestSellers = () => {
     dots: false,
     infinite: products.length > 6,
     speed: 500,
-    autoplay: true,
+    autoplay: products.length > 1,
     autoplaySpeed: 3000,
     slidesToShow: 6,
     slidesToScroll: 1,
@@ -192,7 +248,7 @@ const BestSellers = () => {
       {
         breakpoint: 1024,
         settings: {
-          slidesToShow: 3,
+          slidesToShow: Math.min(3, products.length || 1),
           swipe: false,
           draggable: false,
         },
@@ -200,7 +256,7 @@ const BestSellers = () => {
       {
         breakpoint: 768,
         settings: {
-          slidesToShow: 2,
+          slidesToShow: Math.min(2, products.length || 1),
           swipe: true,
           draggable: true,
         },
@@ -216,8 +272,8 @@ const BestSellers = () => {
     ],
   };
 
-  const isPrevDisabled = false;
-  const isNextDisabled = false;
+  const isPrevDisabled = products.length <= 1;
+  const isNextDisabled = products.length <= 1;
 
   const handleRegisterClick = (e) => {
     e.preventDefault();
@@ -268,7 +324,7 @@ const BestSellers = () => {
               onClick={(e) => {
                 e.stopPropagation();
                 e.preventDefault();
-                onCartClick(product);
+                onCartClick();
               }}
             >
               <img src={CartIcon} alt="CartIcon" />
@@ -285,9 +341,9 @@ const BestSellers = () => {
         <div className="power-tools-section-inner">
           <div className="section-header">
             <div className="section-headerLft">
-              <h2>Best Sellers</h2>
+              <h2>New Arrivals</h2>
               <Link to="/" className="all-link">
-                All Best Sellers <FiChevronRight />
+                All New Arrivals <FiChevronRight />
               </Link>
             </div>
 
@@ -324,81 +380,84 @@ const BestSellers = () => {
             </div>
           </div>
 
-          <Slider ref={sliderRef} {...settings}>
-            {products.map((product) => (
-              <div key={product.id} className="product-slide">
-                <div className="product-card">
-                  {renderProductImage(product, openModal)}
+          {products.length > 0 ? (
+            <Slider ref={sliderRef} {...settings}>
+              {products.map((product) => (
+                <div
+                  key={`${product.new_arrival_id}-${product.id}`}
+                  className="product-slide"
+                >
+                  <div className="product-card">
+                    {renderProductImage(product, () => openModal(product.modalProduct))}
 
-                  <div className="product-info">
-                    <h4 className="h4-font" title={product.name}>
-                      <Link
-                        to={`/product-details/${product.slug}`}
-                        style={{ textDecoration: "none", color: "inherit" }}
-                      >
-                        {product.name?.length > 40
-                          ? product.name.substring(0, 40) + "..."
-                          : product.name}
-                      </Link>
-                    </h4>
+                    <div className="product-info">
+                      <h4 className="h4-font" title={product.name}>
+                        <Link
+                          to={`/product-details/${product.slug}`}
+                          style={{ textDecoration: "none", color: "inherit" }}
+                        >
+                          {product.name?.length > 40
+                            ? product.name.substring(0, 40) + "..."
+                            : product.name}
+                        </Link>
+                      </h4>
 
-                    {product.user_id != null && (
-                      <div className="prices">
-                        <span className="old">{product.oldPrice}</span>
-                        <span className="new">{product.newPrice}</span>
-                      </div>
-                    )}
+                      {product.user_id != null && (
+                        <div className="prices">
+                          <span className="old">{product.oldPrice}</span>
+                          <span className="new">{product.newPrice}</span>
+                        </div>
+                      )}
 
-                    {product.user_id == null && <br />}
+                      {product.user_id == null && <br />}
 
-                    <div className="ratingGrp">
-                      <div className="ratingGrpLft">
-                        {product.user_id != null && (
-                          <div className="discount">OFF {product.discount}%</div>
-                        )}
+                      <div className="ratingGrp">
+                        <div className="ratingGrpLft">
+                          {product.user_id != null && (
+                            <div className="discount">OFF {product.discount}%</div>
+                          )}
 
-                        <div className="rating">
-                          {renderRating(product.rating)}
-                          <span className="rating-count">
-                            ({product.totalRatings})
-                          </span>
+                          <div className="rating">
+                            {renderRating(product.rating)}
+                            <span className="rating-count">
+                              ({product.totalRatings})
+                            </span>
+                          </div>
+
+                          {renderWarrantyTag(product)}
                         </div>
 
-                        {renderWarrantyTag(product)}
+                        {renderFastDeliveryTag(product)}
                       </div>
 
-                      {fastDeliveryTag(product)}
-                    </div>
-
-                    {product.user_id != null && (
-                      <>
+                      {product.user_id != null && (
                         <div className="progress-bar">
                           <div
                             className="progress"
-                            // style={{ width: `${Math.random() * 100}%` }}
-                            style={{ width: `100%` }}
+                            style={{ width: "100%" }}
                           ></div>
                         </div>
-                        {/* <div className="sold">Sold: {product.sold}</div> */}
-                      </>
-                    )}
+                      )}
 
-                    {product.user_id == null && (
-                      <div>
-                        <button
-                          type="button"
-                          className="before-reg-btn"
-                          onClick={handleRegisterClick}
-                        >
-                          Register to check prices
-                        </button>
-                      </div>
-                    )}
+                      {product.user_id == null && (
+                        <div>
+                          <button
+                            type="button"
+                            className="before-reg-btn"
+                            onClick={handleRegisterClick}
+                          >
+                            Register to check prices
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </Slider>
+              ))}
+            </Slider>
+          ) : (
+            <div className="text-center py-4">No new arrivals found.</div>
+          )}
         </div>
       </div>
 
@@ -411,4 +470,4 @@ const BestSellers = () => {
   );
 };
 
-export default BestSellers;
+export default NewArrivals;

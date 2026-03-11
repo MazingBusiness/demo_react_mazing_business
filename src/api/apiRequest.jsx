@@ -49,11 +49,26 @@ export const getOfferProducts = async () => {
     return response;
 };
 
-//Get Offer Product
+//Get Best Seller Products
 export const getBestSellerProducts = async () => {
   const user = getLoggedInUser();
   const header = getHeader();
   const url = `${API_BASE_URL}home/get-best-seller-products${user ? `?user_id=${user.id}` : ''}`;
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      ...(header?.headers || {}),
+      'Content-Type': 'application/json',
+    },
+  });
+  return response;
+};
+
+//Get New Arrival Product
+export const getNewArrivalProducts = async () => {
+  const user = getLoggedInUser();
+  const header = getHeader();
+  const url = `${API_BASE_URL}home/get-new-arrival-products${user ? `?user_id=${user.id}` : ''}`;
   const response = await fetch(url, {
     method: 'GET',
     headers: {
