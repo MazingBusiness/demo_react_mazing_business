@@ -822,6 +822,43 @@ a.right-link {
   font-weight: 600;
 }
 
+.download-pdf-btn {
+  background-color: #004d84;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  width: 209px;
+  height: 40px;
+  font-family: "Roboto", sans-serif;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 15px;
+  gap: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  margin-left: 295px;
+}
+
+.download-excel-btn {
+  background-color: #00931e;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  width: 209px;
+  height: 40px;
+  font-family: "Roboto", sans-serif;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 15px;
+  gap: 10px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
 .nav-links {
   list-style: none;
   display: flex;
@@ -1951,6 +1988,19 @@ a.all-link svg {
   font-size: 11px;
   font-weight: 400;
   background: #d70000;
+  padding: 5px 13px;
+  border-radius: 0 10px 10px 0;
+  z-index: 1;
+}
+
+.offer-tag {
+  position: absolute;
+  bottom: 40px;
+  left: 0;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 400;
+  background: #00d72b;
   padding: 5px 13px;
   border-radius: 0 10px 10px 0;
   z-index: 1;

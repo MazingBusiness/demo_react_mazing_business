@@ -73,6 +73,23 @@ const QuickOrderGrid = ({ filters }) => {
               ? item.reviews.length
               : 20;
 
+          const offerList = Array.isArray(item.offer) ? item.offer : [];
+          const now = new Date();
+          const hasActiveOffer = offerList.some((offerItem) => {
+            const start = offerItem?.offer_validity_start
+              ? new Date(offerItem.offer_validity_start.replace(" ", "T"))
+              : null;
+
+            const end = offerItem?.offer_validity_end
+              ? new Date(offerItem.offer_validity_end.replace(" ", "T"))
+              : null;
+
+            if (!start || !end || isNaN(start.getTime()) || isNaN(end.getTime())) {
+              return false;
+            }
+
+            return now >= start && now <= end;
+          });
           return {
             id: item.id,
             slug: item.slug,
@@ -90,6 +107,9 @@ const QuickOrderGrid = ({ filters }) => {
             fastDeliveryTag,
             is_warranty: hasWarranty,
             noCredit,
+            cash_and_carry_item: Number(item.cash_and_carry_item || 0),
+            offer: offerList,
+            hasActiveOffer,
             discount: item.discount ? `${item.discount}%` : "20%",
             user_id: user?.id || null,
             category_group: item.category_group?.name || "",
@@ -184,18 +204,26 @@ const QuickOrderGrid = ({ filters }) => {
         )}
 
         {product.user_id != null && (
-          <div className="btnGrp">
-            <button
-              className="cart-btn"
-              aria-label="Add to cart"
-              onClick={(e) => {
-                e.stopPropagation();
-                onCartClick(product);
-              }}
-            >
-              <img src={CartIcon} alt="CartIcon" /> Add to Cart
-            </button>
-          </div>
+          <>
+            <div className="btnGrp">
+              <button
+                className="cart-btn"
+                aria-label="Add to cart"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onCartClick(product);
+                }}
+              >
+                <img src={CartIcon} alt="CartIcon" /> Add to Cart {product.cash_and_carry_item}
+              </button>
+            </div>
+            {Number(product.cash_and_carry_item) === 1 && (
+              <div className="no-credit-tag">No Credit Item</div>
+            )}
+            {product.hasActiveOffer && (
+              <div className="offer-tag">Special Offer Item</div>
+            )}
+          </>
         )}
       </div>
     );
@@ -260,15 +288,15 @@ const QuickOrderGrid = ({ filters }) => {
         </div>
 
         <div className="sort-by">
-          {/*
-          <span>Sort By:</span>
+          {/* <span>Sort By:</span>
           <select value={price_sort} onChange={(e) => handleSortChange(e.target.value)}>
             <option value="popularity">Popularity</option>
             <option value="low_to_high">Price: Low to High</option>
             <option value="high_to_low">Price: High to Low</option>
-          </select>
-          */}
+          </select> */}
         </div>
+        {/* <button className="download-pdf-btn" type="button">Download Net Price (PDF)</button>
+        <button className="download-excel-btn" type="button">Download Net Price (EXCEL)</button> */}
       </div>
 
       <div className="product-grid Quick-grid">

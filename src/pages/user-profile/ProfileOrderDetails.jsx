@@ -149,17 +149,19 @@ const ProfileOrderDetails = () => {
 
           <div className="orderdetailsHrRgt">
             <button
-              className={`invoice-btn ${invoiceLoading ? "loading" : ""}`}
+              // className={`invoice-btn ${invoiceLoading ? "loading" : ""}`}
+              className='download-pdf-btn'
               type="button"
               onClick={handleInvoice}
               disabled={invoiceLoading}
               title="Download Invoice"
             >
-              {invoiceLoading ? (
+              {/* {invoiceLoading ? (
                 <span className="btn-spinner" aria-label="Loading" />
               ) : (
                 <img src={InvoiceBtn} alt="Invoice" />
-              )}
+              )} */}
+              Download Performa
             </button>
           </div>
         </div>

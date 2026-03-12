@@ -554,9 +554,9 @@ const ProductModal = ({ product, isOpen, onClose }) => {
                       <img src={CartbtnIcon} alt="cartbtnIcon" className="cartbtnIcon" /> Add to Cart
                     </button>
 
-                    <button className="modal-wishlist-btn" type="button">
+                    {/* <button className="modal-wishlist-btn" type="button">
                       <FiHeart />
-                    </button>
+                    </button> */}
                   </div>
                 </div>
               </>

@@ -8,8 +8,6 @@ import fastDeliveryIcon from "../assets/icons/fast-delivery.svg";
 
 import { getLoggedInUser } from "../utils/authUtils";
 import { productDetails } from "../api/apiRequest";
-
-// ✅ Use the SAME ProductModal file used in QuickOrder
 import ProductModal from "../components/ProductModal";
 
 const ProductDetails = () => {
@@ -25,11 +23,8 @@ const ProductDetails = () => {
 
   const [product, setProduct] = useState(null);
   const [apiAttributes, setApiAttributes] = useState([]);
-
-  // ✅ Modal open state
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // ⭐ Rating UI
   const renderRating = (rating) => {
     const r = Number(rating || 0);
     const stars = [];
@@ -39,6 +34,7 @@ const ProductDetails = () => {
     for (let i = 0; i < fullStars; i++) {
       stars.push(<FaStar key={`full-${i}`} className="star-icon full-star" />);
     }
+
     if (hasHalfStar) {
       stars.push(<FaStarHalfAlt key="half" className="star-icon half-star" />);
     }
@@ -49,12 +45,13 @@ const ProductDetails = () => {
         <FaRegStar key={`empty-${i}`} className="star-icon empty-star" />
       );
     }
+
     return stars;
   };
 
-  // ✅ Compute rating if product.rating = 0
   const computedRating = useMemo(() => {
     if (!product) return 0;
+
     const apiRating = Number(product.rating || 0);
     if (apiRating > 0) return apiRating;
 
@@ -70,7 +67,6 @@ const ProductDetails = () => {
     return reviews.length;
   }, [product]);
 
-  // ✅ Specs
   const specs = useMemo(() => {
     if (!product) return [];
 
@@ -111,12 +107,33 @@ const ProductDetails = () => {
   const productName = product?.name || "Product";
   const descriptionText = product?.description || "";
 
-  // ✅ image
   const mainImage =
     product?.thumb_img?.file_name || product?.images?.[0]?.file_name || "";
 
   const crumbGroup = product?.category_group?.name || "Category Group";
   const crumbCategory = product?.category?.name || "Category";
+
+  // ✅ direct and safe price mapping
+  const formattedMrp =
+    user_id != null && product?.mrp
+      ? `₹${Number(product.mrp).toFixed(2)}`
+      : "";
+
+  const formattedDiscountPrice =
+    user_id != null && product?.discount_price
+      ? `₹${Number(product.discount_price).toFixed(2)}`
+      : "";
+  
+  const formattedBulkDiscountPrice =
+    user_id != null && product?.bulk_discount_price
+      ? `₹${Number(product.bulk_discount_price).toFixed(2)}`
+      : "";
+
+  const pieceByCarton =
+    user_id != null && product?.piece_by_carton
+      ? `${product.piece_by_carton}`
+      : "";
+  const unitLabel = product?.unit ? `/${product.unit}` : "/Pc";
 
   const fetchProduct = async () => {
     setLoading(true);
@@ -132,10 +149,15 @@ const ProductDetails = () => {
 
       const ok =
         payload?.res === true || payload?.res === 1 || payload?.res === "true";
+
       if (!ok) throw new Error(payload?.msg || "API returned res=false");
 
       const p = Array.isArray(payload?.data) ? payload.data[0] : null;
       if (!p) throw new Error("Product not found in payload.data[0]");
+
+      console.log("API product data:", p); // debug
+      console.log("MRP:", p?.mrp);
+      console.log("Discount Price:", p?.discount_price);
 
       setProduct(p);
       setApiAttributes(
@@ -150,20 +172,13 @@ const ProductDetails = () => {
 
   useEffect(() => {
     fetchProduct();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slug]);
 
-  // ✅ Add to Cart -> open modal
   const handleAddToCart = () => {
-    if (!product?.id) {
-      console.log("No product id yet:", product);
-      return;
-    }
-    console.log("Opening modal for product:", product.id);
+    if (!product?.id) return;
     setIsModalOpen(true);
   };
 
-  // ✅ Guest user -> login page
   const handleRegisterToCheckPrices = () => {
     navigate("/login");
   };
@@ -175,13 +190,16 @@ const ProductDetails = () => {
       <div className="maincontainer">
         <div className="product-details-conte">
           <div className="product-details">
-            {/* Left */}
             <div className="product-details-left">
               <div className="breadcrumb">
                 {crumbGroup}
-                <em><GoDotFill /></em>
+                <em>
+                  <GoDotFill />
+                </em>
                 {crumbCategory}
-                <em><GoDotFill /></em>
+                <em>
+                  <GoDotFill />
+                </em>
                 <span className="current">{productName}</span>
               </div>
 
@@ -214,7 +232,6 @@ const ProductDetails = () => {
               )}
             </div>
 
-            {/* Right */}
             <div className="product-details-right">
               <div className="product-modal-info-top">
                 <div className="product-modal-info-top-lft">
@@ -250,7 +267,28 @@ const ProductDetails = () => {
                 </div>
               </div>
 
-              {/* Tabs + button */}
+              {/* ✅ Price section only for logged-in users */}
+              {user_id != null && (
+                <>
+                  <div className="product-modal-info">
+                    <div className="product-price">
+                      <span className="old-price">{formattedMrp}</span>
+                      <span className="new-price">{formattedDiscountPrice}</span>
+                      <span className="unit">{unitLabel}</span>
+                    </div>
+                  </div>
+                  <div className="bulk-discount">
+                  <p>
+                    <span className="red">Bulk Quantity Discount:</span> Purchase{" "}
+                    {pieceByCarton} or more and get each for{" "}
+                    <span className="highlight">{formattedBulkDiscountPrice}</span>{" "}
+                    instead of{" "}
+                    <span className="highlight">{formattedDiscountPrice}</span>
+                  </p>
+                </div>
+                </>
+              )}
+              
               <div
                 className="tabs-row"
                 style={{
@@ -299,7 +337,6 @@ const ProductDetails = () => {
                 )}
               </div>
 
-              {/* Content */}
               {activeTab === "specs" ? (
                 <div className="specs-table">
                   <div className="specs-grid">
@@ -342,9 +379,7 @@ const ProductDetails = () => {
                     <div style={{ padding: 12 }}>Loading...</div>
                   ) : (
                     <p style={{ margin: 0 }}>
-                      {descriptionText
-                        ? descriptionText
-                        : "No description available."}
+                      {descriptionText || "No description available."}
                     </p>
                   )}
                 </div>
@@ -354,7 +389,6 @@ const ProductDetails = () => {
         </div>
       </div>
 
-      {/* ✅ ProductModal */}
       {isModalOpen && user_id != null && (
         <ProductModal
           open={isModalOpen}

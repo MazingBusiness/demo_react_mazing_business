@@ -84,6 +84,10 @@ const QuickOrder = () => {
   const [showMoreBrands, setShowMoreBrands] = useState(5);
   const [showMoreDelivery, setShowMoreDelivery] = useState(2);
 
+  // show more / show less state for Categories section (per group)
+  const CATEGORY_INITIAL_LIMIT = 5;
+  const [showMoreCategories, setShowMoreCategories] = useState({});
+
   useEffect(() => {
     if (sliderRef.current) {
       setSliderWidth(sliderRef.current.offsetWidth);
@@ -237,6 +241,33 @@ const QuickOrder = () => {
     }
   }, [selectedBrands, allBrands, showMoreBrands]);
 
+  // ensure selected child category is visible in Categories section
+  useEffect(() => {
+    if (!selectedChildCatIds.length || !groupsWithSortedChildren.length) return;
+
+    setShowMoreCategories((prev) => {
+      const next = { ...prev };
+
+      groupsWithSortedChildren.forEach((group) => {
+        const children = group.child_category || [];
+        const selectedIndex = children.findIndex((child) =>
+          selectedChildCatIds.includes(Number(child.id))
+        );
+
+        if (selectedIndex !== -1) {
+          const requiredCount = selectedIndex + 1;
+          const currentCount = prev[group.id] || CATEGORY_INITIAL_LIMIT;
+
+          if (requiredCount > currentCount) {
+            next[group.id] = requiredCount;
+          }
+        }
+      });
+
+      return next;
+    });
+  }, [selectedChildCatIds, groupsWithSortedChildren]);
+
   const toggleCatG = (groupId) => {
     setSelectedCatGIds((prev) => {
       const isSelected = prev.includes(groupId);
@@ -275,6 +306,12 @@ const QuickOrder = () => {
     setSelectedCatGIds([]);
     setSelectedChildCatIds([]);
     setShowMoreCatG(5);
+    setShowMoreCategories({});
+  };
+
+  const clearCategories = () => {
+    setSelectedChildCatIds([]);
+    setShowMoreCategories({});
   };
 
   const toggleCatGs = () => {
@@ -299,6 +336,20 @@ const QuickOrder = () => {
         ? prev.filter((b) => b !== brand)
         : [...prev, brand]
     );
+  };
+
+  const toggleCategoriesForGroup = (groupId, totalChildren) => {
+    setShowMoreCategories((prev) => {
+      const currentCount = prev[groupId] || CATEGORY_INITIAL_LIMIT;
+
+      return {
+        ...prev,
+        [groupId]:
+          currentCount >= totalChildren
+            ? CATEGORY_INITIAL_LIMIT
+            : currentCount + CATEGORY_INITIAL_LIMIT,
+      };
+    });
   };
 
   const onMinDrag = (e) => {
@@ -430,10 +481,7 @@ const QuickOrder = () => {
               <div className="filter-section">
                 <h4>
                   Categories{" "}
-                  <button
-                    onClick={() => setSelectedChildCatIds([])}
-                    className="clear-btn"
-                  >
+                  <button onClick={clearCategories} className="clear-btn">
                     ✕ CLEAR
                   </button>
                 </h4>
@@ -450,6 +498,12 @@ const QuickOrder = () => {
                         const children = g.child_category || [];
                         if (children.length === 0) return null;
 
+                        const visibleCount =
+                          showMoreCategories[g.id] || CATEGORY_INITIAL_LIMIT;
+                        const visibleChildren = children.slice(0, visibleCount);
+                        const canToggle = children.length > CATEGORY_INITIAL_LIMIT;
+                        const isExpanded = visibleCount >= children.length;
+
                         return (
                           <div key={g.id} style={{ marginBottom: 14 }}>
                             <div
@@ -463,7 +517,7 @@ const QuickOrder = () => {
                             </div>
 
                             <div className="checkbox-group brand-group fade-in">
-                              {children.map((child) => {
+                              {visibleChildren.map((child) => {
                                 const isChildSelected = selectedChildCatIds.includes(
                                   child.id
                                 );
@@ -486,6 +540,26 @@ const QuickOrder = () => {
                                 );
                               })}
                             </div>
+
+                            {canToggle && (
+                              <button
+                                onClick={() =>
+                                  toggleCategoriesForGroup(g.id, children.length)
+                                }
+                                className="show-more"
+                                type="button"
+                              >
+                                {isExpanded ? (
+                                  <>
+                                    <FaAngleUp /> SHOW LESS
+                                  </>
+                                ) : (
+                                  <>
+                                    <FaAngleDown /> SHOW MORE
+                                  </>
+                                )}
+                              </button>
+                            )}
                           </div>
                         );
                       })}
