@@ -7,7 +7,11 @@ import CartIcon from "../assets/icons/CartIcon.svg";
 import warrantyIcon from "../assets/icons/warranty.jpeg";
 
 import ProductModal from "../components/ProductModal.jsx";
-import { getQuickOrderProduct } from "../api/apiRequest";
+import {
+  getQuickOrderProduct,
+  generatePdfFileName,
+  getdfQuickOrderProduct,
+} from "../api/apiRequest";
 import { getLoggedInUser } from "../utils/authUtils";
 
 const QuickOrderGrid = ({ filters }) => {
@@ -29,11 +33,18 @@ const QuickOrderGrid = ({ filters }) => {
   const openModal = (product) => setSelectedProduct(product);
   const closeModal = () => setSelectedProduct(null);
 
+  const [pdfDownloading, setPdfDownloading] = useState(false);
+
   const handleSortChange = (value) => {
     setPriceSort(value);
     setCurrentPage(1);
     setProducts([]);
     setHasMore(true);
+  };
+
+  const toCsv = (value) => {
+    if (Array.isArray(value)) return value.join(",");
+    return value ?? "";
   };
 
   const getQuickOrderProductRecord = async (page = 1) => {
@@ -75,6 +86,7 @@ const QuickOrderGrid = ({ filters }) => {
 
           const offerList = Array.isArray(item.offer) ? item.offer : [];
           const now = new Date();
+
           const hasActiveOffer = offerList.some((offerItem) => {
             const start = offerItem?.offer_validity_start
               ? new Date(offerItem.offer_validity_start.replace(" ", "T"))
@@ -90,6 +102,7 @@ const QuickOrderGrid = ({ filters }) => {
 
             return now >= start && now <= end;
           });
+
           return {
             id: item.id,
             slug: item.slug,
@@ -97,7 +110,9 @@ const QuickOrderGrid = ({ filters }) => {
             img: item.thumb_img?.file_name || no_image,
             oldPrice: item.mrp ? `₹${parseFloat(item.mrp).toFixed(2)}` : "₹0.00",
             newPrice: item.discount_price
-              ? `₹${parseFloat(String(item.discount_price).replace(/₹/g, "")).toFixed(2)}`
+              ? `₹${parseFloat(
+                  String(item.discount_price).replace(/₹/g, "")
+                ).toFixed(2)}`
               : "₹0.00",
             rating,
             totalRatings,
@@ -142,6 +157,76 @@ const QuickOrderGrid = ({ filters }) => {
       setHasMore(false);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDownloadPdf = async () => {
+    try {
+      setPdfDownloading(true);
+
+      // required by your first API
+      const slug = "quick-order-products";
+
+      // 1) get file name
+      const fileRes = await generatePdfFileName(slug);
+
+      console.log("generatePdfFileName response:", fileRes);
+
+      if (!fileRes?.res || !fileRes?.file_name) {
+        alert(fileRes?.msg || "Unable to generate PDF file name.");
+        return;
+      }
+
+      const file_name = fileRes.file_name;
+
+      // 2) ask backend to generate filtered PDF
+      const pdfRes = await getdfQuickOrderProduct(
+        file_name,
+        toCsv(filters?.cat_groups),
+        toCsv(filters?.categories),
+        toCsv(filters?.brands),
+        filters?.search_text || "",
+        filters?.min_price || "",
+        filters?.max_price || "",
+        filters?.location_id || "",
+        filters?.inhouse_product || "",
+        price_sort || "popularity",
+        filters?.delivery ?? "",
+        1,
+        totalRecord || 1000
+      );
+
+      const pdfJson = await pdfRes.json();
+
+      console.log("getdfQuickOrderProduct response:", pdfJson);
+
+      if (!pdfRes.ok || !pdfJson?.res || !pdfJson?.file_name) {
+        alert(pdfJson?.msg || "PDF generation failed.");
+        return;
+      }
+
+      // 3) wait a bit so file is fully written
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      // 4) build public file URL
+      const finalFileName = pdfJson.file_name;
+      // const downloadUrl = `${window.location.origin}/mazing_business_react/public/pdfs/${finalFileName}`;
+      const downloadUrl = `https://mazingbusiness.com/mazing_business_react/public/pdfs/${finalFileName}`;
+
+
+      // 5) trigger browser download
+      const link = document.createElement("a");
+      link.href = downloadUrl;
+      link.setAttribute("download", finalFileName);
+      link.setAttribute("target", "_blank");
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      console.error("PDF download failed:", error);
+      alert("Something went wrong while downloading PDF.");
+    } finally {
+      setPdfDownloading(false);
     }
   };
 
@@ -214,12 +299,14 @@ const QuickOrderGrid = ({ filters }) => {
                   onCartClick(product);
                 }}
               >
-                <img src={CartIcon} alt="CartIcon" /> Add to Cart {product.cash_and_carry_item}
+                <img src={CartIcon} alt="CartIcon" /> Add to Cart
               </button>
             </div>
+
             {Number(product.cash_and_carry_item) === 1 && (
               <div className="no-credit-tag">No Credit Item</div>
             )}
+
             {product.hasActiveOffer && (
               <div className="offer-tag">Special Offer Item</div>
             )}
@@ -288,15 +375,27 @@ const QuickOrderGrid = ({ filters }) => {
         </div>
 
         <div className="sort-by">
-          {/* <span>Sort By:</span>
-          <select value={price_sort} onChange={(e) => handleSortChange(e.target.value)}>
+          {/*
+          <span>Sort By:</span>
+          <select
+            value={price_sort}
+            onChange={(e) => handleSortChange(e.target.value)}
+          >
             <option value="popularity">Popularity</option>
             <option value="low_to_high">Price: Low to High</option>
             <option value="high_to_low">Price: High to Low</option>
-          </select> */}
+          </select>
+          */}
         </div>
-        {/* <button className="download-pdf-btn" type="button">Download Net Price (PDF)</button>
-        <button className="download-excel-btn" type="button">Download Net Price (EXCEL)</button> */}
+
+        <button
+          className="download-pdf-btn"
+          type="button"
+          onClick={handleDownloadPdf}
+          disabled={pdfDownloading}
+        >
+          {pdfDownloading ? "Downloading PDF..." : "Download Net Price (PDF)"}
+        </button>
       </div>
 
       <div className="product-grid Quick-grid">
