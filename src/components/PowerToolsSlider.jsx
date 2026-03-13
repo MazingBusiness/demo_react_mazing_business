@@ -145,7 +145,7 @@ const PowerToolsSlider = () => {
             <div className="section-headerLft">
               <h2>Power Tools</h2>
 
-              <Link to="/" className="all-link">
+              <Link to="/quick-order" className="all-link" state={{ cat_g_id: 1 }}>
                 All Power Tools <FiChevronRight />
               </Link>
             </div>

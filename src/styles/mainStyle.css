@@ -2006,6 +2006,22 @@ a.all-link svg {
   z-index: 1;
 }
 
+.filter-search-input{
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  outline: none;
+  margin-bottom: 10px;
+  font-size: 13px;
+  background: #fff;
+}
+
+.filter-search-input:focus{
+  border-color: #2563eb;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.12);
+}
+
 .applied-offer-tag {
   position: absolute;
   bottom: -90px;
@@ -5034,7 +5050,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 .filter-section .current-value input {
   margin: 0;
-  max-width: 40px;
+  max-width: 80px;
   margin-bottom: 5px;
   font-size: 16px;
   color: white;

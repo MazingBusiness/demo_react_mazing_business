@@ -286,9 +286,9 @@ const BestSellers = () => {
           <div className="section-header">
             <div className="section-headerLft">
               <h2>Best Sellers</h2>
-              <Link to="/" className="all-link">
+              {/* <Link to="/" className="all-link">
                 All Best Sellers <FiChevronRight />
-              </Link>
+              </Link> */}
             </div>
 
             <div className="section-headerRgt">

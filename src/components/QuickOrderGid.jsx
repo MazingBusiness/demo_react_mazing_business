@@ -10,11 +10,13 @@ import ProductModal from "../components/ProductModal.jsx";
 import {
   getQuickOrderProduct,
   generatePdfFileName,
-  getdfQuickOrderProduct,
+  getPdfQuickOrderProduct,
+  generateExcelFileName,
+  getExcelQuickOrderProduct,
 } from "../api/apiRequest";
 import { getLoggedInUser } from "../utils/authUtils";
 
-const QuickOrderGrid = ({ filters }) => {
+const QuickOrderGrid = ({ filters, onPriceRangeUpdate }) => {
   const navigate = useNavigate();
   const loaderRef = useRef(null);
   const user = getLoggedInUser();
@@ -34,6 +36,7 @@ const QuickOrderGrid = ({ filters }) => {
   const closeModal = () => setSelectedProduct(null);
 
   const [pdfDownloading, setPdfDownloading] = useState(false);
+  const [excelDownloading, setExcelDownloading] = useState(false);
 
   const handleSortChange = (value) => {
     setPriceSort(value);
@@ -45,6 +48,16 @@ const QuickOrderGrid = ({ filters }) => {
   const toCsv = (value) => {
     if (Array.isArray(value)) return value.join(",");
     return value ?? "";
+  };
+
+  const triggerBrowserDownload = (downloadUrl, finalFileName) => {
+    const link = document.createElement("a");
+    link.href = downloadUrl;
+    link.setAttribute("download", finalFileName);
+    link.setAttribute("target", "_blank");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const getQuickOrderProductRecord = async (page = 1) => {
@@ -72,6 +85,14 @@ const QuickOrderGrid = ({ filters }) => {
         const total = responseData?.data?.total || 0;
 
         setTotalRecord(total);
+
+        // ✅ send full filtered result price range back to parent
+        if (onPriceRangeUpdate) {
+          onPriceRangeUpdate({
+            min: responseData?.min_mrp,
+            max: responseData?.max_mrp,
+          });
+        }
 
         const transformedData = productList.map((item) => {
           const noCredit = item.cash_and_carry_item === 1;
@@ -164,12 +185,9 @@ const QuickOrderGrid = ({ filters }) => {
     try {
       setPdfDownloading(true);
 
-      // required by your first API
       const slug = "quick-order-products";
 
-      // 1) get file name
       const fileRes = await generatePdfFileName(slug);
-
       console.log("generatePdfFileName response:", fileRes);
 
       if (!fileRes?.res || !fileRes?.file_name) {
@@ -179,8 +197,7 @@ const QuickOrderGrid = ({ filters }) => {
 
       const file_name = fileRes.file_name;
 
-      // 2) ask backend to generate filtered PDF
-      const pdfRes = await getdfQuickOrderProduct(
+      const pdfRes = await getPdfQuickOrderProduct(
         file_name,
         toCsv(filters?.cat_groups),
         toCsv(filters?.categories),
@@ -197,36 +214,80 @@ const QuickOrderGrid = ({ filters }) => {
       );
 
       const pdfJson = await pdfRes.json();
-
-      console.log("getdfQuickOrderProduct response:", pdfJson);
+      console.log("getPdfQuickOrderProduct response:", pdfJson);
 
       if (!pdfRes.ok || !pdfJson?.res || !pdfJson?.file_name) {
         alert(pdfJson?.msg || "PDF generation failed.");
         return;
       }
 
-      // 3) wait a bit so file is fully written
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
-      // 4) build public file URL
       const finalFileName = pdfJson.file_name;
-      // const downloadUrl = `${window.location.origin}/mazing_business_react/public/pdfs/${finalFileName}`;
-      const downloadUrl = `https://mazingbusiness.com/mazing_business_react/public/pdfs/${finalFileName}`;
+      const downloadUrl = `${window.location.origin}/mazing_business_react/public/pdfs/${finalFileName}`;
 
+      console.log("PDF Download URL:", downloadUrl);
 
-      // 5) trigger browser download
-      const link = document.createElement("a");
-      link.href = downloadUrl;
-      link.setAttribute("download", finalFileName);
-      link.setAttribute("target", "_blank");
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      triggerBrowserDownload(downloadUrl, finalFileName);
     } catch (error) {
       console.error("PDF download failed:", error);
       alert("Something went wrong while downloading PDF.");
     } finally {
       setPdfDownloading(false);
+    }
+  };
+
+  const handleDownloadExcel = async () => {
+    try {
+      setExcelDownloading(true);
+
+      const fileRes = await generateExcelFileName();
+      console.log("generateExcelFileName response:", fileRes);
+
+      if (!fileRes?.res || !fileRes?.file_name) {
+        alert(fileRes?.msg || "Unable to generate Excel file name.");
+        return;
+      }
+
+      const file_name = fileRes.file_name;
+
+      const excelRes = await getExcelQuickOrderProduct(
+        file_name,
+        toCsv(filters?.cat_groups),
+        toCsv(filters?.categories),
+        toCsv(filters?.brands),
+        filters?.search_text || "",
+        filters?.min_price || "",
+        filters?.max_price || "",
+        filters?.location_id || "",
+        filters?.inhouse_product || "",
+        price_sort || "popularity",
+        filters?.delivery ?? "",
+        1,
+        totalRecord || 1000
+      );
+
+      const excelJson = await excelRes.json();
+      console.log("getExcelQuickOrderProduct response:", excelJson);
+
+      if (!excelRes.ok || !excelJson?.res || !excelJson?.file_name) {
+        alert(excelJson?.msg || "Excel generation failed.");
+        return;
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      const finalFileName = excelJson.file_name;
+      const downloadUrl = `https://mazingbusiness.com/mazing_business_react/storage/app/excel/${finalFileName}`;
+
+      console.log("Excel Download URL:", downloadUrl);
+
+      triggerBrowserDownload(downloadUrl, finalFileName);
+    } catch (error) {
+      console.error("Excel download failed:", error);
+      alert("Something went wrong while downloading Excel.");
+    } finally {
+      setExcelDownloading(false);
     }
   };
 
@@ -370,10 +431,6 @@ const QuickOrderGrid = ({ filters }) => {
   return (
     <div className="product-section-wrapper">
       <div className="product-header">
-        <div className="product-count">
-          Result: <strong>{totalRecord} Products</strong>
-        </div>
-
         <div className="sort-by">
           {/*
           <span>Sort By:</span>
@@ -388,14 +445,25 @@ const QuickOrderGrid = ({ filters }) => {
           */}
         </div>
 
-        <button
-          className="download-pdf-btn"
-          type="button"
-          onClick={handleDownloadPdf}
-          disabled={pdfDownloading}
-        >
-          {pdfDownloading ? "Downloading PDF..." : "Download Net Price (PDF)"}
-        </button>
+        <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+          <button
+            className="download-pdf-btn"
+            type="button"
+            onClick={handleDownloadPdf}
+            disabled={pdfDownloading}
+          >
+            {pdfDownloading ? "Downloading PDF..." : "Download Net Price (PDF)"}
+          </button>
+
+          <button
+            className="download-excel-btn"
+            type="button"
+            onClick={handleDownloadExcel}
+            disabled={excelDownloading}
+          >
+            {excelDownloading ? "Downloading Excel..." : "Download Net Price (EXCEL)"}
+          </button>
+        </div>
       </div>
 
       <div className="product-grid Quick-grid">

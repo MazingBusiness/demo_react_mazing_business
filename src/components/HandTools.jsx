@@ -182,7 +182,7 @@ const HandTools = () => {
             <div className="section-headerLft">
               <h2>Hand Tools</h2>
 
-              <Link to="/" className="all-link">
+              <Link to="/quick-order" className="all-link" state={{ cat_g_id: 14 }}>
                 All Hand Tools <FiChevronRight />
               </Link>
             </div>

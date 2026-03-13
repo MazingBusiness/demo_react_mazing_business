@@ -809,13 +809,8 @@ export const getProductDetailsBySlug = async (slug) => {
 };
 
 export const generatePdfFileName = async () => {
-  // const user = getLoggedInUser();
   const header = getHeader();
   const queryParams = new URLSearchParams();
-  // queryParams.append("slug", slug); // ✅ mandatory
-  // if (user?.id) {
-  //   queryParams.append("user_id", user.id); // For logged-in user
-  // }
   const url = `${API_BASE_URL}download_document/generate-pdf-file-name`;
   const response = await fetch(url, {
     method: "GET",
@@ -828,7 +823,7 @@ export const generatePdfFileName = async () => {
   return data;
 };
 
-export const getdfQuickOrderProduct = async (
+export const getPdfQuickOrderProduct = async (
   file_name,
   cat_groups,
   categories,
@@ -870,6 +865,76 @@ export const getdfQuickOrderProduct = async (
   if (user?.id) queryParams.append("user_id", user.id);
 
   const url = `${API_BASE_URL}download_document/pdf-quick-order-products?${queryParams.toString()}`;
+
+  const response = await fetch(url, {
+    method: "GET",
+    headers: {
+      ...(header?.headers || {}),
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    },
+  });
+
+  return response;
+};
+
+export const generateExcelFileName = async () => {
+  const header = getHeader();
+  const queryParams = new URLSearchParams();
+  const url = `${API_BASE_URL}download_document/generate-excel-file-name`;
+  const response = await fetch(url, {
+    method: "GET",
+    headers: {
+      ...(header?.headers || {}),
+      "Content-Type": "application/json",
+    },
+  });
+  const data = await response.json();
+  return data;
+};
+
+export const getExcelQuickOrderProduct = async (
+  file_name,
+  cat_groups,
+  categories,
+  brands,
+  search_text,
+  min_price,
+  max_price,
+  location_id,
+  inhouse_product,
+  price_sort,
+  delivery,
+  page = 1,
+  pagination = 16
+) => {
+  const user = getLoggedInUser();
+  const header = getHeader();
+
+  const queryParams = new URLSearchParams();
+
+  if (file_name) queryParams.append("file_name", file_name);
+  if (cat_groups) queryParams.append("cat_groups", cat_groups);
+  if (categories) queryParams.append("categories", categories);
+  if (brands) queryParams.append("brands", brands);
+  if (search_text) queryParams.append("search_text", search_text);
+  if (min_price) queryParams.append("min_price", min_price);
+  if (max_price) queryParams.append("max_price", max_price);
+  if (location_id) queryParams.append("location_id", location_id);
+  if (inhouse_product !== null && inhouse_product !== undefined && inhouse_product !== "") {
+    queryParams.append("inhouse_product", inhouse_product);
+  }
+
+  if (delivery !== null && delivery !== undefined && delivery !== "") {
+    queryParams.append("delivery", delivery);
+  }
+
+  if (page) queryParams.append("page", page);
+  if (price_sort) queryParams.append("price_sort", price_sort);
+  if (pagination) queryParams.append("pagination", pagination);
+  if (user?.id) queryParams.append("user_id", user.id);
+
+  const url = `${API_BASE_URL}download_document/excel-quick-order-products?${queryParams.toString()}`;
 
   const response = await fetch(url, {
     method: "GET",

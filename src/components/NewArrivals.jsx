@@ -342,9 +342,9 @@ const NewArrivals = () => {
           <div className="section-header">
             <div className="section-headerLft">
               <h2>New Arrivals</h2>
-              <Link to="/" className="all-link">
+              {/* <Link to="/" className="all-link">
                 All New Arrivals <FiChevronRight />
-              </Link>
+              </Link> */}
             </div>
 
             <div className="section-headerRgt">
