@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import MainLayout from "../layouts/MainLayout";
+import { FiArrowLeft, FiCopy } from "react-icons/fi";
 import { FiX, FiChevronDown, FiCheck } from "react-icons/fi";
 import { BsCloudArrowDownFill } from "react-icons/bs";
 import { useNavigate, Link, useLocation } from "react-router-dom";
@@ -251,11 +252,11 @@ const Payment = () => {
                   </Link>
                 </div>
               </div>
-
               <div className="cart-left-rgt">
-                <Link to="/" className="back-home-btn">
-                  ← Back to Home
-                </Link>
+                <Link to="/" className="back-home-btn-modern">
+                    <FiArrowLeft />
+                    Back to Home
+                  </Link>
                 {payStatus === "SUCCESS" ? (
                   <div className="payment-success">
                     <img src={PaidIcon} alt="success" style={{ width: 120 }} />

@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import MainLayout from "../layouts/MainLayout";
-import { FiX, FiChevronDown, FiCheck } from "react-icons/fi";
-import { BsCloudArrowDownFill } from "react-icons/bs";
+import { FiChevronDown, FiCheck } from "react-icons/fi";
 import { useNavigate, Link } from "react-router-dom";
 
 import cartllink1 from "../assets/icons/cartllink1a.svg";
@@ -12,19 +11,34 @@ import cartllink4 from "../assets/icons/cartllink4b.svg";
 import Modal from "../components/Modal";
 import CartSummary from "../components/CartSummary.jsx";
 
-import { userDetails, getShippingAddress } from "../api/apiRequest";
+import { getShippingAddress } from "../api/apiRequest";
 
 const Company = () => {
-  const [selectedAddress, setSelectedAddress] = useState(0);
+  const [selectedAddress, setSelectedAddress] = useState(null); // store selected INDEX
   const [showTicketModal, setShowTicketModal] = useState(false);
   const [noGstin, setNoGstin] = useState(false);
   const [addresses, setAddresses] = useState([]);
+
+  const [selectedState, setSelectedState] = useState("");
+  const [stateDropdownOpen, setStateDropdownOpen] = useState(false);
+  const stateRef = useRef();
+
+  const [selectedCountry, setSelectedCountry] = useState("");
+  const [countryDropdownOpen, setCountryDropdownOpen] = useState(false);
+  const countryRef = useRef();
+
+  const [selectedCity, setSelectedCity] = useState("");
+  const [cityDropdownOpen, setCityDropdownOpen] = useState(false);
+  const cityRef = useRef();
+
+  const [gstInput, setGstInput] = useState("");
 
   const navigate = useNavigate();
 
   const handleCheckout = () => {
     navigate("/payment");
   };
+
   const handlegohome = () => {
     navigate("/home");
   };
@@ -35,15 +49,11 @@ const Company = () => {
     setShowTicketModal(false);
   };
 
-  const handleFileChange = (e) => {
-    if (e.target.files.length > 0) {
-      setFileName(e.target.files[0].name);
-    }
-    setIsFocused(false); // remove focus after file selection
-  };
-
   const mapUserDetailsToAddresses = (addressJson) => {
-    const list = Array.isArray(addressJson?.shipping_address)? addressJson.shipping_address: [];
+    const list = Array.isArray(addressJson?.shipping_address)
+      ? addressJson.shipping_address
+      : [];
+
     return list.map((a) => ({
       id: a?.id || "",
       gst: a?.gstin || "",
@@ -52,81 +62,105 @@ const Company = () => {
       address2: a?.address_2 || "",
       postalCode: a?.postal_code || "",
       city: a?.city || "",
-      state: a?.state || "", // API me state name nahi hai, only state_id
+      state: a?.state || "",
       country: "India",
       phone: a?.phone || "",
-      // optional extra fields (useful later)
-      id: a?.id,
-      acc_code: a?.acc_code,
-      set_default: a?.set_default,
-      address_id: a?.id,
-      state_id: a?.state_id,
-      city_id: a?.city_id,
-      country_id: a?.country_id,
+      acc_code: a?.acc_code || "",
+      set_default: Number(a?.set_default || 0),
+      address_id: a?.id || "",
+      state_id: a?.state_id || "",
+      city_id: a?.city_id || "",
+      country_id: a?.country_id || "",
     }));
   };
 
   const getAddressData = async () => {
-      try {
-        const json = await getShippingAddress(); // <-- ensure this returns parsed JSON
-        if (json?.res) {
-          const mapped = mapUserDetailsToAddresses(json);
-          setAddresses(mapped);
-        } else {
-          setAddresses([]);
+    try {
+      const json = await getShippingAddress();
+
+      if (json?.res) {
+        const mapped = mapUserDetailsToAddresses(json);
+        setAddresses(mapped);
+
+        const lastOrderAddressId = json?.lastOrderAddressId
+          ? Number(json.lastOrderAddressId)
+          : null;
+
+        let defaultIndex = -1;
+
+        // 1) First priority: lastOrderAddressId
+        if (lastOrderAddressId) {
+          defaultIndex = mapped.findIndex(
+            (addr) => Number(addr.address_id) === lastOrderAddressId
+          );
         }
-      } catch (e) {
-        console.error(e);
+
+        // 2) If not found, fallback to set_default = 1
+        if (defaultIndex === -1) {
+          defaultIndex = mapped.findIndex(
+            (addr) => Number(addr.set_default) === 1
+          );
+        }
+
+        // 3) If still not found, fallback to first address
+        if (defaultIndex === -1 && mapped.length > 0) {
+          defaultIndex = 0;
+        }
+
+        setSelectedAddress(defaultIndex >= 0 ? defaultIndex : null);
+      } else {
         setAddresses([]);
+        setSelectedAddress(null);
       }
+    } catch (e) {
+      console.error(e);
+      setAddresses([]);
+      setSelectedAddress(null);
+    }
   };
 
   useEffect(() => {
     getAddressData();
   }, []);
 
-  const [selectedState, setSelectedState] = useState("");
-  const [stateDropdownOpen, setStateDropdownOpen] = useState(false);
-  const stateRef = useRef();
-
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (stateRef.current && !stateRef.current.contains(event.target)) {
         setStateDropdownOpen(false);
       }
+      if (countryRef.current && !countryRef.current.contains(event.target)) {
+        setCountryDropdownOpen(false);
+      }
+      if (cityRef.current && !cityRef.current.contains(event.target)) {
+        setCityDropdownOpen(false);
+      }
     };
+
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   const statesOfIndia = ["Andhra Pradesh", "Arunachal Pradesh"];
-
   const countryofWorld = ["India", "English"];
-  const [selectedCountry, setSelectedCountry] = useState("");
-  const [countryDropdownOpen, setCountryDropdownOpen] = useState(false);
-  const countryRef = useRef();
+  const cityList = ["Delhi", "Mumbai", "Kolkata", "Bangalore"];
 
-  const cityList = ["Delhi", "Mumbai", "Kolkata", "Bangalore"]; // update as needed
-  const [selectedCity, setSelectedCity] = useState("");
-  const [cityDropdownOpen, setCityDropdownOpen] = useState(false);
-  const cityRef = useRef();
-
-  const [gstInput, setGstInput] = useState("");
-
-  // Filter addresses based on GSTIN input
   const matchedAddress = addresses.find(
-    (addr) => addr.gst.toLowerCase() === gstInput.toLowerCase()
+    (addr) => (addr.gst || "").toLowerCase() === gstInput.toLowerCase()
   );
 
   const handleNoGstinChange = (e) => {
     setNoGstin(e.target.checked);
     if (e.target.checked) {
-      setGstInput(""); // Clear GSTIN input when checkbox is checked
+      setGstInput("");
     }
   };
 
-  const selectedAddressObj = addresses?.[selectedAddress];  // selectedAddress = index
-  const selectedAddressId = selectedAddressObj?.address_id ?? selectedAddressObj?.id ?? 0;
+  const selectedAddressObj =
+    selectedAddress !== null ? addresses?.[selectedAddress] : null;
+
+  const selectedAddressId =
+    selectedAddressObj?.address_id ?? selectedAddressObj?.id ?? 0;
+
   return (
     <div className="CartBody ConfirmationBody">
       <MainLayout>
@@ -141,7 +175,7 @@ const Company = () => {
                   <Link to="/company">
                     <img src={cartllink2} alt="MenuIcon" /> Shipping Company
                   </Link>
-                  
+
                   <Link className="deactive">
                     <img src={cartllink4} alt="MenuIcon" /> Confirmation
                   </Link>
@@ -150,59 +184,73 @@ const Company = () => {
                   </Link>
                 </div>
               </div>
+
               <div className="cart-left-rgt">
                 <div className="address-container">
                   {addresses.map((addr, index) => (
-                    <label key={index}
+                    <label
+                      key={addr.id || index}
                       className={`address-card ${
                         selectedAddress === index ? "selected" : ""
                       }`}
                     >
-                      <input type="radio" name="selectedAddress" value={addr.id} checked={selectedAddress === index} onChange={() => setSelectedAddress(index)} />
+                      <input
+                        type="radio"
+                        name="selectedAddress"
+                        value={addr.id}
+                        checked={selectedAddress === index}
+                        onChange={() => setSelectedAddress(index)}
+                      />
                       <div className="card-content">
                         <p>
-                          <strong>GST IN:</strong> {addr.gst}
+                          <strong>GST IN:</strong> {addr.gst || "-"}
                         </p>
                         <p>
-                          <strong>Company Name:</strong> {addr.company}
+                          <strong>Company Name:</strong> {addr.company || "-"}
                         </p>
                         <p>
-                          <strong>Address:</strong> {addr.address1}
+                          <strong>Address:</strong> {addr.address1 || "-"}
                         </p>
                         <p>
-                          <strong>Address 2:</strong> {addr.address2}
+                          <strong>Address 2:</strong> {addr.address2 || "-"}
                         </p>
                         <p>
-                          <strong>Postal Code:</strong> {addr.postalCode}
+                          <strong>Postal Code:</strong> {addr.postalCode || "-"}
                         </p>
                         <p>
-                          <strong>City:</strong> {addr.city}
+                          <strong>City:</strong> {addr.city || "-"}
                         </p>
                         <p>
-                          <strong>State:</strong> {addr.state}
+                          <strong>State:</strong> {addr.state || "-"}
                         </p>
                         <p>
-                          <strong>Country:</strong> {addr.country}
+                          <strong>Country:</strong> {addr.country || "-"}
                         </p>
                         <p>
-                          <strong>Phone:</strong> {addr.phone}
+                          <strong>Phone:</strong> {addr.phone || "-"}
                         </p>
                       </div>
                     </label>
                   ))}
                 </div>
-                <button className="add-address-btn" onClick={() => setShowTicketModal(true)} >
+
+                <button
+                  className="add-address-btn"
+                  onClick={() => setShowTicketModal(true)}
+                >
                   Add New Address <span>+</span>
                 </button>
                 <p></p>
               </div>
             </div>
-            {/* Pass selectedAddressId as props to the cartSummary page */}
-            <CartSummary selectedAddressId={selectedAddressId} canCheckout={true} />
+
+            <CartSummary
+              selectedAddressId={selectedAddressId}
+              canCheckout={true}
+            />
           </div>
         </div>
 
-        {/* Ticket Modal */}
         <Modal
           isOpen={showTicketModal}
           onClose={() => setShowTicketModal(false)}
@@ -215,7 +263,7 @@ const Company = () => {
                 <h3 className="modal-title">Add New Address</h3>
 
                 <div className="manageProfileFrmBoxInner">
-                  <form class="manage-profile-form">
+                  <div className="manage-profile-form">
                     <div className="form-row">
                       <div className="form-group">
                         <label>GSTIN</label>
@@ -243,7 +291,7 @@ const Company = () => {
                           <label className="address-card selected">
                             <input
                               type="radio"
-                              name="selectedAddress"
+                              name="matchedAddress"
                               checked={true}
                               onChange={() => {}}
                             />
@@ -288,7 +336,6 @@ const Company = () => {
                       </div>
                     </div>
 
-                    {/* ===== Form 2: Without GSTIN ===== */}
                     {noGstin && (
                       <div className="noGst-form-row">
                         <div className="form-row">
@@ -428,6 +475,7 @@ const Company = () => {
                               </div>
                             </div>
                           </div>
+
                           <div className="form-group">
                             <label>Address</label>
                             <input
@@ -517,7 +565,7 @@ const Company = () => {
                         Save Address
                       </button>
                     </div>
-                  </form>
+                  </div>
                 </div>
               </form>
             </div>
