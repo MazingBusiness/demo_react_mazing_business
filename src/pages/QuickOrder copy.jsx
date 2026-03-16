@@ -3,7 +3,7 @@ import { useLocation } from "react-router-dom";
 import MainLayout from "../layouts/MainLayout";
 
 import { FaAngleDown, FaAngleUp, FaFilter } from "react-icons/fa";
-import QuickOrderGrid from "../components/QuickOrderGrid.jsx";
+import QuickOrderGid from "../components/QuickOrderGrid";
 
 // Api Call
 import { getAllBrands, getAllCategoryGroups } from "../api/apiRequest";
@@ -36,10 +36,12 @@ const QuickOrder = () => {
   const [loading, setLoading] = useState(false);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
 
+  // search states
   const [categoryGroupSearch, setCategoryGroupSearch] = useState("");
   const [categorySearch, setCategorySearch] = useState("");
   const [brandSearch, setBrandSearch] = useState("");
 
+  // dynamic price range from API
   const [availableMin, setAvailableMin] = useState(1000);
   const [availableMax, setAvailableMax] = useState(7500);
 
@@ -51,13 +53,6 @@ const QuickOrder = () => {
   const [currentMax, setCurrentMax] = useState(7500);
   const [inputMin, setInputMin] = useState(1000);
   const [inputMax, setInputMax] = useState(7500);
-
-  const [isPriceDirty, setIsPriceDirty] = useState(false);
-
-  // ✅ live refs to avoid stale closure issues
-  const isPriceDirtyRef = useRef(false);
-  const currentMinRef = useRef(1000);
-  const currentMaxRef = useRef(7500);
 
   const sliderRef = useRef(null);
   const minValueRef = useRef(null);
@@ -74,33 +69,6 @@ const QuickOrder = () => {
   const CATEGORY_INITIAL_LIMIT = 5;
   const [showMoreCategories, setShowMoreCategories] = useState({});
 
-  const setPriceDirtyState = (value) => {
-    isPriceDirtyRef.current = value;
-    setIsPriceDirty(value);
-  };
-
-  const setMinState = (value) => {
-    currentMinRef.current = value;
-    setCurrentMin(value);
-  };
-
-  const setMaxState = (value) => {
-    currentMaxRef.current = value;
-    setCurrentMax(value);
-  };
-
-  useEffect(() => {
-    isPriceDirtyRef.current = isPriceDirty;
-  }, [isPriceDirty]);
-
-  useEffect(() => {
-    currentMinRef.current = currentMin;
-  }, [currentMin]);
-
-  useEffect(() => {
-    currentMaxRef.current = currentMax;
-  }, [currentMax]);
-
   const filters = useMemo(
     () => ({
       cat_groups: selectedCatGIds,
@@ -108,8 +76,8 @@ const QuickOrder = () => {
       brands: selectedBrands,
       delivery: selectedDelivery,
       search_text,
-      min_price: isPriceDirty ? currentMin : "",
-      max_price: isPriceDirty ? currentMax : "",
+      min_price: currentMin,
+      max_price: currentMax,
       location_id,
       inhouse_product,
       price_sort,
@@ -125,7 +93,6 @@ const QuickOrder = () => {
       location_id,
       inhouse_product,
       price_sort,
-      isPriceDirty,
     ]
   );
 
@@ -136,16 +103,13 @@ const QuickOrder = () => {
 
     hasAppliedSelectAllBrands.current = true;
 
-    const allBrandIds = [
-      ...new Set(allBrands.map((brand) => Number(brand.id)).filter(Boolean)),
-    ];
+    const allBrandIds = [...new Set(allBrands.map((brand) => Number(brand.id)).filter(Boolean))];
 
     setSelectedCatGIds([]);
     setSelectedChildCatIds([]);
     setSelectedDelivery(null);
     setSearchText("");
     setSelectedBrands(allBrandIds);
-    setPriceDirtyState(false);
   }, [selectAllBrandsFromState, allBrands]);
 
   useEffect(() => {
@@ -198,6 +162,25 @@ const QuickOrder = () => {
       setLoading(false);
     }
   };
+
+  // const getAllBrandsFromAPI = async () => {
+  //   try {
+  //     setLoading(true);
+  //     const apiRes = await getAllBrands(selectedCatGIds, selectedChildCatIds);
+  //     const responseData = await apiRes.json();
+
+  //     if (responseData?.res) {
+  //       setAllBrands(responseData?.data || []);
+  //     } else {
+  //       setAllBrands([]);
+  //     }
+  //   } catch (error) {
+  //     console.error("Fetch error:", error);
+  //     setAllBrands([]);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
 
   const getAllBrandsFromAPI = async () => {
     try {
@@ -318,7 +301,6 @@ const QuickOrder = () => {
     setSelectedChildCatIds(nextChildIds);
     setSelectedDelivery(null);
     setSearchText("");
-    setPriceDirtyState(false);
   }, [incomingState, incomingCatGId, incomingCatId, groupsWithSortedChildren]);
 
   useEffect(() => {
@@ -335,8 +317,6 @@ const QuickOrder = () => {
     } else {
       setSelectedBrands([]);
     }
-
-    setPriceDirtyState(false);
   }, [incomingState, incomingBrandId, allBrands]);
 
   useEffect(() => {
@@ -393,20 +373,6 @@ const QuickOrder = () => {
     });
   }, [selectedChildCatIds, groupsWithSortedChildren]);
 
-  // ✅ reset price state immediately when non-price filters change
-  useEffect(() => {
-    isPriceDirtyRef.current = false;
-    setIsPriceDirty(false);
-  }, [
-    selectedCatGIds,
-    selectedChildCatIds,
-    selectedBrands,
-    selectedDelivery,
-    search_text,
-    location_id,
-    inhouse_product,
-  ]);
-
   const toggleCatG = (groupId) => {
     setSelectedCatGIds((prev) => {
       const isSelected = prev.includes(groupId);
@@ -446,13 +412,9 @@ const QuickOrder = () => {
     setSelectedBrands([]);
     setShowMoreBrands(5);
     setBrandSearch("");
-    setPriceDirtyState(false);
   };
 
-  const clearDelivery = () => {
-    setSelectedDelivery(null);
-    setPriceDirtyState(false);
-  };
+  const clearDelivery = () => setSelectedDelivery(null);
 
   const clearCatG = () => {
     setSelectedCatGIds([]);
@@ -461,20 +423,17 @@ const QuickOrder = () => {
     setShowMoreCategories({});
     setCategoryGroupSearch("");
     setCategorySearch("");
-    setPriceDirtyState(false);
   };
 
   const clearCategories = () => {
     setSelectedChildCatIds([]);
     setShowMoreCategories({});
     setCategorySearch("");
-    setPriceDirtyState(false);
   };
 
   const clearPrice = () => {
-    setPriceDirtyState(false);
-    setMinState(availableMin);
-    setMaxState(availableMax);
+    setCurrentMin(availableMin);
+    setCurrentMax(availableMax);
     setInputMin(availableMin);
     setInputMax(availableMax);
   };
@@ -545,9 +504,7 @@ const QuickOrder = () => {
         prev.filter((id) => !childIdsToRemove.includes(id))
       );
     } else {
-      setSelectedCatGIds((prev) => [
-        ...new Set([...prev, ...visibleCategoryGroupIds]),
-      ]);
+      setSelectedCatGIds((prev) => [...new Set([...prev, ...visibleCategoryGroupIds])]);
     }
   };
 
@@ -557,17 +514,13 @@ const QuickOrder = () => {
         prev.filter((id) => !visibleCategoryIds.includes(id))
       );
     } else {
-      setSelectedChildCatIds((prev) => [
-        ...new Set([...prev, ...visibleCategoryIds]),
-      ]);
+      setSelectedChildCatIds((prev) => [...new Set([...prev, ...visibleCategoryIds])]);
     }
   };
 
   const handleSelectAllBrands = () => {
     if (allVisibleBrandsSelected) {
-      setSelectedBrands((prev) =>
-        prev.filter((id) => !visibleBrandIds.includes(id))
-      );
+      setSelectedBrands((prev) => prev.filter((id) => !visibleBrandIds.includes(id)));
     } else {
       setSelectedBrands((prev) => [...new Set([...prev, ...visibleBrandIds])]);
     }
@@ -591,9 +544,8 @@ const QuickOrder = () => {
 
     setInputMin(val);
 
-    if (val >= min && val <= currentMaxRef.current - minValueBetween) {
-      setMinState(val);
-      setPriceDirtyState(true);
+    if (val >= min && val <= currentMax - minValueBetween) {
+      setCurrentMin(val);
     }
   };
 
@@ -607,38 +559,31 @@ const QuickOrder = () => {
 
     setInputMax(val);
 
-    if (val <= max && val >= currentMinRef.current + minValueBetween) {
-      setMaxState(val);
-      setPriceDirtyState(true);
+    if (val <= max && val >= currentMin + minValueBetween) {
+      setCurrentMax(val);
     }
   };
 
   const onMinBlur = () => {
     let val = parseFloat(inputMin);
 
-    if (Number.isNaN(val)) val = currentMinRef.current;
+    if (Number.isNaN(val)) val = currentMin;
     if (val < min) val = min;
-    if (val > currentMaxRef.current - minValueBetween) {
-      val = currentMaxRef.current - minValueBetween;
-    }
+    if (val > currentMax - minValueBetween) val = currentMax - minValueBetween;
 
     setInputMin(val);
-    setMinState(val);
-    setPriceDirtyState(true);
+    setCurrentMin(val);
   };
 
   const onMaxBlur = () => {
     let val = parseFloat(inputMax);
 
-    if (Number.isNaN(val)) val = currentMaxRef.current;
+    if (Number.isNaN(val)) val = currentMax;
     if (val > max) val = max;
-    if (val < currentMinRef.current + minValueBetween) {
-      val = currentMinRef.current + minValueBetween;
-    }
+    if (val < currentMin + minValueBetween) val = currentMin + minValueBetween;
 
     setInputMax(val);
-    setMaxState(val);
-    setPriceDirtyState(true);
+    setCurrentMax(val);
   };
 
   const onMinDrag = (e) => {
@@ -652,11 +597,9 @@ const QuickOrder = () => {
     const percent = (draggedWidth * 100) / sliderWidth;
     const val = Math.round((max * percent) / 100);
 
-    if (val >= min && val <= currentMaxRef.current - minValueBetween) {
-      setMinState(val);
+    if (val >= min && val <= currentMax - minValueBetween) {
+      setCurrentMin(val);
       setInputMin(val);
-      setPriceDirtyState(true);
-
       if (minValueRef.current) {
         minValueRef.current.style.width = `${percent}%`;
       }
@@ -674,11 +617,9 @@ const QuickOrder = () => {
     const percent = (draggedWidth * 100) / sliderWidth;
     const val = Math.round((max * percent) / 100);
 
-    if (val <= max && val >= currentMinRef.current + minValueBetween) {
-      setMaxState(val);
+    if (val <= max && val >= currentMin + minValueBetween) {
+      setCurrentMax(val);
       setInputMax(val);
-      setPriceDirtyState(true);
-
       if (maxValueRef.current) {
         maxValueRef.current.style.width = `${percent}%`;
       }
@@ -716,7 +657,7 @@ const QuickOrder = () => {
   };
 
   const toggleMobileFilters = () => {
-    setShowMobileFilters((prev) => !prev);
+    setShowMobileFilters(!showMobileFilters);
   };
 
   const maxForMin = () => currentMax - minValueBetween;
@@ -726,38 +667,39 @@ const QuickOrder = () => {
     const nextMin = Math.floor(Number(range?.min ?? 0));
     const nextMax = Math.ceil(Number(range?.max ?? 0));
 
-    if (Number.isNaN(nextMin) || Number.isNaN(nextMax)) return;
-    if (nextMin <= 0 && nextMax <= 0) return;
+    if (!nextMin && !nextMax) return;
     if (nextMax < nextMin) return;
 
-    setAvailableMin(nextMin);
-    setAvailableMax(nextMax);
+    setAvailableMin((prev) => (prev !== nextMin ? nextMin : prev));
+    setAvailableMax((prev) => (prev !== nextMax ? nextMax : prev));
 
-    // ✅ use ref instead of stale state
-    if (!isPriceDirtyRef.current) {
-      setMinState(nextMin);
-      setMaxState(nextMax);
-      setInputMin(nextMin);
-      setInputMax(nextMax);
-      return;
-    }
+    setCurrentMin((prev) => {
+      if (prev < nextMin) return nextMin;
+      if (prev > nextMax) return nextMin;
+      return prev;
+    });
 
-    const liveCurrentMin = currentMinRef.current;
-    const liveCurrentMax = currentMaxRef.current;
+    setCurrentMax((prev) => {
+      if (prev > nextMax) return nextMax;
+      if (prev < nextMin) return nextMax;
+      return prev;
+    });
 
-    let clampedMin = liveCurrentMin;
-    let clampedMax = liveCurrentMax;
+    setInputMin((prev) => {
+      const p = Number(prev);
+      if (Number.isNaN(p)) return nextMin;
+      if (p < nextMin) return nextMin;
+      if (p > nextMax) return nextMin;
+      return p;
+    });
 
-    if (clampedMin < nextMin) clampedMin = nextMin;
-    if (clampedMin > nextMax) clampedMin = nextMin;
-
-    if (clampedMax > nextMax) clampedMax = nextMax;
-    if (clampedMax < nextMin) clampedMax = nextMax;
-
-    setMinState(clampedMin);
-    setMaxState(clampedMax);
-    setInputMin(clampedMin);
-    setInputMax(clampedMax);
+    setInputMax((prev) => {
+      const p = Number(prev);
+      if (Number.isNaN(p)) return nextMax;
+      if (p > nextMax) return nextMax;
+      if (p < nextMin) return nextMax;
+      return p;
+    });
   };
 
   return (
@@ -819,9 +761,7 @@ const QuickOrder = () => {
                     return (
                       <label
                         key={catG.id}
-                        className={`animated-checkbox ${
-                          isGroupSelected ? "checked" : ""
-                        }`}
+                        className={`animated-checkbox ${isGroupSelected ? "checked" : ""}`}
                       >
                         <input
                           type="checkbox"
@@ -860,11 +800,7 @@ const QuickOrder = () => {
               <div className="filter-section">
                 <h4>
                   Categories{" "}
-                  <button
-                    onClick={clearCategories}
-                    className="clear-btn"
-                    type="button"
-                  >
+                  <button onClick={clearCategories} className="clear-btn" type="button">
                     ✕ CLEAR
                   </button>
                 </h4>
@@ -1136,9 +1072,7 @@ const QuickOrder = () => {
                     }}
                   >
                     <div style={{ flex: 1 }}>
-                      <label
-                        style={{ display: "block", fontSize: 12, marginBottom: 4 }}
-                      >
+                      <label style={{ display: "block", fontSize: 12, marginBottom: 4 }}>
                         Min
                       </label>
                       <input
@@ -1153,9 +1087,7 @@ const QuickOrder = () => {
                     </div>
 
                     <div style={{ flex: 1 }}>
-                      <label
-                        style={{ display: "block", fontSize: 12, marginBottom: 4 }}
-                      >
+                      <label style={{ display: "block", fontSize: 12, marginBottom: 4 }}>
                         Max
                       </label>
                       <input
@@ -1216,7 +1148,7 @@ const QuickOrder = () => {
           </div>
 
           <div className="productGrid">
-            <QuickOrderGrid
+            <QuickOrderGid
               filters={filters}
               onPriceRangeUpdate={handlePriceRangeUpdate}
             />

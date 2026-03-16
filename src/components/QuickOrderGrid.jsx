@@ -6,15 +6,15 @@ import fastDeliveryIcon from "../assets/icons/fast-delivery.svg";
 import CartIcon from "../assets/icons/CartIcon.svg";
 import warrantyIcon from "../assets/icons/warranty.jpeg";
 
-import ProductModal from "../components/ProductModal.jsx";
+import ProductModal from "./ProductModal.jsx";
 import {
   getQuickOrderProduct,
   generatePdfFileName,
   getPdfQuickOrderProduct,
   generateExcelFileName,
   getExcelQuickOrderProduct,
-} from "../api/apiRequest";
-import { getLoggedInUser } from "../utils/authUtils";
+} from "../api/apiRequest.jsx";
+import { getLoggedInUser } from "../utils/authUtils.js";
 
 const QuickOrderGrid = ({ filters, onPriceRangeUpdate }) => {
   const navigate = useNavigate();
@@ -86,7 +86,6 @@ const QuickOrderGrid = ({ filters, onPriceRangeUpdate }) => {
 
         setTotalRecord(total);
 
-        // ✅ send full filtered result price range back to parent
         if (onPriceRangeUpdate) {
           onPriceRangeUpdate({
             min: responseData?.min_mrp,
@@ -186,9 +185,7 @@ const QuickOrderGrid = ({ filters, onPriceRangeUpdate }) => {
       setPdfDownloading(true);
 
       const slug = "quick-order-products";
-
       const fileRes = await generatePdfFileName(slug);
-      console.log("generatePdfFileName response:", fileRes);
 
       if (!fileRes?.res || !fileRes?.file_name) {
         alert(fileRes?.msg || "Unable to generate PDF file name.");
@@ -214,7 +211,6 @@ const QuickOrderGrid = ({ filters, onPriceRangeUpdate }) => {
       );
 
       const pdfJson = await pdfRes.json();
-      console.log("getPdfQuickOrderProduct response:", pdfJson);
 
       if (!pdfRes.ok || !pdfJson?.res || !pdfJson?.file_name) {
         alert(pdfJson?.msg || "PDF generation failed.");
@@ -225,9 +221,6 @@ const QuickOrderGrid = ({ filters, onPriceRangeUpdate }) => {
 
       const finalFileName = pdfJson.file_name;
       const downloadUrl = `${window.location.origin}/mazing_business_react/public/pdfs/${finalFileName}`;
-
-      console.log("PDF Download URL:", downloadUrl);
-
       triggerBrowserDownload(downloadUrl, finalFileName);
     } catch (error) {
       console.error("PDF download failed:", error);
@@ -242,7 +235,6 @@ const QuickOrderGrid = ({ filters, onPriceRangeUpdate }) => {
       setExcelDownloading(true);
 
       const fileRes = await generateExcelFileName();
-      console.log("generateExcelFileName response:", fileRes);
 
       if (!fileRes?.res || !fileRes?.file_name) {
         alert(fileRes?.msg || "Unable to generate Excel file name.");
@@ -268,7 +260,6 @@ const QuickOrderGrid = ({ filters, onPriceRangeUpdate }) => {
       );
 
       const excelJson = await excelRes.json();
-      console.log("getExcelQuickOrderProduct response:", excelJson);
 
       if (!excelRes.ok || !excelJson?.res || !excelJson?.file_name) {
         alert(excelJson?.msg || "Excel generation failed.");
@@ -279,9 +270,6 @@ const QuickOrderGrid = ({ filters, onPriceRangeUpdate }) => {
 
       const finalFileName = excelJson.file_name;
       const downloadUrl = `https://mazingbusiness.com/mazing_business_react/storage/app/excel/${finalFileName}`;
-
-      console.log("Excel Download URL:", downloadUrl);
-
       triggerBrowserDownload(downloadUrl, finalFileName);
     } catch (error) {
       console.error("Excel download failed:", error);
@@ -478,8 +466,8 @@ const QuickOrderGrid = ({ filters, onPriceRangeUpdate }) => {
 
               <div className="product-info">
                 <h3 title={product.name}>
-                  {product.name?.length > 25
-                    ? product.name.substring(0, 25) + "..."
+                  {product.name?.length > 65
+                    ? product.name.substring(0, 85) + "..."
                     : product.name}
                 </h3>
 
