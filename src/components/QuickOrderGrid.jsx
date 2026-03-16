@@ -466,7 +466,7 @@ const QuickOrderGrid = ({ filters, onPriceRangeUpdate }) => {
 
               <div className="product-info">
                 <h3 title={product.name}>
-                  {product.name?.length > 65
+                  {product.name?.length > 85
                     ? product.name.substring(0, 85) + "..."
                     : product.name}
                 </h3>

@@ -62,7 +62,23 @@ const BestSellers = () => {
           const noCredit = Number(item.cash_and_carry_item) === 1;
           const fastDeliveryTag = Number(item.fast_delivery_tag) === 1;
           const hasWarranty = Number(item.is_warranty) === 1;
+          const offerList = Array.isArray(item.offer) ? item.offer : [];
+          const now = new Date();
+          const hasActiveOffer = offerList.some((offerItem) => {
+            const start = offerItem?.offer_validity_start
+              ? new Date(offerItem.offer_validity_start.replace(" ", "T"))
+              : null;
 
+            const end = offerItem?.offer_validity_end
+              ? new Date(offerItem.offer_validity_end.replace(" ", "T"))
+              : null;
+
+            if (!start || !end || isNaN(start.getTime()) || isNaN(end.getTime())) {
+              return false;
+            }
+
+            return now >= start && now <= end;
+          });
           const rating =
             item.rating && Number(item.rating) !== 0 ? Number(item.rating) : 4;
 
@@ -93,12 +109,15 @@ const BestSellers = () => {
             fastDeliveryTag,
             is_warranty: hasWarranty,
             noCredit,
+            cash_and_carry_item: Number(item.cash_and_carry_item || 0),
             user_id: user?.id || null,
 
             // ProductModal ke liye
             category_group: item.category_group?.name || "",
             category: item.category?.name || "",
             fast_delivery_tag: item.fast_delivery_tag || 0,
+            offer: offerList,
+            hasActiveOffer,
             stocks: item.stocks || [],
             reviews: item.reviews || [],
           };
@@ -336,8 +355,8 @@ const BestSellers = () => {
                         to={`/product-details/${product.slug}`}
                         style={{ textDecoration: "none", color: "inherit" }}
                       >
-                        {product.name?.length > 40
-                          ? product.name.substring(0, 40) + "..."
+                        {product.name?.length > 80
+                          ? product.name.substring(0, 80) + "..."
                           : product.name}
                       </Link>
                     </h4>
@@ -366,7 +385,6 @@ const BestSellers = () => {
 
                         {renderWarrantyTag(product)}
                       </div>
-
                       {fastDeliveryTag(product)}
                     </div>
 
@@ -384,15 +402,24 @@ const BestSellers = () => {
                     )}
 
                     {product.user_id == null && (
-                      <div>
-                        <button
-                          type="button"
-                          className="before-reg-btn"
-                          onClick={handleRegisterClick}
-                        >
-                          Register to check prices
-                        </button>
-                      </div>
+                      <>
+                        <div className="btnGrp">
+                          <button
+                            type="button"
+                            className="before-reg-btn"
+                            onClick={handleRegisterClick}
+                          >
+                            Register to check prices
+                          </button>
+                        </div>
+                        {Number(product.cash_and_carry_item) === 1 && (
+                          <div className="no-credit-tag">No Credit Item</div>
+                        )}
+
+                        {product.hasActiveOffer && (
+                          <div className="offer-tag">Special Offer Item</div>
+                        )}
+                      </>
                     )}
                   </div>
                 </div>

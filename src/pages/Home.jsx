@@ -1,5 +1,6 @@
 // src/pages/Home.jsx
 import React from "react";
+import { Link } from "react-router-dom";
 import MainLayout from "../layouts/MainLayout";
 import PowerToolsSlider from "../components/PowerToolsSlider";
 import BannerSection from "../components/BannerSection";
@@ -30,7 +31,7 @@ const Home = () => {
 
           <div className="app-banner">
             <div className="app-banner-inner">
-              <img src={AddBlock} alt="Visa" />
+              <Link to="/quick-order"><img src={AddBlock} alt="Visa" /></Link>
             </div>
           </div>
         </div>
@@ -57,7 +58,7 @@ const Home = () => {
                   Maximize productivity with cutting-edge technology and
                   reliable equipment.
                 </p>
-                <button>Shop Now</button>
+                <Link to="/quick-order"><button>Shop Now</button></Link>
               </div>
             </div>
 
@@ -69,7 +70,7 @@ const Home = () => {
                   Discover precision-crafted machinery that drives performance
                   and reliability.
                 </p>
-                <button>Shop Now</button>
+                <Link to="/quick-order"><button>Shop Now</button></Link>
               </div>
             </div>
 
@@ -81,7 +82,7 @@ const Home = () => {
                   Eco-friendly industrial products designed to meet tomorrow’s
                   demands today.
                 </p>
-                <button>Shop Now</button>
+                <Link to="/quick-order"><button>Shop Now</button></Link>
               </div>
             </div>
           </div>

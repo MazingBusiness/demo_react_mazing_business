@@ -1,4 +1,5 @@
 import React, { useRef, useState , useEffect} from "react";
+import { Link } from "react-router-dom";
 import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
@@ -142,13 +143,15 @@ const BannerSection = () => {
               </div>
             </div>
             <div className="side-banner">
-              <img src={sideBox} alt="Side Box"
-                  onError={(e) => {
-                    e.target.onerror = null;
-                    e.target.src =
-                      "https://via.placeholder.com/300x400?text=Side+Banner";
-                  }}
-              />
+              <Link to="/quick-order">
+                <img src={sideBox} alt="Side Box"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src =
+                        "https://via.placeholder.com/300x400?text=Side+Banner";
+                    }}
+                />
+              </Link>
             </div>
           </div>
         </div>

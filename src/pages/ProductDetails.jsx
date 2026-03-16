@@ -5,6 +5,7 @@ import { useParams, useNavigate } from "react-router-dom";
 
 import MainLayout from "../layouts/MainLayout";
 import fastDeliveryIcon from "../assets/icons/fast-delivery.svg";
+import warrantyIcon from "../assets/icons/warranty.jpeg";
 
 import { getLoggedInUser } from "../utils/authUtils";
 import { productDetails } from "../api/apiRequest";
@@ -113,7 +114,6 @@ const ProductDetails = () => {
   const crumbGroup = product?.category_group?.name || "Category Group";
   const crumbCategory = product?.category?.name || "Category";
 
-  // ✅ direct and safe price mapping
   const formattedMrp =
     user_id != null && product?.mrp
       ? `₹${Number(product.mrp).toFixed(2)}`
@@ -123,7 +123,7 @@ const ProductDetails = () => {
     user_id != null && product?.discount_price
       ? `₹${Number(product.discount_price).toFixed(2)}`
       : "";
-  
+
   const formattedBulkDiscountPrice =
     user_id != null && product?.bulk_discount_price
       ? `₹${Number(product.bulk_discount_price).toFixed(2)}`
@@ -133,7 +133,29 @@ const ProductDetails = () => {
     user_id != null && product?.piece_by_carton
       ? `${product.piece_by_carton}`
       : "";
+
   const unitLabel = product?.unit ? `/${product.unit}` : "/Pc";
+
+  const offerList = Array.isArray(product?.offer) ? product.offer : [];
+  const now = new Date();
+
+  const hasActiveOffer = offerList.some((offerItem) => {
+    const start = offerItem?.offer_validity_start
+      ? new Date(String(offerItem.offer_validity_start).replace(" ", "T"))
+      : null;
+
+    const end = offerItem?.offer_validity_end
+      ? new Date(String(offerItem.offer_validity_end).replace(" ", "T"))
+      : null;
+
+    if (!start || !end || isNaN(start.getTime()) || isNaN(end.getTime())) {
+      return false;
+    }
+
+    return now >= start && now <= end;
+  });
+
+  const isNoCreditItem = Number(product?.cash_and_carry_item || 0) === 1;
 
   const fetchProduct = async () => {
     setLoading(true);
@@ -154,10 +176,6 @@ const ProductDetails = () => {
 
       const p = Array.isArray(payload?.data) ? payload.data[0] : null;
       if (!p) throw new Error("Product not found in payload.data[0]");
-
-      console.log("API product data:", p); // debug
-      console.log("MRP:", p?.mrp);
-      console.log("Discount Price:", p?.discount_price);
 
       setProduct(p);
       setApiAttributes(
@@ -228,6 +246,18 @@ const ProductDetails = () => {
                   ) : (
                     <div style={{ padding: 20 }}>No Image</div>
                   )}
+
+                  {hasActiveOffer && (
+                    <div className="offer-tag-product-details">
+                      Special Offer Item
+                    </div>
+                  )}
+
+                  {isNoCreditItem && (
+                    <div className="no-credit-tag-product-details">
+                      No Credit Item
+                    </div>
+                  )}
                 </>
               )}
             </div>
@@ -267,7 +297,6 @@ const ProductDetails = () => {
                 </div>
               </div>
 
-              {/* ✅ Price section only for logged-in users */}
               {user_id != null && (
                 <>
                   <div className="product-modal-info">
@@ -277,18 +306,44 @@ const ProductDetails = () => {
                       <span className="unit">{unitLabel}</span>
                     </div>
                   </div>
+                  {product?.is_warranty == 1 && (
+                    <div className="warranty-div">
+                      <p className="warranty-text">
+                        <img
+                          src={warrantyIcon}
+                          alt="Warranty"
+                          loading="lazy"
+                          onError={(e) => (e.target.style.display = "none")}
+                        />
+                        <span className="highlight">
+                          {"    "}
+                          {product?.warranty_duration} Months Warranty
+                        </span>
+                      </p>
+                    </div>
+                  )}
+                  {product?.stocks != null && (
+                    <div className="product-stock">
+                      {(product?.stocks || []).map((warehouse) => (
+                        <div className="stock-item" key={warehouse.warehouse_id}>
+                          {warehouse.warehouse_name} <span>{warehouse.qty}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
                   <div className="bulk-discount">
-                  <p>
-                    <span className="red">Bulk Quantity Discount:</span> Purchase{" "}
-                    {pieceByCarton} or more and get each for{" "}
-                    <span className="highlight">{formattedBulkDiscountPrice}</span>{" "}
-                    instead of{" "}
-                    <span className="highlight">{formattedDiscountPrice}</span>
-                  </p>
-                </div>
+                    <p>
+                      <span className="red">Bulk Quantity Discount:</span> Purchase{" "}
+                      {pieceByCarton} or more and get each for{" "}
+                      <span className="highlight">{formattedBulkDiscountPrice}</span>{" "}
+                      instead of{" "}
+                      <span className="highlight">{formattedDiscountPrice}</span>
+                    </p>
+                  </div>
                 </>
               )}
-              
+
               <div
                 className="tabs-row"
                 style={{

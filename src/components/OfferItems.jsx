@@ -314,8 +314,8 @@ const OfferItems = () => {
                   <div className="product-info">
                     <Link to={`/product-details/${product.slug}`}>
                       <h3 title={product.name}>
-                        {product.name?.length > 25
-                          ? product.name.substring(0, 25) + "..."
+                        {product.name?.length > 80
+                          ? product.name.substring(0, 80) + "..."
                           : product.name}
                       </h3>
 

@@ -87,6 +87,24 @@ const NewArrivals = () => {
             ? normalizePriceString(item.discount_price)
             : formatPrice(oldPriceValue);
 
+          const offerList = Array.isArray(item.offer) ? item.offer : [];
+          const now = new Date();
+          const hasActiveOffer = offerList.some((offerItem) => {
+            const start = offerItem?.offer_validity_start
+              ? new Date(offerItem.offer_validity_start.replace(" ", "T"))
+              : null;
+
+            const end = offerItem?.offer_validity_end
+              ? new Date(offerItem.offer_validity_end.replace(" ", "T"))
+              : null;
+
+            if (!start || !end || isNaN(start.getTime()) || isNaN(end.getTime())) {
+              return false;
+            }
+
+            return now >= start && now <= end;
+          });
+
           const modalProduct = {
             ...product,
             id: product?.id || item?.product_id || item?.id,
@@ -154,6 +172,9 @@ const NewArrivals = () => {
             current_stock: product?.current_stock || 0,
             num_of_sale: product?.num_of_sale || 0,
             cash_and_carry_item: product?.cash_and_carry_item || 0,
+
+            offer: offerList,
+            hasActiveOffer,
 
             productData: product,
             modalProduct,
@@ -396,8 +417,8 @@ const NewArrivals = () => {
                           to={`/product-details/${product.slug}`}
                           style={{ textDecoration: "none", color: "inherit" }}
                         >
-                          {product.name?.length > 40
-                            ? product.name.substring(0, 40) + "..."
+                          {product.name?.length > 70
+                            ? product.name.substring(0, 70) + "..."
                             : product.name}
                         </Link>
                       </h4>
@@ -440,15 +461,24 @@ const NewArrivals = () => {
                       )}
 
                       {product.user_id == null && (
-                        <div>
-                          <button
-                            type="button"
-                            className="before-reg-btn"
-                            onClick={handleRegisterClick}
-                          >
-                            Register to check prices
-                          </button>
-                        </div>
+                        <>
+                          <div className="btnGrp">
+                            <button
+                              type="button"
+                              className="before-reg-btn"
+                              onClick={handleRegisterClick}
+                            >
+                              Register to check prices
+                            </button>
+                          </div>
+                          {Number(product.cash_and_carry_item) === 1 && (
+                            <div className="no-credit-tag">No Credit Item</div>
+                          )}
+
+                          {product.hasActiveOffer && (
+                            <div className="offer-tag">Special Offer Item</div>
+                          )}
+                        </>
                       )}
                     </div>
                   </div>
