@@ -34,9 +34,11 @@ import WarrantyClaim from "../pages/WarrantyClaim";
 import WarrentyClaimHistory from "../pages/WarrentyClaimHistory";
 import NewWarrentyClaim from "../pages/NewWarrentyClaim";
 import WarrentyClaimFull from "../pages/WarrentyClaimFull";
+import ScrollToTop from "../components/ScrollToTop";
 
 const AppRoutes = () => (
   <HashRouter>
+    <ScrollToTop />
     <Routes>
       {/* Public Routes */}
       <Route path="/" element={<Home />} />
