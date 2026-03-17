@@ -80,7 +80,7 @@ const Login = () => {
 
       if (staffId) {
         if (data.user_type === "staff") {
-          const redirectToAdmin = `https://mazingbusiness.com/switch_back_from_react/${encodeURIComponent(staffId)}`;
+          const redirectToAdmin = `https://mazingbusiness.com/mazing_laravel/switch_back_from_react/${encodeURIComponent(staffId)}`;
           window.location.href = redirectToAdmin;
           return; // ✅ stop further execution
         }

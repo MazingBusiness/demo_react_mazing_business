@@ -74,7 +74,7 @@ const Header = () => {
   const staffId = useMemo(() => getStoredStaffId(), []);
   const switchBackHref = useMemo(() => {
     if (!staffId) return "";
-    return `https://mazingbusiness.com/switch_back_from_react/${encodeURIComponent(
+    return `https://mazingbusiness.com/mazing_laravel/switch_back_from_react/${encodeURIComponent(
       staffId
     )}`;
   }, [staffId]);
