@@ -38,6 +38,19 @@ const renderStars = (rating) => {
   return stars;
 };
 
+const parseOfferDate = (dateString) => {
+  if (!dateString) return null;
+
+  const normalized = String(dateString).replace(" ", "T");
+  const parsed = new Date(normalized);
+
+  if (isNaN(parsed.getTime())) {
+    return null;
+  }
+
+  return parsed;
+};
+
 const OfferItems = () => {
   const navigate = useNavigate();
   const sliderRef = useRef(null);
@@ -60,12 +73,35 @@ const OfferItems = () => {
       const responseData = await apiRes.json();
       const user = getLoggedInUser();
 
+      console.log("Offer API response:", responseData);
+
       if (responseData?.res) {
         const transformedData = (responseData?.data || []).map((item) => {
           const details = item.product_details || {};
           const noCredit = Number(details.cash_and_carry_item) === 1;
           const fastDeliveryTag = Number(item.fast_delivery_tag) === 1;
           const hasWarranty = Number(details.is_warranty) === 1;
+
+          const offerList = Array.isArray(item.offer) ? item.offer : [];
+          const now = new Date();
+
+          const hasActiveOfferByDate = offerList.some((offerItem) => {
+            const start = parseOfferDate(offerItem?.offer_validity_start);
+            const end = parseOfferDate(offerItem?.offer_validity_end);
+
+            if (!start || !end) {
+              return false;
+            }
+
+            return now >= start && now <= end;
+          });
+
+          // fallback: if discount exists, treat as offer item
+          const hasDiscountOffer =
+            Number(item.offer_discount_percent || 0) > 0 ||
+            Number(item.discount_price || 0) > 0;
+
+          const hasActiveOffer = hasActiveOfferByDate || hasDiscountOffer;
 
           const rating =
             details.rating && Number(details.rating) !== 0
@@ -79,7 +115,7 @@ const OfferItems = () => {
               ? item.reviews.length
               : 20;
 
-          return {
+          const transformedItem = {
             id: details.id,
             slug: details.slug,
             name: details.name,
@@ -103,13 +139,28 @@ const OfferItems = () => {
             noCredit,
             user_id: user?.id || null,
 
-            // ProductModal ke liye extra fields
+            // ProductModal fields
             category_group: details.category_group?.name || "",
             category: details.category?.name || "",
             fast_delivery_tag: item.fast_delivery_tag || 0,
             stocks: details.stocks || [],
             reviews: details.reviews || item.reviews || [],
+
+            offer: offerList,
+            hasActiveOffer,
           };
+
+          console.log("Mapped product:", {
+            name: transformedItem.name,
+            offerList,
+            offer_discount_percent: item.offer_discount_percent,
+            discount_price: item.discount_price,
+            hasActiveOfferByDate,
+            hasDiscountOffer,
+            finalHasActiveOffer: hasActiveOffer,
+          });
+
+          return transformedItem;
         });
 
         setProducts(transformedData);
@@ -259,7 +310,13 @@ const OfferItems = () => {
               </button>
             </div>
 
-            {product.noCredit && <div className="no-credit-tag">No Credit Item</div>}
+            {product.noCredit && (
+              <div className="no-credit-tag">No Credit Item</div>
+            )}
+
+            {product.hasActiveOffer && (
+              <div className="offer-tag">Special Offer Item</div>
+            )}
           </>
         )}
       </div>
@@ -366,6 +423,7 @@ const OfferItems = () => {
           </Slider>
         </div>
       </div>
+
       <ProductModal
         product={selectedProduct}
         isOpen={!!selectedProduct}

@@ -736,6 +736,22 @@ a.right-link {
   cursor: pointer;
 }
 
+.add-to-cart-btn-product-details{
+  background: #0b3b73;
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 12px 18px;
+  font-weight: 700;
+  min-width: 190px;
+  height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  margin-left: auto;
+}
+
 .add-to-cart-btn:disabled{
   opacity: 0.7;
   cursor: not-allowed;
@@ -2383,6 +2399,7 @@ a.all-link svg {
   display: flex;
   align-items: end;
   justify-content: center;
+  margin-top: 58px;
 }
 
 .app-banner-inner img {

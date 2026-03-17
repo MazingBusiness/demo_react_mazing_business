@@ -297,13 +297,16 @@ const ProductDetails = () => {
                 </div>
               </div>
 
-              {user_id != null && (
+              {user_id != null ? (
                 <>
                   <div className="product-modal-info">
                     <div className="product-price">
                       <span className="old-price">{formattedMrp}</span>
                       <span className="new-price">{formattedDiscountPrice}</span>
                       <span className="unit">{unitLabel}</span>
+
+                      <button type="button" onClick={handleAddToCart} disabled={loading || !product?.id} className="add-to-cart-btn-product-details"
+                        > Add to Cart </button>
                     </div>
                   </div>
                   {product?.is_warranty == 1 && (
@@ -342,6 +345,10 @@ const ProductDetails = () => {
                     </p>
                   </div>
                 </>
+              ) : (
+                <button type="button" onClick={handleRegisterToCheckPrices} className="before-reg-btn"  style={{ margin: "10px" }}>
+                  Register to check prices
+                </button>
               )}
 
               <div
@@ -371,25 +378,6 @@ const ProductDetails = () => {
                     Descriptions
                   </button>
                 </div>
-
-                {user_id != null ? (
-                  <button
-                    type="button"
-                    onClick={handleAddToCart}
-                    disabled={loading || !product?.id}
-                    className="add-to-cart-btn"
-                  >
-                    Add to Cart
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={handleRegisterToCheckPrices}
-                    className="before-reg-btn"
-                  >
-                    Register to check prices
-                  </button>
-                )}
               </div>
 
               {activeTab === "specs" ? (

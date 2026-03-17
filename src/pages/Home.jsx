@@ -96,7 +96,7 @@ const Home = () => {
 
             <div className="app-banner">
               <div className="app-banner-inner">
-                <img src={AddBanner} alt="Visa" />
+                <Link to="https://mazingbusiness.com/qr/" target="_blank"><img src={AddBanner} alt="Visa" /></Link>
               </div>
             </div>
           </div>
