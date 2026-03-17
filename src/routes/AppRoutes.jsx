@@ -1,6 +1,7 @@
 
 import React from "react";
 import { Routes, Route , HashRouter  } from "react-router-dom";
+// import { Routes, Route , BrowserRouter   } from "react-router-dom";  // to remove # link 
 import PrivateRoute from "./PrivateRoute";
 
 import Home from "../pages/Home";
@@ -38,7 +39,6 @@ import ScrollToTop from "../components/ScrollToTop";
 
 const AppRoutes = () => (
   <HashRouter>
-    <ScrollToTop />
     <Routes>
       {/* Public Routes */}
       <Route path="/" element={<Home />} />

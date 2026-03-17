@@ -167,8 +167,23 @@ const Login = () => {
           console.log("Login API Response:", data);
 
           if (data && data.id) {
-            localStorage.setItem("mazingBusinessLoginInfo", JSON.stringify(data));
-            navigate("/profileDashbord");
+            const data = await res.json();
+
+            const staffId = data?.id;
+
+            if (staffId) {
+              if (data.user_type === "staff") {
+                const redirectToAdmin = `https://mazingbusiness.com/mazing_laravel/switch_back_from_react/${encodeURIComponent(staffId)}`;
+                window.location.href = redirectToAdmin;
+                return; // ✅ stop further execution
+              }
+
+              localStorage.setItem("mazingBusinessLoginInfo", JSON.stringify(data));
+              navigate("/quick-order");
+              return;
+            }
+            // localStorage.setItem("mazingBusinessLoginInfo", JSON.stringify(data));
+            // navigate("/profile-dashbord");
           } else {
             setErrors({ general: data.message || "Login failed" });
             setTimeout(() => setErrors({}), 3000);

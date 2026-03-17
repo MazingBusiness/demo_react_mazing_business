@@ -95,7 +95,7 @@ const Home = () => {
             </div>
 
             <div className="app-banner">
-              <div className="app-banner-inner" style={{ "margin-top": "58px" }}>
+              <div className="app-banner-inner" style={{ "marginTop": "58px" }}>
                 <Link to="https://mazingbusiness.com/qr/" target="_blank"><img src={AddBanner} alt="Visa" /></Link>
               </div>
             </div>
