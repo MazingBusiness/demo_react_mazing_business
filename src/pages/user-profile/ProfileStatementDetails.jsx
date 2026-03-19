@@ -278,7 +278,7 @@ const ProfileStatementDetails = () => {
         <div className="orderdetailsHr">
           <div className="orderdetailsHrLft">
             <div className="breadcrumb">
-              <Link to="/profileStatement">
+              <Link to="/statement">
                 <IoIosArrowBack />
                 My Statement
               </Link>
@@ -400,20 +400,33 @@ const ProfileStatementDetails = () => {
                   const cr = Number(r?.cramount || 0);
                   const drcr = (r?.dr_or_cr || "").toLowerCase(); // "dr" / "cr"
                   const invoiceLink = r?.invoice_download_link;
+                  const overdue_status = r?.overdue_status || '';
+                  const overdue_by_day = (r?.overdue_by_day || "-").toString();
+
+                  let rowBg = "";
+                  if (overdue_status === "Partial Overdue") {
+                    rowBg = "#f6d2d2";
+                  } else if (overdue_status === "Overdue") {
+                    rowBg = "#fe8888";
+                  }
+                  
                   const isClosing = (r?.ledgername || "").trim().toLowerCase() === "closing c/f...";
 
                   if (!isClosing) {
                     return (
                       <tr
                         key={`${r?.trn_no || "row"}-${idx}`}
-                        style={{ cursor: invoiceLink ? "pointer" : "default" }}
+                        style={{ cursor: invoiceLink ? "pointer" : "default",backgroundColor: rowBg }}
                         onClick={() => {
                           if (invoiceLink) window.open(invoiceLink, "_blank", "noopener,noreferrer");
                         }}
                         title={invoiceLink ? "Open invoice" : ""}
                       >
                         <td>{formatDateDMY(r?.trn_date)}</td>
-                        <td>{r?.vouchertypebasename || r?.ledgername || "-"}</td>
+                        <td>
+                          {r?.vouchertypebasename || r?.ledgername || "-"}
+                          <p><small>{overdue_status}</small></p>
+                          </td>
                         <td>{r?.trn_no || "-"}</td>
                         <td>
                           <span className={dr > 0 ? "red" : ""}>{money(dr)}</span>
@@ -425,7 +438,7 @@ const ProfileStatementDetails = () => {
                             {(r?.dr_or_cr || "-").toString()}
                           </span>
                         </td>
-                        <td>{/* If API gives overdue days later, show here */}-</td>
+                        <td>{overdue_by_day}</td>
                       </tr>
                     );
                   }
