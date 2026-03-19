@@ -129,7 +129,7 @@ const Login = () => {
     }
   };
 
-  const handleOtpChange = (index, value) => {
+  const handleOtpChange = async (index, value) => {
     if (!/^\d?$/.test(value)) return;
 
     const newOtp = [...otp];
@@ -147,55 +147,115 @@ const Login = () => {
     const enteredOtp = newOtp.join("");
     const otpComplete = enteredOtp.length === 6 && newOtp.every((d) => d !== "");
 
-    if (otpComplete) {
-      //  Check against server OTP
-      if (enteredOtp !== serverOtp) {
-        setErrors({ general: "Invalid OTP" });
-        setTimeout(() => setErrors({}), 3000);
-        return;
-      }
+    if (!otpComplete) return;
 
+    if (enteredOtp !== serverOtp) {
+      setErrors({ general: "Invalid OTP" });
+      setTimeout(() => setErrors({}), 3000);
+      return;
+    }
+
+    try {
       const login_info = {
         phone: selectedCountry.code + mobile,
         email: "",
         password: enteredOtp,
       };
 
-      login(login_info)
-        .then(async (res) => {
-          const data = await res.json();
-          console.log("Login API Response:", data);
+      const res = await login(login_info);
+      const data = await res.json();
 
-          if (data && data.id) {
-            const data = await res.json();
+      console.log("Login API Response:", data);
 
-            const staffId = data?.id;
+      const staffId = data?.id;
 
-            if (staffId) {
-              if (data.user_type === "staff") {
-                const redirectToAdmin = `https://mazingbusiness.com/mazing_laravel/switch_back_from_react/${encodeURIComponent(staffId)}`;
-                window.location.href = redirectToAdmin;
-                return; // ✅ stop further execution
-              }
+      if (staffId) {
+        if (data.user_type === "staff") {
+          const redirectToAdmin = `https://mazingbusiness.com/mazing_laravel/switch_back_from_react/${encodeURIComponent(staffId)}`;
+          window.location.href = redirectToAdmin;
+          return;
+        }
 
-              localStorage.setItem("mazingBusinessLoginInfo", JSON.stringify(data));
-              navigate("/quick-order");
-              return;
-            }
-            // localStorage.setItem("mazingBusinessLoginInfo", JSON.stringify(data));
-            // navigate("/profile-dashbord");
-          } else {
-            setErrors({ general: data.message || "Login failed" });
-            setTimeout(() => setErrors({}), 3000);
-          }
-        })
-        .catch((error) => {
-          console.error("Login error:", error);
-          setErrors({ general: "Something went wrong. Please try again." });
-          setTimeout(() => setErrors({}), 3000);
-        });
+        localStorage.setItem("mazingBusinessLoginInfo", JSON.stringify(data));
+        navigate("/quick-order");
+        return;
+      }
+
+      setErrors({ general: data.message || data.msg || "Login failed" });
+      setTimeout(() => setErrors({}), 3000);
+    } catch (error) {
+      console.error("Login error:", error);
+      setErrors({ general: "Something went wrong. Please try again." });
+      setTimeout(() => setErrors({}), 3000);
     }
   };
+  // const handleOtpChange = (index, value) => {
+  //   if (!/^\d?$/.test(value)) return;
+
+  //   const newOtp = [...otp];
+  //   newOtp[index] = value;
+  //   setOtp(newOtp);
+
+  //   if (value && index < 5) {
+  //     otpRefs.current[index + 1]?.focus();
+  //   }
+
+  //   if (!value && index > 0) {
+  //     otpRefs.current[index - 1]?.focus();
+  //   }
+
+  //   const enteredOtp = newOtp.join("");
+  //   const otpComplete = enteredOtp.length === 6 && newOtp.every((d) => d !== "");
+
+  //   if (otpComplete) {
+  //     //  Check against server OTP
+  //     if (enteredOtp !== serverOtp) {
+  //       setErrors({ general: "Invalid OTP" });
+  //       setTimeout(() => setErrors({}), 3000);
+  //       return;
+  //     }
+
+  //     const login_info = {
+  //       phone: selectedCountry.code + mobile,
+  //       email: "",
+  //       password: enteredOtp,
+  //     };
+
+  //     login(login_info)
+  //       .then(async (res) => {
+  //         const data = await res.json();
+  //         console.log("Login API Response:", data);
+
+  //         if (data && data.id) {
+  //           const data = await res.json();
+
+  //         const staffId = data?.id;
+
+  //         if (staffId) {
+  //           if (data.user_type === "staff") {
+  //             const redirectToAdmin = `https://mazingbusiness.com/mazing_laravel/switch_back_from_react/${encodeURIComponent(staffId)}`;
+  //             window.location.href = redirectToAdmin;
+  //             return; // ✅ stop further execution
+  //           }
+
+  //           localStorage.setItem("mazingBusinessLoginInfo", JSON.stringify(data));
+  //           navigate("/quick-order");
+  //           return;
+  //         }
+  //           localStorage.setItem("mazingBusinessLoginInfo", JSON.stringify(data));
+  //           navigate("/profile-dashbord");
+  //         } else {
+  //           setErrors({ general: data.message || "Login failed" });
+  //           setTimeout(() => setErrors({}), 3000);
+  //         }
+  //       })
+  //       .catch((error) => {
+  //         console.error("Login error:", error);
+  //         setErrors({ general: "Something went wrong. Please try again." });
+  //         setTimeout(() => setErrors({}), 3000);
+  //       });
+  //   }
+  // };
 
 
 
