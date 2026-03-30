@@ -9,8 +9,6 @@ import cartllink2 from "../assets/icons/cartllink2a.svg";
 import cartllink3 from "../assets/icons/cartllink3b.svg";
 import cartllink4 from "../assets/icons/cartllink4.svg";
 
-
-
 import CartSummary from "../components/CartSummary.jsx";
 
 import { cart } from "../api/apiRequest";

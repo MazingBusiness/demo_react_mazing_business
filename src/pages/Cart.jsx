@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useMemo } from "react";
 import MainLayout from "../layouts/MainLayout";
+import { FiTrash2 } from "react-icons/fi";
 import { BsCloudArrowDownFill } from "react-icons/bs";
 import { useNavigate, Link } from "react-router-dom";
 
@@ -16,6 +17,7 @@ import fastDeliveryIcon from "../assets/icons/fast-delivery.svg";
 import noImage from "../assets/images/no-image.png";
 
 import OfferModal from "../components/OfferModal.jsx";
+import CartSummary from "../components/CartSummary.jsx";
 
 import {
   cart,
@@ -138,6 +140,12 @@ const Cart = ({ isCartVisible, toggleCart }) => {
   const [qtyAlertsById, setQtyAlertsById] = useState({});
   const [savedItems, setSavedItems] = useState([]);
 
+  // ----- M Coin
+  const [availableMCoinBalance, setAvailableMCoinBalance] = useState(0);
+  const [earnMCoinBalance, setEarnMCoin] = useState(0);
+  const [appliedCoins, setAppliedCoins] = useState("");
+  const [savedAppliedCoins, setSavedAppliedCoins] = useState(0);
+
   const navigate = useNavigate();
 
   // Edit Price -----
@@ -239,6 +247,11 @@ const Cart = ({ isCartVisible, toggleCart }) => {
 
         const save_for_later = responseData.save_for_later || [];
         const save_for_later_category = responseData.save_for_later_category || [];
+
+        const availableMCoin = Number(responseData.availableMCoinBalance || 0);
+        const earnMCoin = Number(responseData.earnMCoin || 0);
+        setAvailableMCoinBalance(availableMCoin);
+        setEarnMCoin(earnMCoin);
 
         setCartItems(cart_item);
         setCartCount(cart_item.length);
@@ -599,6 +612,70 @@ const Cart = ({ isCartVisible, toggleCart }) => {
       : savedItems.filter(
           (item) => (item.category || "UNCATEGORIZED") === selectedCategory
         );
+  
+  // Apply M-Coin 
+    const appliedCoinValue = Math.floor((Number(appliedCoins || 0)) / 250);
+    const savedAppliedCoinValue = Math.floor(Number(savedAppliedCoins || 0) / 250);
+    const finalTotalPayable = Math.max(
+      0,
+      Number(totalPayable || 0) - Number(savedAppliedCoinValue || 0)
+    );
+    useEffect(() => {
+      const storedCoins = localStorage.getItem("appliedCoins");
+      if (storedCoins) {
+        setSavedAppliedCoins(Number(storedCoins));
+      }
+    }, []);
+    const handleCoinChange = (e) => {
+      let value = e.target.value;
+      if (value === "") {
+        setAppliedCoins("");
+        return;
+      }
+      value = Number(value);
+      if (isNaN(value) || value < 0) {
+        value = 0;
+      }
+      if (value > availableMCoinBalance) {
+        value = availableMCoinBalance;
+      }
+      setAppliedCoins(value);
+    }; 
+    const handleApplyCoins = () => {
+      const coinCount = Number(appliedCoins || 0);
+  
+      if (!coinCount || coinCount <= 0) {
+        alert("Please enter valid coins");
+        return;
+      }
+  
+      if (coinCount > availableMCoinBalance) {
+        alert("Entered coins cannot be more than available balance");
+        return;
+      }
+  
+      const rupeeValue = Math.floor(coinCount / 250);
+  
+      if (rupeeValue <= 0) {
+        alert("Entered coins are too low to apply");
+        return;
+      }
+  
+      if (rupeeValue > Number(totalPayable || 0)) {
+        alert("Applied coin value cannot be more than total payable amount");
+        return;
+      }
+  
+      localStorage.setItem("appliedCoins", String(coinCount));
+      setSavedAppliedCoins(coinCount);
+      setAppliedCoins("");
+    };
+    const handleRemoveAppliedCoins = () => {
+      localStorage.removeItem("appliedCoins");
+      setSavedAppliedCoins(0);
+      setAppliedCoins("");
+    };
+  // ----------------------------------------------
 
   return (
     <div className="CartBody ConfirmationBody">
@@ -995,6 +1072,111 @@ const Cart = ({ isCartVisible, toggleCart }) => {
                   </label>
                 )}
 
+                <hr/><br/>
+                  {availableMCoinBalance > 0 && (
+                    <div className="mcoin-card">
+                      <div className="mcoin-card-header">
+                        <div>
+                          <h4>M Coin Wallet</h4>
+                          <p>Use your coins and save more on this order</p>
+                        </div>
+                      </div>
+    
+                      <div className="mcoin-stats">
+                        <div className="mcoin-stat-box">
+                          <span className="mcoin-stat-label">Available Coins</span>
+                          <strong className="mcoin-stat-value">{availableMCoinBalance}</strong>
+                          <br />
+                          <small>
+                            Value :{" "}
+                            <strong style={{ color: "#077807" }}>
+                              ₹{Math.floor(availableMCoinBalance / 250)}
+                            </strong>
+                          </small>
+                        </div>
+    
+                        <div className="mcoin-stat-box">
+                          <span className="mcoin-stat-label">You Can Earn</span>
+                          <strong className="mcoin-stat-value">{earnMCoinBalance}</strong>
+                          <br />
+                          <small>
+                            Value :{" "}
+                            <strong style={{ color: "#077807" }}>
+                              ₹{Math.floor(earnMCoinBalance / 250)}
+                            </strong>
+                          </small>
+                        </div>
+                      </div>
+    
+                      {savedAppliedCoins > 0 ? (
+                        <div className="mcoin-applied-box">
+                          <div>
+                            <div className="mcoin-input-label" style={{ padding: 0 }}>
+                              Applied Coins
+                            </div>
+                            <strong>{savedAppliedCoins} Coins</strong>
+                            <div style={{ marginTop: "4px", fontSize: "13px", color: "#077807" }}>
+                              Value : ₹{savedAppliedCoinValue}
+                            </div>
+                          </div>
+    
+                          <button
+                            type="button"
+                            className="mcoin-delete-btn"
+                            onClick={handleRemoveAppliedCoins}
+                            title="Remove applied coins"
+                          >
+                            <FiTrash2 />
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="mcoin-apply-row">
+                          <div className="mcoin-input-wrap">
+                            <label className="mcoin-input-label" style={{ padding: "0px" }}>
+                              Apply Coins (
+                              Value :{" "}
+                              <strong style={{ color: "#ff0000" }}>
+                                ₹{appliedCoinValue}
+                              </strong>
+                              )
+                            </label>
+    
+                            <div className="mcoin-input-action-row">
+                              <input
+                                type="number"
+                                className="mcoin-input"
+                                placeholder="Enter coins"
+                                value={appliedCoins}
+                                onChange={handleCoinChange}
+                                min={0}
+                                max={availableMCoinBalance}
+                              />
+    
+                              <button
+                                type="button"
+                                className="mcoin-apply-btn"
+                                onClick={handleApplyCoins}
+                              >
+                                Apply
+                              </button>
+                            </div>
+    
+                            <small
+                              style={{
+                                color: "#666",
+                                display: "block",
+                                marginTop: "6px",
+                              }}
+                            >
+                              Max allowed: {availableMCoinBalance} coins
+                            </small>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  <hr/><br/>
+
                 <button className="download-pdf" onClick={downloadStatement}>
                   <BsCloudArrowDownFill />{" "}
                   {downloading ? "Downloading..." : "Download Statement"}
@@ -1002,28 +1184,51 @@ const Cart = ({ isCartVisible, toggleCart }) => {
               </div>
 
               <div className="cart-panel-footer">
-                <div className="subtotal">
-                  Total Payable: <span>₹ {totalPayable}</span>
+              <div className="subtotal">
+                <div className="subtotal-main">
+                  {savedAppliedCoinValue > 0 && (
+                    <div
+                      style={{
+                        display: "block",
+                        width: "100%",
+                        color: "#077807",
+                        marginTop: "6px",
+                        fontSize: "13px",
+                        lineHeight: "18px",
+                      }}
+                    >
+                      M Coin Discount Applied: - ₹ {savedAppliedCoinValue}
+                    </div>
+                  )}
                 </div>
-
-                {offerApplied != 0 ? (
-                  <button
-                    className="checkout-btn Remove-btn"
-                    onClick={() => removeAppliedOffer(appliedOfferDetails?.id)}
-                  >
-                    Remove Offer {appliedOfferDetails?.offer_name}
-                  </button>
-                ) : (
-                  <button className="checkout-btn Offer-btn" onClick={() => setOfferModalOpen(true)}>
-                    Apply Offer
-                  </button>
-                )}
-
-                <button className="checkout-btn" onClick={handleCheckout}>
-                  Checkout
-                </button>
               </div>
+              <div className="subtotal">
+                <div className="subtotal-main">
+                  Total Payable: <span>₹ {finalTotalPayable}</span>
+                </div>
+              </div>
+              {offerApplied != 0 ? (
+                <button
+                  className="checkout-btn Remove-btn"
+                  onClick={() => removeAppliedOffer(appliedOfferDetails?.id)}
+                >
+                  Remove Offer {appliedOfferDetails?.offer_name}
+                </button>
+              ) : (
+                <button
+                  className="checkout-btn Offer-btn"
+                  onClick={() => setOfferModalOpen(true)}
+                >
+                  Apply Offer
+                </button>
+              )}
+
+              <button className="checkout-btn" onClick={handleCheckout}>
+                Checkout
+              </button>
             </div>
+            </div>
+            
           </div>
         </div>
       </MainLayout>

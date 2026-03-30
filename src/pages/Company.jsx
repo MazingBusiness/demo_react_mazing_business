@@ -243,7 +243,6 @@ const Company = () => {
                 <p></p>
               </div>
             </div>
-
             <CartSummary
               selectedAddressId={selectedAddressId}
               canCheckout={true}

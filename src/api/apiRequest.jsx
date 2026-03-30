@@ -491,6 +491,35 @@ export const applyOffer = async (offer_id) => {
   return response;
 };
 
+export const getMCoin = async () => {
+  const header = getHeader();
+  // const queryParams = new URLSearchParams();
+  // if (offer_id != null) queryParams.append("offer_id", String(offer_id));
+  const url = `${API_BASE_URL}cart/get-m-coin`;
+  const response = await fetch(url, {
+    method: "GET",
+    headers: { Accept: "application/json", ...(header.headers || {}) },
+  });
+  console.log(response);
+  return response;
+};
+
+export const applyMCoin = async ({ applied_m_coins }) => {
+  const header = getHeader();
+  if (!header) throw new Error("Authorization token missing");
+  const res = await fetch(`${API_BASE_URL}cart/apply-m-coin`, {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+      ...(header.headers || {}), // Authorization: Bearer xxx
+    },
+    body: JSON.stringify({ applied_m_coins, }),
+  });
+}
+
+
+
 export const removeOffer = async (offer_id) => {
   const header = getHeader();
   const queryParams = new URLSearchParams();
@@ -503,6 +532,7 @@ export const removeOffer = async (offer_id) => {
   console.log(response);
   return response;
 };
+
 export const statementDownload = async () => {
   const header = getHeader();
   const url = `${API_BASE_URL}user/statement-download`;
