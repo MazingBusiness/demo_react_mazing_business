@@ -493,31 +493,61 @@ export const applyOffer = async (offer_id) => {
 
 export const getMCoin = async () => {
   const header = getHeader();
-  // const queryParams = new URLSearchParams();
-  // if (offer_id != null) queryParams.append("offer_id", String(offer_id));
   const url = `${API_BASE_URL}cart/get-m-coin`;
+
   const response = await fetch(url, {
     method: "GET",
-    headers: { Accept: "application/json", ...(header.headers || {}) },
+    headers: {
+      Accept: "application/json",
+      ...(header?.headers || {}),
+    },
   });
-  console.log(response);
+  return response;
+};
+
+export const removeMCoin = async () => {
+  const header = getHeader();
+  const url = `${API_BASE_URL}cart/remove-m-coin`;
+
+  const response = await fetch(url, {
+    method: "GET",
+    headers: {
+      Accept: "application/json",
+      ...(header?.headers || {}),
+    },
+  });
   return response;
 };
 
 export const applyMCoin = async ({ applied_m_coins }) => {
   const header = getHeader();
   if (!header) throw new Error("Authorization token missing");
+
   const res = await fetch(`${API_BASE_URL}cart/apply-m-coin`, {
     method: "POST",
     headers: {
       Accept: "application/json",
       "Content-Type": "application/json",
-      ...(header.headers || {}), // Authorization: Bearer xxx
+      ...(header.headers || {}),
     },
-    body: JSON.stringify({ applied_m_coins, }),
+    body: JSON.stringify({ applied_m_coins }),
   });
-}
+  return res;
+};
 
+export const getAvailableMCoin = async () => {
+  const header = getHeader();
+  const url = `${API_BASE_URL}cart/get-available-m-coin`;
+
+  const response = await fetch(url, {
+    method: "GET",
+    headers: {
+      Accept: "application/json",
+      ...(header?.headers || {}),
+    },
+  });
+  return response;
+};
 
 
 export const removeOffer = async (offer_id) => {

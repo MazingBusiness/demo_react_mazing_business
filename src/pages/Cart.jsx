@@ -19,6 +19,8 @@ import noImage from "../assets/images/no-image.png";
 import OfferModal from "../components/OfferModal.jsx";
 import CartSummary from "../components/CartSummary.jsx";
 
+import Swal from "sweetalert2";
+
 import {
   cart,
   updateQuantity,
@@ -33,6 +35,10 @@ import {
   statementDownload,
   updateProductQty,
   updateCartItemPrice,
+  applyMCoin, 
+  getMCoin, 
+  removeMCoin,
+  getAvailableMCoin, 
 } from "../api/apiRequest";
 
 // ✅ helper: read staff id safely from localStorage
@@ -140,11 +146,225 @@ const Cart = ({ isCartVisible, toggleCart }) => {
   const [qtyAlertsById, setQtyAlertsById] = useState({});
   const [savedItems, setSavedItems] = useState([]);
 
-  // ----- M Coin
-  const [availableMCoinBalance, setAvailableMCoinBalance] = useState(0);
-  const [earnMCoinBalance, setEarnMCoin] = useState(0);
-  const [appliedCoins, setAppliedCoins] = useState("");
-  const [savedAppliedCoins, setSavedAppliedCoins] = useState(0);
+  // Show Message
+  const showToast = (icon, title) => {
+    Swal.fire({
+      toast: true,
+      position: "top-end",
+      icon,
+      title,
+      showConfirmButton: false,
+      timer: 2500,
+      timerProgressBar: true,
+    });
+  };
+
+  // ------ M Coin
+    const [availableMCoinBalance, setAvailableMCoinBalance] = useState(0);
+    const [earnMCoinBalance, setEarnMCoin] = useState(0);
+    const [appliedCoins, setAppliedCoins] = useState("");
+    const [savedAppliedCoins, setSavedAppliedCoins] = useState(0);
+    const [mCoinLoading, setMCoinLoading] = useState(false);
+    const appliedCoinValue = Math.floor((Number(appliedCoins || 0)) / 250);
+    const savedAppliedCoinValue = Math.floor(Number(savedAppliedCoins || 0) / 250);
+    const loadAppliedMCoin = async () => {
+      try {
+        const res = await getMCoin();
+        if (!res?.ok) {
+          setSavedAppliedCoins(0);
+          return;
+        }
+  
+        const json = await res.json();
+        console.log("getMCoin json:", json);
+  
+        const applied = Number(
+          json?.data?.coins ??
+          json?.data?.applied_m_coins ??
+          json?.applied_m_coins ??
+          0
+        );
+  
+        setSavedAppliedCoins(applied > 0 ? applied : 0);
+      } catch (e) {
+        console.error("getMCoin error:", e);
+        setSavedAppliedCoins(0);
+      }
+    };
+  
+    const getAvailableMCoinBalance = async () => {
+      try {
+        const res = await getAvailableMCoin();
+        if (!res?.ok) {
+          setAvailableMCoinBalance(0);
+          return;
+        }
+  
+        const json = await res.json();
+        console.log("getAvailableMCoinBalance json:", json);
+  
+        const applied = Number(
+          json?.data?.coins ??
+          json?.data?.availableMCoinBalance ??
+          json?.availableMCoinBalance ??
+          0
+        );
+  
+        setAvailableMCoinBalance(applied > 0 ? applied : 0);
+      } catch (e) {
+        console.error("getAvailableMCoinBalance error:", e);
+        setAvailableMCoinBalance(0);
+      }
+    };
+    
+    useEffect(() => {
+      loadAppliedMCoin();
+    }, []);
+    
+    const finalTotalPayable = Math.max(
+      0,
+      Number(totalPayable || 0) - Number(savedAppliedCoinValue || 0)
+    );
+  
+    useEffect(() => {
+      const storedCoins = localStorage.getItem("appliedCoins");
+      if (storedCoins) {
+        setSavedAppliedCoins(Number(storedCoins));
+      }
+    }, []);
+  
+    const handleCoinChange = async(e) => {
+      let value = e.target.value;
+      if (value === "") {
+        setAppliedCoins("");
+        return;
+      }
+      value = Number(value);
+      if (isNaN(value) || value < 0) value = 0;
+      if (value > availableMCoinBalance) {
+        value = availableMCoinBalance;
+      }
+      setAppliedCoins(value);
+      // await getAvailableMCoinBalance();
+    };
+  
+    const handleApplyCoins = async () => {
+      if (mCoinLoading) return;
+      const coinCount = Number(appliedCoins || 0);
+      if (!coinCount || coinCount <= 0) {
+        showToast("error", "Please enter valid coins");
+        return;
+      }
+      if (coinCount > availableMCoinBalance) {
+        showToast("error", "Cannot exceed available balance");
+        return;
+      }
+      const rupeeValue = Math.floor(coinCount / 250);
+      if (rupeeValue <= 0) {
+        showToast("error", "Coins too low");
+        return;
+      }
+      if (rupeeValue > Number(totalPayable || 0)) {
+        showToast("error", "Cannot exceed total payable");
+        return;
+      }
+      try {
+        setMCoinLoading(true);
+        const res = await applyMCoin({ applied_m_coins: coinCount });
+        const json = await res.json();
+        if (json?.res === false) {
+          showToast("error", json?.msg || "Failed to apply");
+          return;
+        } else {
+          showToast("success", json?.msg || "Successfully applied M Coin.");
+          // availableMCoinBalance
+        }
+        setSavedAppliedCoins(coinCount);
+        setAppliedCoins("");
+        await getAvailableMCoinBalance();
+      } catch (e) {
+        console.error(e);
+        showToast("error", "Apply failed");
+      } finally {
+        setMCoinLoading(false);
+      }
+    };
+    
+    const handleRemoveAppliedCoins = async () => {
+      try {
+        setMCoinLoading(true);
+        const res = await removeMCoin();
+        if (!res?.ok) {
+          let msg = "Failed to remove applied M Coin";
+          try {
+            const errJson = await res.json();
+            msg = errJson?.msg || errJson?.message || msg;
+          } catch {}
+          throw new Error(msg);
+        }
+  
+        const json = await res.json().catch(() => ({}));
+  
+        if (json?.res === false) {
+          showToast("error", json?.msg || "Failed to remove applied M Coin");
+          return;
+        }
+        showToast("success", json?.msg || "Applied M Coin removed");
+        setSavedAppliedCoins(0);
+        setAppliedCoins("");
+        await loadAppliedMCoin();
+        await getAvailableMCoinBalance();
+        // await cartData();
+      } catch (e) {
+        console.error("removeMCoin error:", e);
+        showToast("error", e?.message || "Failed to remove applied M Coin");
+      } finally {
+        setMCoinLoading(false);
+      }
+    };
+    // ----------------------------------------------
+  
+  
+    useEffect(() => {
+      cartPageData(); // first load when header renders
+      const handler = () => cartPageData(); // when cart-updated happens, refresh
+      if(location.pathname == '/cart'){
+        canCheckout =  "";
+        setButnText("Proceed to shipping");
+      } else if(location.pathname == '/company'){
+        canCheckout =  "";
+        setButnText("Proceed to checkout");
+      } else if(location.pathname == '/confirmation'){
+        canCheckout = "";
+        setButnText("Proceed to confirmation");
+      }else if(location.pathname == '/payment'){
+        setButnText("Complete");
+      }
+      window.addEventListener("cart-updated", handler);
+      return () => {
+        window.removeEventListener("cart-updated", handler);
+      };
+      
+    }, []);
+  
+    useEffect(() => {
+      let other = 0;
+      let noCredit = 0;
+      let payableAmount = 0;
+      for (const item of cartItems) {
+        const qty = Number(item.quantity || 1);
+        const lineTotal = Number(item.price || 0) * qty;
+  
+        if (item?.product?.cash_and_carry_item == 1) noCredit += lineTotal;
+        else other += lineTotal;
+        payableAmount = item.payable_amount;
+      }
+      setCartSubTotal(other);
+      setNoCreditItemTotalAmount(noCredit);
+  
+      const st = other + noCredit;
+      setSubTotal(st);
+    }, [cartItems]);
 
   const navigate = useNavigate();
 
@@ -612,70 +832,6 @@ const Cart = ({ isCartVisible, toggleCart }) => {
       : savedItems.filter(
           (item) => (item.category || "UNCATEGORIZED") === selectedCategory
         );
-  
-  // Apply M-Coin 
-    const appliedCoinValue = Math.floor((Number(appliedCoins || 0)) / 250);
-    const savedAppliedCoinValue = Math.floor(Number(savedAppliedCoins || 0) / 250);
-    const finalTotalPayable = Math.max(
-      0,
-      Number(totalPayable || 0) - Number(savedAppliedCoinValue || 0)
-    );
-    useEffect(() => {
-      const storedCoins = localStorage.getItem("appliedCoins");
-      if (storedCoins) {
-        setSavedAppliedCoins(Number(storedCoins));
-      }
-    }, []);
-    const handleCoinChange = (e) => {
-      let value = e.target.value;
-      if (value === "") {
-        setAppliedCoins("");
-        return;
-      }
-      value = Number(value);
-      if (isNaN(value) || value < 0) {
-        value = 0;
-      }
-      if (value > availableMCoinBalance) {
-        value = availableMCoinBalance;
-      }
-      setAppliedCoins(value);
-    }; 
-    const handleApplyCoins = () => {
-      const coinCount = Number(appliedCoins || 0);
-  
-      if (!coinCount || coinCount <= 0) {
-        alert("Please enter valid coins");
-        return;
-      }
-  
-      if (coinCount > availableMCoinBalance) {
-        alert("Entered coins cannot be more than available balance");
-        return;
-      }
-  
-      const rupeeValue = Math.floor(coinCount / 250);
-  
-      if (rupeeValue <= 0) {
-        alert("Entered coins are too low to apply");
-        return;
-      }
-  
-      if (rupeeValue > Number(totalPayable || 0)) {
-        alert("Applied coin value cannot be more than total payable amount");
-        return;
-      }
-  
-      localStorage.setItem("appliedCoins", String(coinCount));
-      setSavedAppliedCoins(coinCount);
-      setAppliedCoins("");
-    };
-    const handleRemoveAppliedCoins = () => {
-      localStorage.removeItem("appliedCoins");
-      setSavedAppliedCoins(0);
-      setAppliedCoins("");
-    };
-  // ----------------------------------------------
 
   return (
     <div className="CartBody ConfirmationBody">
@@ -766,6 +922,7 @@ const Cart = ({ isCartVisible, toggleCart }) => {
                                       }}
                                     />{" "}
                                     {item?.product?.name}
+                                     {<span className="m-coin">Earn M Coin : <strong>{(Number(item.quantity || 1) * Number(item.price || 0) * Number(item?.product?.c_instock_m_coin))}</strong></span>}
                                     {item?.product?.cash_and_carry_item == 1 && (
                                       <span className="no-credit">No Credit Item</span>
                                     )}
@@ -791,7 +948,7 @@ const Cart = ({ isCartVisible, toggleCart }) => {
                                     {qtyAlertsById[item.id] && (
                                       <div
                                         style={{
-                                          marginTop: "-30px",
+                                          marginTop: "2px",
                                           padding: "6px 8px",
                                           border: "1px solid #ff4d4f",
                                           background: "#fff1f0",
@@ -1072,110 +1229,97 @@ const Cart = ({ isCartVisible, toggleCart }) => {
                   </label>
                 )}
 
-                <hr/><br/>
+                <div className="mcoin-balance">
+                  <div>
+                    <span className="label">You Can Earn M Coins with this order</span>
+                    <strong>{earnMCoinBalance}</strong>
+                  </div>
+                  <div className="value">
+                    ₹{Math.floor(earnMCoinBalance / 250)}
+                  </div>
+                </div>
+                <br/>
+                {/* <hr/><br/> */}
                   {availableMCoinBalance > 0 && (
                     <div className="mcoin-card">
-                      <div className="mcoin-card-header">
+                      <div className="mcoin-header">
+                        <h4>M Coin Wallet</h4>
+                        <p>Use your coins and save more on this order</p>
+                      </div>
+
+                      {/* Available Coins */}
+                      <div className="mcoin-balance">
                         <div>
-                          <h4>M Coin Wallet</h4>
-                          <p>Use your coins and save more on this order</p>
+                          <span className="label">Available Coins</span>
+                          <strong>{availableMCoinBalance}</strong>
+                        </div>
+                        <div className="value">
+                          ₹{Math.floor(availableMCoinBalance / 250)}
                         </div>
                       </div>
-    
-                      <div className="mcoin-stats">
-                        <div className="mcoin-stat-box">
-                          <span className="mcoin-stat-label">Available Coins</span>
-                          <strong className="mcoin-stat-value">{availableMCoinBalance}</strong>
-                          <br />
-                          <small>
-                            Value :{" "}
-                            <strong style={{ color: "#077807" }}>
-                              ₹{Math.floor(availableMCoinBalance / 250)}
-                            </strong>
-                          </small>
-                        </div>
-    
-                        <div className="mcoin-stat-box">
-                          <span className="mcoin-stat-label">You Can Earn</span>
-                          <strong className="mcoin-stat-value">{earnMCoinBalance}</strong>
-                          <br />
-                          <small>
-                            Value :{" "}
-                            <strong style={{ color: "#077807" }}>
-                              ₹{Math.floor(earnMCoinBalance / 250)}
-                            </strong>
-                          </small>
-                        </div>
-                      </div>
-    
+
+                      {/* Applied Section */}
                       {savedAppliedCoins > 0 ? (
-                        <div className="mcoin-applied-box">
-                          <div>
-                            <div className="mcoin-input-label" style={{ padding: 0 }}>
-                              Applied Coins
-                            </div>
-                            <strong>{savedAppliedCoins} Coins</strong>
-                            <div style={{ marginTop: "4px", fontSize: "13px", color: "#077807" }}>
-                              Value : ₹{savedAppliedCoinValue}
-                            </div>
+                        <div className="mcoin-applied">
+                          <div className="mcoin-applied-left">
+                            <span className="label">Applied Coins</span>
+                            <strong className="coins">{savedAppliedCoins} Coins</strong>
+                            <div className="value">₹{savedAppliedCoinValue}</div>
                           </div>
-    
+
                           <button
                             type="button"
                             className="mcoin-delete-btn"
                             onClick={handleRemoveAppliedCoins}
-                            title="Remove applied coins"
+                            disabled={mCoinLoading}
                           >
-                            <FiTrash2 />
+                            {mCoinLoading ? (
+                              <span className="mcoin-delete-loader"></span>
+                            ) : (
+                              <FiTrash2 />
+                            )}
                           </button>
                         </div>
                       ) : (
-                        <div className="mcoin-apply-row">
-                          <div className="mcoin-input-wrap">
-                            <label className="mcoin-input-label" style={{ padding: "0px" }}>
-                              Apply Coins (
-                              Value :{" "}
-                              <strong style={{ color: "#ff0000" }}>
-                                ₹{appliedCoinValue}
-                              </strong>
-                              )
-                            </label>
-    
-                            <div className="mcoin-input-action-row">
-                              <input
-                                type="number"
-                                className="mcoin-input"
-                                placeholder="Enter coins"
-                                value={appliedCoins}
-                                onChange={handleCoinChange}
-                                min={0}
-                                max={availableMCoinBalance}
-                              />
-    
-                              <button
-                                type="button"
-                                className="mcoin-apply-btn"
-                                onClick={handleApplyCoins}
-                              >
-                                Apply
-                              </button>
-                            </div>
-    
-                            <small
-                              style={{
-                                color: "#666",
-                                display: "block",
-                                marginTop: "6px",
+                        <div className="mcoin-apply">
+                          
+                          <label htmlFor="mcoinInput" className="mcoin-label">
+                            Apply Coins
+                            <span>₹{appliedCoinValue}</span>
+                          </label>
+
+                          <div className="mcoin-input-row">
+                            <input
+                              id="mcoinInput"
+                              type="number"
+                              className="mcoin-input"
+                              placeholder="Enter coins"
+                              value={appliedCoins}
+                              onChange={handleCoinChange}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") {
+                                  e.preventDefault(); // 🔥 important (form submit avoid)
+                                  handleApplyCoins();
+                                }
                               }}
+                              min={0}
+                              max={availableMCoinBalance}
+                            />
+
+                            <button
+                              type="button"
+                              onClick={handleApplyCoins}
+                              disabled={mCoinLoading}
                             >
-                              Max allowed: {availableMCoinBalance} coins
-                            </small>
+                              {mCoinLoading ? "Applying..." : "Apply"}
+                            </button>
                           </div>
+
+                          <small>Max: {availableMCoinBalance} coins</small>
                         </div>
                       )}
                     </div>
                   )}
-                  <hr/><br/>
 
                 <button className="download-pdf" onClick={downloadStatement}>
                   <BsCloudArrowDownFill />{" "}

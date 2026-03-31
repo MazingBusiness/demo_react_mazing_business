@@ -1648,6 +1648,27 @@ a.right-link {
   }
 }
 
+.mcoin-btn-loader-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mcoin-btn-loader {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: mcoinSpin 0.7s linear infinite;
+}
+
+@keyframes mcoinSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .cart-summary-content h3 {
   font-size: 20px;
   color: #000000;
@@ -2458,7 +2479,7 @@ a.all-link svg {
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2) !important;
 }
 
-.mcoin-card {
+/* .mcoin-card {
   margin: 18px 0;
   padding: 16px;
   border-radius: 16px;
@@ -2592,6 +2613,205 @@ a.all-link svg {
 .mcoin-delete-btn:hover {
   background: #ffd6d6;
 }
+ */
+
+ .mcoin-card {
+  border: 1px solid #eee;
+  border-radius: 12px;
+  padding: 16px;
+  background: #fff;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.05);
+}
+
+/* Header */
+.mcoin-header h4 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.mcoin-header p {
+  margin: 4px 0 14px;
+  font-size: 13px;
+  color: #777;
+}
+
+/* Balance */
+.mcoin-balance {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #f4fbf4;
+  padding: 12px;
+  border-radius: 10px;
+  margin-bottom: 14px;
+}
+
+.mcoin-balance .label {
+  font-size: 12px;
+  color: #777;
+  display: block;
+}
+
+.mcoin-balance strong {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.mcoin-balance .value {
+  color: #077807;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+/* Applied Section */
+.mcoin-applied {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #eef9ee;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid #d6f5d6;
+}
+
+.mcoin-applied-left {
+  display: flex;
+  flex-direction: column;
+}
+
+.mcoin-applied .label {
+  font-size: 12px;
+  color: #777;
+}
+
+.mcoin-applied strong {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.mcoin-applied .value {
+  color: #077807;
+  font-size: 13px;
+  margin-top: 2px;
+}
+
+/* Apply Section */
+.mcoin-apply {
+  margin-top: 12px;
+}
+
+.mcoin-label {
+  font-size: 13px;
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.mcoin-label span {
+  color: #ff0000;
+  font-weight: 600;
+}
+
+/* Input + Button Row */
+.mcoin-input-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.mcoin-input-row input {
+  flex: 1;
+  height: 38px;
+  padding: 0 10px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  outline: none;
+  transition: 0.2s;
+}
+
+.mcoin-input-row input:focus {
+  border-color: #077807;
+  box-shadow: 0 0 0 2px rgba(7,120,7,0.1);
+}
+
+/* Apply Button */
+.mcoin-input-row button {
+  height: 38px;
+  padding: 0 16px;
+  background: #077807;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: 0.2s;
+}
+
+.mcoin-input-row button:hover {
+  background: #056c05;
+}
+
+.mcoin-input-row button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Delete Button (IMPROVED) */
+.mcoin-delete-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: #ffeaea;
+  color: #ff4d4f;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.mcoin-delete-btn:hover {
+  background: #ffd6d6;
+}
+
+.mcoin-delete-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Apply Loader */
+.mcoin-btn-loader {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255,255,255,0.5);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+/* Delete Loader (FIXED VISIBILITY) */
+.mcoin-delete-loader {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255,77,79,0.3);
+  border-top-color: #ff4d4f;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+/* Animation */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 
 .app-banner-inner img {
   width: 100%;
@@ -6010,10 +6230,20 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   font-weight: 500;
   text-align: left;
   position: absolute;
-  bottom: 0;
+  bottom: -21%;
   left: 80px;
 }
 
+.cart-left .cart-section table tr td.narrow1 .m-coin {
+  color: #077807;
+  font-family: "Poppins", sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  text-align: left;
+  position: absolute;
+  bottom: 10%;
+  left: 80px;
+}
 .cart-left .cart-section table tr th {
   padding: 5px 10px;
 }
