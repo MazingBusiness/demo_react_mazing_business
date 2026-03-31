@@ -244,6 +244,7 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
       showToast("error", "Please enter valid coins");
       return;
     }
+    await getAvailableMCoinBalance();
     if (coinCount > availableMCoinBalance) {
       showToast("error", "Cannot exceed available balance");
       return;
@@ -818,6 +819,7 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
   // Show Message
   const showToast = (icon, title) => {
     Swal.fire({
+      target: document.body,
       toast: true,
       position: "top-end",
       icon,
@@ -825,6 +827,10 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
       showConfirmButton: false,
       timer: 2500,
       timerProgressBar: true,
+      customClass: {
+        container: "swal-toast-container",
+        popup: "swal-toast-popup",
+      },
     });
   };
 

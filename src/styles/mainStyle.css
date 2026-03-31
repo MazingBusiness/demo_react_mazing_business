@@ -6234,6 +6234,20 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   left: 80px;
 }
 
+.swal-toast-container,
+.swal2-container {
+  z-index: 2147483647 !important;
+}
+
+.swal-toast-popup,
+.swal2-popup.swal2-toast {
+  z-index: 2147483647 !important;
+}
+.cart-slide,
+.cart-slide-overlay {
+  z-index: 9999;
+}
+
 .cart-left .cart-section table tr td.narrow1 .m-coin {
   color: #077807;
   font-family: "Poppins", sans-serif;
