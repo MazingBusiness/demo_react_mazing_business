@@ -937,12 +937,38 @@ const Cart = ({ isCartVisible, toggleCart }) => {
                                       onError={(e) => {
                                         e.currentTarget.src = noImage;
                                       }}
-                                    />{" "}
-                                    {item?.product?.name}
-                                     {<span className="m-coin">Earn M Coin : <strong>{(Number(item.quantity || 1) * Number(item.price || 0) * Number(item?.product?.c_instock_m_coin))}</strong></span>}
-                                    {item?.product?.cash_and_carry_item == 1 && (
-                                      <span className="no-credit">No Credit Item</span>
-                                    )}
+                                    />
+      
+                                    <div className="cartproduct-details">
+                                      <span className="product-name">{item?.product?.name}</span>
+      
+                                      <span className="m-coin">
+                                        Earn M Coin :{" "}
+                                        <strong>
+                                          {(() => {
+                                            const lineAmount =
+                                              Number(item.price || 0) * Number(item.quantity || 1);
+      
+                                            const itemMCoin =
+                                              Number(item?.product?.current_stock) === 1
+                                                ? Number(item?.product?.c_instock_m_coin || 0) * lineAmount
+                                                : Number(item?.product?.c_m_coin || 0) * lineAmount;
+      
+                                            return itemMCoin;
+                                          })()}
+                                        </strong>
+                                      </span>
+      
+                                      {item?.product?.cash_and_carry_item == 1 && (
+                                        <span className="no-credit">No Credit Item</span>
+                                      )}
+      
+                                      {item?.applied_offer_id != null && (
+                                        <span className="applied-offer-tag">
+                                          {appliedOfferDetails?.offer_name} Offer Applied
+                                        </span>
+                                      )}
+                                    </div>
                                   </div>
 
                                   <div className="ratingGrp">

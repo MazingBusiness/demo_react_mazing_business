@@ -928,35 +928,37 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
                                   e.currentTarget.src = noImage;
                                 }}
                               />
-                              {" "}
-                              {item?.product?.name}
 
-                              <span className="m-coin">
-                                Earn M Coin :{" "}
-                                <strong>
-                                  {(() => {
-                                    const lineAmount =
-                                      Number(item.price || 0) * Number(item.quantity || 1);
+                              <div className="cartproduct-details">
+                                <span className="product-name">{item?.product?.name}</span>
 
-                                    const itemMCoin =
-                                      Number(item?.product?.current_stock) === 1
-                                        ? Number(item?.product?.c_instock_m_coin || 0) * lineAmount
-                                        : Number(item?.product?.c_m_coin || 0) * lineAmount;
+                                <span className="m-coin">
+                                  Earn M Coin :{" "}
+                                  <strong>
+                                    {(() => {
+                                      const lineAmount =
+                                        Number(item.price || 0) * Number(item.quantity || 1);
 
-                                    return itemMCoin;
-                                  })()}
-                                </strong>
-                              </span>
+                                      const itemMCoin =
+                                        Number(item?.product?.current_stock) === 1
+                                          ? Number(item?.product?.c_instock_m_coin || 0) * lineAmount
+                                          : Number(item?.product?.c_m_coin || 0) * lineAmount;
 
-                              {item?.product?.cash_and_carry_item == 1 && (
-                                <span className="no-credit">No Credit Item</span>
-                              )}
-
-                              {item?.applied_offer_id != null && (
-                                <span className="applied-offer-tag">
-                                  {appliedOfferDetails?.offer_name} Offer Applied
+                                      return itemMCoin;
+                                    })()}
+                                  </strong>
                                 </span>
-                              )}
+
+                                {item?.product?.cash_and_carry_item == 1 && (
+                                  <span className="no-credit">No Credit Item</span>
+                                )}
+
+                                {item?.applied_offer_id != null && (
+                                  <span className="applied-offer-tag">
+                                    {appliedOfferDetails?.offer_name} Offer Applied
+                                  </span>
+                                )}
+                              </div>
                             </div>
 
                             <div className="ratingGrp">

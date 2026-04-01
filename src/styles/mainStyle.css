@@ -1693,6 +1693,39 @@ a.right-link {
 .cart-summary-content label span {
   font-weight: 700;
 }
+.cartproduct {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.cartproduct-details {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  min-width: 0;
+  flex: 1;
+}
+
+.cartproduct-details .product-name {
+  display: block;
+  line-height: 1.5;
+  white-space: normal;
+  word-break: break-word;
+}
+
+.cartproduct-details .m-coin {
+  display: block;
+  font-size: 14px;
+  line-height: 1.4;
+  color: #077807;
+}
+
+.cartproduct-details .no-credit,
+.cartproduct-details .applied-offer-tag {
+  display: inline-block;
+}
 
 .download-pdf {
   width: 258px;
@@ -6266,7 +6299,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   cursor: pointer;
 }
 
-.cart-left .cart-section table tr td.narrow1 .m-coin {
+/* .cart-left .cart-section table tr td.narrow1 .m-coin {
   color: #077807;
   font-family: "Poppins", sans-serif;
   font-size: 13px;
@@ -6275,7 +6308,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   position: absolute;
   bottom: 10%;
   left: 80px;
-}
+} */
 .cart-left .cart-section table tr th {
   padding: 5px 10px;
 }
