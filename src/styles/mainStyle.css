@@ -1686,7 +1686,7 @@ a.right-link {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 15px;
+  margin-bottom: 5px;
   padding: 0 20px;
 }
 
@@ -6246,6 +6246,24 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 .cart-slide,
 .cart-slide-overlay {
   z-index: 9999;
+}
+
+.pay-mcoin-toggle {
+  margin: 10px 0 14px 0;
+}
+
+.pay-mcoin-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.pay-mcoin-checkbox input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
 }
 
 .cart-left .cart-section table tr td.narrow1 .m-coin {

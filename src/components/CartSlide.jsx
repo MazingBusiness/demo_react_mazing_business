@@ -156,6 +156,9 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
   const [mCoinLoading, setMCoinLoading] = useState(false);
   const appliedCoinValue = Math.floor((Number(appliedCoins || 0)) / 250);
   const savedAppliedCoinValue = Math.floor(Number(savedAppliedCoins || 0) / 250);
+  const [payWithMCoin, setPayWithMCoin] = useState(false);
+  
+  
   const loadAppliedMCoin = async () => {
     try {
       const res = await getMCoin();
@@ -178,6 +181,18 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
     } catch (e) {
       console.error("getMCoin error:", e);
       setSavedAppliedCoins(0);
+    }
+  };
+
+  useEffect(() => {
+    setPayWithMCoin(Number(savedAppliedCoins) > 0);
+  }, [savedAppliedCoins]);
+
+  const handlePayWithMCoinToggle = async (e) => {
+    const checked = e.target.checked;
+    setPayWithMCoin(checked);
+    if (!checked && Number(savedAppliedCoins) > 0) {
+      await handleRemoveAppliedCoins();
     }
   };
 
@@ -267,11 +282,12 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
         return;
       } else {
         showToast("success", json?.msg || "Successfully applied M Coin.");
-        // availableMCoinBalance
+        setSavedAppliedCoins(coinCount);
+        setAppliedCoins("");
+        await getAvailableMCoinBalance();
+        setPayWithMCoin(true);
       }
-      setSavedAppliedCoins(coinCount);
-      setAppliedCoins("");
-      await getAvailableMCoinBalance();
+      
     } catch (e) {
       console.error(e);
       showToast("error", "Apply failed");
@@ -1243,97 +1259,111 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
                   Overdue Amount:<span>₹ {overDueAmount}</span>
                 </label>
               )}
+
               <div className="mcoin-balance">
-            <div>
-              <span className="label">You Can Earn M Coins with this order</span>
-              <strong>{earnMCoinBalance}</strong>
-            </div>
-            <div className="value">
-              ₹{Math.floor(earnMCoinBalance / 250)}
-            </div>
-          </div>
-            <br/>
-            {/* <hr/><br/> */}
+                <div>
+                  <span className="label">You Can Earn M Coins with this order</span>
+                  <strong>{earnMCoinBalance}</strong>
+                </div>
+                <div className="value">
+                  ₹{Math.floor(earnMCoinBalance / 250)}
+                </div>
+              </div>
+
               {availableMCoinBalance > 0 && (
-                <div className="mcoin-card">
-                  <div className="mcoin-header">
-                    <h4>M Coin Wallet</h4>
-                    <p>Use your coins and save more on this order</p>
-                  </div>
-
-                  {/* Available Coins */}
-                  <div className="mcoin-balance">
-                    <div>
-                      <span className="label">Available Coins</span>
-                      <strong>{availableMCoinBalance}</strong>
-                    </div>
-                    <div className="value">
-                      ₹{Math.floor(availableMCoinBalance / 250)}
-                    </div>
-                  </div>
-
-                  {/* Applied Section */}
-                  {savedAppliedCoins > 0 ? (
-                    <div className="mcoin-applied">
-                      <div className="mcoin-applied-left">
-                        <span className="label">Applied Coins</span>
-                        <strong className="coins">{savedAppliedCoins} Coins</strong>
-                        <div className="value">₹{savedAppliedCoinValue}</div>
-                      </div>
-
-                      <button
-                        type="button"
-                        className="mcoin-delete-btn"
-                        onClick={handleRemoveAppliedCoins}
+                <>
+                  <div className="pay-mcoin-toggle">
+                    <label className="pay-mcoin-checkbox" style={{width:'62%'}}>
+                      <input
+                        type="checkbox"
+                        checked={payWithMCoin}
+                        onChange={handlePayWithMCoinToggle}
                         disabled={mCoinLoading}
-                      >
-                        {mCoinLoading ? (
-                          <span className="mcoin-delete-loader"></span>
-                        ) : (
-                          <FiTrash2 />
-                        )}
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="mcoin-apply">
-                      
-                      <label htmlFor="mcoinInput" className="mcoin-label">
-                        Apply Coins
-                        <span>₹{appliedCoinValue}</span>
-                      </label>
+                      />
+                      <span>Pay With M Coin</span>
+                    </label>
+                  </div>
 
-                      <div className="mcoin-input-row">
-                        <input
-                          id="mcoinInput"
-                          type="number"
-                          className="mcoin-input"
-                          placeholder="Enter coins"
-                          value={appliedCoins}
-                          onChange={handleCoinChange}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") {
-                              e.preventDefault(); // 🔥 important (form submit avoid)
-                              handleApplyCoins();
-                            }
-                          }}
-                          min={0}
-                          max={availableMCoinBalance}
-                        />
-
-                        <button
-                          type="button"
-                          onClick={handleApplyCoins}
-                          disabled={mCoinLoading}
-                        >
-                          {mCoinLoading ? "Applying..." : "Apply"}
-                        </button>
+                  {payWithMCoin && (
+                    <div className="mcoin-card">
+                      <div className="mcoin-header">
+                        <h4>M Coin Wallet</h4>
+                        <p>Use your coins and save more on this order</p>
                       </div>
 
-                      <small>Max: {availableMCoinBalance} coins</small>
+                      <div className="mcoin-balance">
+                        <div>
+                          <span className="label">Available Coins</span>
+                          <strong>{availableMCoinBalance}</strong>
+                        </div>
+                        <div className="value">
+                          ₹{Math.floor(availableMCoinBalance / 250)}
+                        </div>
+                      </div>
+
+                      {savedAppliedCoins > 0 ? (
+                        <div className="mcoin-applied">
+                          <div className="mcoin-applied-left">
+                            <span className="label">Applied Coins</span>
+                            <strong className="coins">{savedAppliedCoins} Coins</strong>
+                            <div className="value">₹{savedAppliedCoinValue}</div>
+                          </div>
+
+                          <button
+                            type="button"
+                            className="mcoin-delete-btn"
+                            onClick={handleRemoveAppliedCoins}
+                            disabled={mCoinLoading}
+                          >
+                            {mCoinLoading ? (
+                              <span className="mcoin-delete-loader"></span>
+                            ) : (
+                              <FiTrash2 />
+                            )}
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="mcoin-apply">
+                          <label htmlFor="mcoinInput" className="mcoin-label">
+                            Apply Coins
+                            <span>₹{appliedCoinValue}</span>
+                          </label>
+
+                          <div className="mcoin-input-row">
+                            <input
+                              id="mcoinInput"
+                              type="number"
+                              className="mcoin-input"
+                              placeholder="Enter coins"
+                              value={appliedCoins}
+                              onChange={handleCoinChange}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") {
+                                  e.preventDefault();
+                                  handleApplyCoins();
+                                }
+                              }}
+                              min={0}
+                              max={availableMCoinBalance}
+                            />
+
+                            <button
+                              type="button"
+                              onClick={handleApplyCoins}
+                              disabled={mCoinLoading}
+                            >
+                              {mCoinLoading ? "Applying..." : "Apply"}
+                            </button>
+                          </div>
+
+                          <small>Max: {availableMCoinBalance} coins</small>
+                        </div>
+                      )}
                     </div>
                   )}
-                </div>
+                </>
               )}
+
               <button className="download-pdf" onClick={downloadStatement}>
                 <BsCloudArrowDownFill />{" "}
                 {downloading ? "Downloading..." : "Download Statement"}

@@ -160,169 +160,186 @@ const Cart = ({ isCartVisible, toggleCart }) => {
   };
 
   // ------ M Coin
-    const [availableMCoinBalance, setAvailableMCoinBalance] = useState(0);
-    const [earnMCoinBalance, setEarnMCoin] = useState(0);
-    const [appliedCoins, setAppliedCoins] = useState("");
-    const [savedAppliedCoins, setSavedAppliedCoins] = useState(0);
-    const [mCoinLoading, setMCoinLoading] = useState(false);
-    const appliedCoinValue = Math.floor((Number(appliedCoins || 0)) / 250);
-    const savedAppliedCoinValue = Math.floor(Number(savedAppliedCoins || 0) / 250);
-    const loadAppliedMCoin = async () => {
-      try {
-        const res = await getMCoin();
-        if (!res?.ok) {
-          setSavedAppliedCoins(0);
-          return;
-        }
+  const [availableMCoinBalance, setAvailableMCoinBalance] = useState(0);
+  const [earnMCoinBalance, setEarnMCoin] = useState(0);
+  const [appliedCoins, setAppliedCoins] = useState("");
+  const [savedAppliedCoins, setSavedAppliedCoins] = useState(0);
+  const [mCoinLoading, setMCoinLoading] = useState(false);
+  const appliedCoinValue = Math.floor((Number(appliedCoins || 0)) / 250);
+  const savedAppliedCoinValue = Math.floor(Number(savedAppliedCoins || 0) / 250);
+  const [payWithMCoin, setPayWithMCoin] = useState(false);
   
-        const json = await res.json();
-        console.log("getMCoin json:", json);
   
-        const applied = Number(
-          json?.data?.coins ??
-          json?.data?.applied_m_coins ??
-          json?.applied_m_coins ??
-          0
-        );
-  
-        setSavedAppliedCoins(applied > 0 ? applied : 0);
-      } catch (e) {
-        console.error("getMCoin error:", e);
+  const loadAppliedMCoin = async () => {
+    try {
+      const res = await getMCoin();
+      if (!res?.ok) {
         setSavedAppliedCoins(0);
+        return;
       }
-    };
-  
-    const getAvailableMCoinBalance = async () => {
-      try {
-        const res = await getAvailableMCoin();
-        if (!res?.ok) {
-          setAvailableMCoinBalance(0);
-          return;
-        }
-  
-        const json = await res.json();
-        console.log("getAvailableMCoinBalance json:", json);
-  
-        const applied = Number(
-          json?.data?.coins ??
-          json?.data?.availableMCoinBalance ??
-          json?.availableMCoinBalance ??
-          0
-        );
-  
-        setAvailableMCoinBalance(applied > 0 ? applied : 0);
-      } catch (e) {
-        console.error("getAvailableMCoinBalance error:", e);
+
+      const json = await res.json();
+      console.log("getMCoin json:", json);
+
+      const applied = Number(
+        json?.data?.coins ??
+        json?.data?.applied_m_coins ??
+        json?.applied_m_coins ??
+        0
+      );
+
+      setSavedAppliedCoins(applied > 0 ? applied : 0);
+    } catch (e) {
+      console.error("getMCoin error:", e);
+      setSavedAppliedCoins(0);
+    }
+  };
+
+  useEffect(() => {
+    setPayWithMCoin(Number(savedAppliedCoins) > 0);
+  }, [savedAppliedCoins]);
+
+  const handlePayWithMCoinToggle = async (e) => {
+    const checked = e.target.checked;
+    setPayWithMCoin(checked);
+    if (!checked && Number(savedAppliedCoins) > 0) {
+      await handleRemoveAppliedCoins();
+    }
+  };
+
+  const getAvailableMCoinBalance = async () => {
+    try {
+      const res = await getAvailableMCoin();
+      if (!res?.ok) {
         setAvailableMCoinBalance(0);
+        return;
       }
-    };
-    
-    useEffect(() => {
-      loadAppliedMCoin();
-    }, []);
-    
-    const finalTotalPayable = Math.max(
-      0,
-      Number(totalPayable || 0) - Number(savedAppliedCoinValue || 0)
-    );
+
+      const json = await res.json();
+      console.log("getAvailableMCoinBalance json:", json);
+
+      const applied = Number(
+        json?.data?.coins ??
+        json?.data?.availableMCoinBalance ??
+        json?.availableMCoinBalance ??
+        0
+      );
+
+      setAvailableMCoinBalance(applied > 0 ? applied : 0);
+    } catch (e) {
+      console.error("getAvailableMCoinBalance error:", e);
+      setAvailableMCoinBalance(0);
+    }
+  };
   
-    useEffect(() => {
-      const storedCoins = localStorage.getItem("appliedCoins");
-      if (storedCoins) {
-        setSavedAppliedCoins(Number(storedCoins));
-      }
-    }, []);
+  useEffect(() => {
+    loadAppliedMCoin();
+  }, []);
   
-    const handleCoinChange = async(e) => {
-      let value = e.target.value;
-      if (value === "") {
-        setAppliedCoins("");
+  const finalTotalPayable = Math.max(
+    0,
+    Number(totalPayable || 0) - Number(savedAppliedCoinValue || 0)
+  );
+
+  useEffect(() => {
+    const storedCoins = localStorage.getItem("appliedCoins");
+    if (storedCoins) {
+      setSavedAppliedCoins(Number(storedCoins));
+    }
+  }, []);
+
+  const handleCoinChange = async(e) => {
+    let value = e.target.value;
+    if (value === "") {
+      setAppliedCoins("");
+      return;
+    }
+    value = Number(value);
+    if (isNaN(value) || value < 0) value = 0;
+    if (value > availableMCoinBalance) {
+      value = availableMCoinBalance;
+    }
+    setAppliedCoins(value);
+    // await getAvailableMCoinBalance();
+  };
+
+  const handleApplyCoins = async () => {
+    if (mCoinLoading) return;
+    const coinCount = Number(appliedCoins || 0);
+    if (!coinCount || coinCount <= 0) {
+      showToast("error", "Please enter valid coins");
+      return;
+    }
+    await getAvailableMCoinBalance();
+    if (coinCount > availableMCoinBalance) {
+      showToast("error", "Cannot exceed available balance");
+      return;
+    }
+    const rupeeValue = Math.floor(coinCount / 250);
+    if (rupeeValue <= 0) {
+      showToast("error", "Coins too low");
+      return;
+    }
+    if (rupeeValue > Number(totalPayable || 0)) {
+      showToast("error", "Cannot exceed total payable");
+      return;
+    }
+    try {
+      setMCoinLoading(true);
+      const res = await applyMCoin({ applied_m_coins: coinCount });
+      const json = await res.json();
+      if (json?.res === false) {
+        showToast("error", json?.msg || "Failed to apply");
         return;
-      }
-      value = Number(value);
-      if (isNaN(value) || value < 0) value = 0;
-      if (value > availableMCoinBalance) {
-        value = availableMCoinBalance;
-      }
-      setAppliedCoins(value);
-      // await getAvailableMCoinBalance();
-    };
-  
-    const handleApplyCoins = async () => {
-      if (mCoinLoading) return;
-      const coinCount = Number(appliedCoins || 0);
-      if (!coinCount || coinCount <= 0) {
-        showToast("error", "Please enter valid coins");
-        return;
-      }
-      if (coinCount > availableMCoinBalance) {
-        showToast("error", "Cannot exceed available balance");
-        return;
-      }
-      const rupeeValue = Math.floor(coinCount / 250);
-      if (rupeeValue <= 0) {
-        showToast("error", "Coins too low");
-        return;
-      }
-      if (rupeeValue > Number(totalPayable || 0)) {
-        showToast("error", "Cannot exceed total payable");
-        return;
-      }
-      try {
-        setMCoinLoading(true);
-        const res = await applyMCoin({ applied_m_coins: coinCount });
-        const json = await res.json();
-        if (json?.res === false) {
-          showToast("error", json?.msg || "Failed to apply");
-          return;
-        } else {
-          showToast("success", json?.msg || "Successfully applied M Coin.");
-          // availableMCoinBalance
-        }
+      } else {
+        showToast("success", json?.msg || "Successfully applied M Coin.");
         setSavedAppliedCoins(coinCount);
         setAppliedCoins("");
         await getAvailableMCoinBalance();
-      } catch (e) {
-        console.error(e);
-        showToast("error", "Apply failed");
-      } finally {
-        setMCoinLoading(false);
+        setPayWithMCoin(true);
       }
-    };
-    
-    const handleRemoveAppliedCoins = async () => {
-      try {
-        setMCoinLoading(true);
-        const res = await removeMCoin();
-        if (!res?.ok) {
-          let msg = "Failed to remove applied M Coin";
-          try {
-            const errJson = await res.json();
-            msg = errJson?.msg || errJson?.message || msg;
-          } catch {}
-          throw new Error(msg);
-        }
+      
+    } catch (e) {
+      console.error(e);
+      showToast("error", "Apply failed");
+    } finally {
+      setMCoinLoading(false);
+    }
+  };
   
-        const json = await res.json().catch(() => ({}));
-  
-        if (json?.res === false) {
-          showToast("error", json?.msg || "Failed to remove applied M Coin");
-          return;
-        }
-        showToast("success", json?.msg || "Applied M Coin removed");
-        setSavedAppliedCoins(0);
-        setAppliedCoins("");
-        await loadAppliedMCoin();
-        await getAvailableMCoinBalance();
-        // await cartData();
-      } catch (e) {
-        console.error("removeMCoin error:", e);
-        showToast("error", e?.message || "Failed to remove applied M Coin");
-      } finally {
-        setMCoinLoading(false);
+  const handleRemoveAppliedCoins = async () => {
+    try {
+      setMCoinLoading(true);
+      const res = await removeMCoin();
+      if (!res?.ok) {
+        let msg = "Failed to remove applied M Coin";
+        try {
+          const errJson = await res.json();
+          msg = errJson?.msg || errJson?.message || msg;
+        } catch {}
+        throw new Error(msg);
       }
-    };
-    // ----------------------------------------------
+
+      const json = await res.json().catch(() => ({}));
+
+      if (json?.res === false) {
+        showToast("error", json?.msg || "Failed to remove applied M Coin");
+        return;
+      }
+      showToast("success", json?.msg || "Applied M Coin removed");
+      setSavedAppliedCoins(0);
+      setAppliedCoins("");
+      await loadAppliedMCoin();
+      await getAvailableMCoinBalance();
+      // await cartData();
+    } catch (e) {
+      console.error("removeMCoin error:", e);
+      showToast("error", e?.message || "Failed to remove applied M Coin");
+    } finally {
+      setMCoinLoading(false);
+    }
+  };
+  // ----------------------------------------------
   
   
     useEffect(() => {
@@ -1238,87 +1255,99 @@ const Cart = ({ isCartVisible, toggleCart }) => {
                     ₹{Math.floor(earnMCoinBalance / 250)}
                   </div>
                 </div>
-                <br/>
                 {/* <hr/><br/> */}
                   {availableMCoinBalance > 0 && (
-                    <div className="mcoin-card">
-                      <div className="mcoin-header">
-                        <h4>M Coin Wallet</h4>
-                        <p>Use your coins and save more on this order</p>
-                      </div>
-
-                      {/* Available Coins */}
-                      <div className="mcoin-balance">
-                        <div>
-                          <span className="label">Available Coins</span>
-                          <strong>{availableMCoinBalance}</strong>
-                        </div>
-                        <div className="value">
-                          ₹{Math.floor(availableMCoinBalance / 250)}
-                        </div>
-                      </div>
-
-                      {/* Applied Section */}
-                      {savedAppliedCoins > 0 ? (
-                        <div className="mcoin-applied">
-                          <div className="mcoin-applied-left">
-                            <span className="label">Applied Coins</span>
-                            <strong className="coins">{savedAppliedCoins} Coins</strong>
-                            <div className="value">₹{savedAppliedCoinValue}</div>
-                          </div>
-
-                          <button
-                            type="button"
-                            className="mcoin-delete-btn"
-                            onClick={handleRemoveAppliedCoins}
+                    <>
+                      <div className="pay-mcoin-toggle">
+                        <label className="pay-mcoin-checkbox" style={{width:'62%'}}>
+                          <input
+                            type="checkbox"
+                            checked={payWithMCoin}
+                            onChange={handlePayWithMCoinToggle}
                             disabled={mCoinLoading}
-                          >
-                            {mCoinLoading ? (
-                              <span className="mcoin-delete-loader"></span>
-                            ) : (
-                              <FiTrash2 />
-                            )}
-                          </button>
-                        </div>
-                      ) : (
-                        <div className="mcoin-apply">
-                          
-                          <label htmlFor="mcoinInput" className="mcoin-label">
-                            Apply Coins
-                            <span>₹{appliedCoinValue}</span>
-                          </label>
-
-                          <div className="mcoin-input-row">
-                            <input
-                              id="mcoinInput"
-                              type="number"
-                              className="mcoin-input"
-                              placeholder="Enter coins"
-                              value={appliedCoins}
-                              onChange={handleCoinChange}
-                              onKeyDown={(e) => {
-                                if (e.key === "Enter") {
-                                  e.preventDefault(); // 🔥 important (form submit avoid)
-                                  handleApplyCoins();
-                                }
-                              }}
-                              min={0}
-                              max={availableMCoinBalance}
-                            />
-
-                            <button
-                              type="button"
-                              onClick={handleApplyCoins}
-                              disabled={mCoinLoading}
-                            >
-                              {mCoinLoading ? "Applying..." : "Apply"}
-                            </button>
+                          />
+                          <span>Pay With M Coin</span>
+                        </label>
+                      </div>
+    
+                      {payWithMCoin && (
+                        <div className="mcoin-card">
+                          <div className="mcoin-header">
+                            <h4>M Coin Wallet</h4>
+                            <p>Use your coins and save more on this order</p>
                           </div>
-
-                          <small>Max: {availableMCoinBalance} coins</small>
+    
+                          <div className="mcoin-balance">
+                            <div>
+                              <span className="label">Available Coins</span>
+                              <strong>{availableMCoinBalance}</strong>
+                            </div>
+                            <div className="value">
+                              ₹{Math.floor(availableMCoinBalance / 250)}
+                            </div>
+                          </div>
+    
+                          {savedAppliedCoins > 0 ? (
+                            <div className="mcoin-applied">
+                              <div className="mcoin-applied-left">
+                                <span className="label">Applied Coins</span>
+                                <strong className="coins">{savedAppliedCoins} Coins</strong>
+                                <div className="value">₹{savedAppliedCoinValue}</div>
+                              </div>
+    
+                              <button
+                                type="button"
+                                className="mcoin-delete-btn"
+                                onClick={handleRemoveAppliedCoins}
+                                disabled={mCoinLoading}
+                              >
+                                {mCoinLoading ? (
+                                  <span className="mcoin-delete-loader"></span>
+                                ) : (
+                                  <FiTrash2 />
+                                )}
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="mcoin-apply">
+                              <label htmlFor="mcoinInput" className="mcoin-label">
+                                Apply Coins
+                                <span>₹{appliedCoinValue}</span>
+                              </label>
+    
+                              <div className="mcoin-input-row">
+                                <input
+                                  id="mcoinInput"
+                                  type="number"
+                                  className="mcoin-input"
+                                  placeholder="Enter coins"
+                                  value={appliedCoins}
+                                  onChange={handleCoinChange}
+                                  onKeyDown={(e) => {
+                                    if (e.key === "Enter") {
+                                      e.preventDefault();
+                                      handleApplyCoins();
+                                    }
+                                  }}
+                                  min={0}
+                                  max={availableMCoinBalance}
+                                />
+    
+                                <button
+                                  type="button"
+                                  onClick={handleApplyCoins}
+                                  disabled={mCoinLoading}
+                                >
+                                  {mCoinLoading ? "Applying..." : "Apply"}
+                                </button>
+                              </div>
+    
+                              <small>Max: {availableMCoinBalance} coins</small>
+                            </div>
+                          )}
                         </div>
                       )}
-                    </div>
+                    </>
                   )}
 
                 <button className="download-pdf" onClick={downloadStatement}>
