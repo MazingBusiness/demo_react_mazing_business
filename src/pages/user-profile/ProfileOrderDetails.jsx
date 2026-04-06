@@ -289,7 +289,7 @@ const ProfileOrderDetails = () => {
                                             const invDate = fd?.invoice_date ? `(${fd.invoice_date})` : "";
                                             const dispatchFrom = fd?.dispatch_from || "-";
                                             const billedQty = fd?.billed_qty ?? "-";
-                                            const rate2 = fd?.rate ?? "-";
+                                            const rate2 = (fd?.rate / fd?.billed_qty) ?? "-";
                                             const price2 = fd?.price ?? "-";
                                             const status2 = fd?.status || "-";
 

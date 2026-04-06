@@ -161,10 +161,12 @@ const Cart = ({ isCartVisible, toggleCart }) => {
 
   // ------ M Coin
   const [availableMCoinBalance, setAvailableMCoinBalance] = useState(0);
+  const [mCoinRedeemPoint, setMCoinRedeemPoint] = useState(0);
   const [earnMCoinBalance, setEarnMCoin] = useState(0);
   const [appliedCoins, setAppliedCoins] = useState("");
   const [savedAppliedCoins, setSavedAppliedCoins] = useState(0);
   const [mCoinLoading, setMCoinLoading] = useState(false);
+  
   const appliedCoinValue = Math.floor((Number(appliedCoins || 0)) / 250);
   const savedAppliedCoinValue = Math.floor(Number(savedAppliedCoins || 0) / 250);
   const [payWithMCoin, setPayWithMCoin] = useState(false);
@@ -487,7 +489,9 @@ const Cart = ({ isCartVisible, toggleCart }) => {
 
         const availableMCoin = Number(responseData.availableMCoinBalance || 0);
         const earnMCoin = Number(responseData.earnMCoin || 0);
+        const mCoinRedeemPoint = Number(responseData.m_coin_redeem_point || 0);
         setAvailableMCoinBalance(availableMCoin);
+        setMCoinRedeemPoint(mCoinRedeemPoint);
         setEarnMCoin(earnMCoin);
 
         setCartItems(cart_item);

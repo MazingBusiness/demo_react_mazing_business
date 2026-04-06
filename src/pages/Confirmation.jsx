@@ -98,7 +98,23 @@ const Confirmation = () => {
                           <td>
                             {" "}
                             {item.product.name}{" "}
-                            <span className="quantity">( ₹ {item.price} x {item.quantity} )</span>
+                            <span className="quantity">( ₹ {item.price} x {item.quantity} )</span><br/>
+                            <span className="m-coin">
+                              Earn M Coin :{" "}
+                              <strong>
+                                {(() => {
+                                  const lineAmount =
+                                    Number(item.price || 0) * Number(item.quantity || 1);
+
+                                  const itemMCoin =
+                                    Number(item?.product?.current_stock) === 1
+                                      ? Number(item?.product?.c_instock_m_coin || 0) * lineAmount
+                                      : Number(item?.product?.c_m_coin || 0) * lineAmount;
+
+                                  return itemMCoin;
+                                })()}
+                              </strong>
+                            </span>
                           </td>
                           <td>₹ {item.quantity * item.price}</td>
                         </tr>

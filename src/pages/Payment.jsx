@@ -405,6 +405,22 @@ const Payment = () => {
                                 <div style={{ fontSize: 12, opacity: 0.7 }}>
                                   Part No: {row?.product?.part_no || "-"}
                                 </div>
+                                <span className="m-coin">
+                                  Earn M Coin :{" "}
+                                  <strong>
+                                    {(() => {
+                                      const lineAmount =
+                                        Number(row?.price || 0);
+
+                                      const itemMCoin =
+                                        Number(row?.product?.current_stock) === 1
+                                          ? Number(row?.product?.c_instock_m_coin || 0) * lineAmount
+                                          : Number(row?.product?.c_m_coin || 0) * lineAmount;
+
+                                      return itemMCoin;
+                                    })()}
+                                  </strong>
+                                </span>
                               </td>
 
                               <td data-label="Variation">{row?.variation || "-"}</td>
