@@ -149,6 +149,8 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
   const [saveCheckedLoading, setSaveCheckedLoading] = useState(false);
 
   // ------ M Coin
+  // ✅ only from cart API
+  const [mCoinRedeemPoint, setMCoinRedeemPoint] = useState(null);
   const [availableMCoinBalance, setAvailableMCoinBalance] = useState(0);
   const [earnMCoinBalance, setEarnMCoin] = useState(0);
   const [appliedCoins, setAppliedCoins] = useState("");
@@ -455,6 +457,14 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
         const save_for_later = responseData.save_for_later || [];
         const save_for_later_category = responseData.save_for_later_category || [];
 
+        const redeemPointRaw = responseData?.m_coin_redeem_point;
+        const redeemPoint =
+          redeemPointRaw !== null &&
+          redeemPointRaw !== undefined &&
+          redeemPointRaw !== ""
+            ? Number(redeemPointRaw)
+            : null;
+
 
 
         setCartItems(cart_item);
@@ -468,6 +478,13 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
         const earnMCoin = Number(responseData.earnMCoin || 0);
         setAvailableMCoinBalance(availableMCoin);
         setEarnMCoin(earnMCoin);
+
+        // ✅ set only from API
+        setMCoinRedeemPoint(
+          redeemPoint && !Number.isNaN(redeemPoint) && redeemPoint > 0
+            ? redeemPoint
+            : null
+        );
 
         setSubTotal(otherTotal + noCreditTotal);
         setTotalPayable(payable);

@@ -146,6 +146,8 @@ const Cart = ({ isCartVisible, toggleCart }) => {
   const [qtyAlertsById, setQtyAlertsById] = useState({});
   const [savedItems, setSavedItems] = useState([]);
 
+  
+
   // Show Message
   const showToast = (icon, title) => {
     Swal.fire({
@@ -489,7 +491,22 @@ const Cart = ({ isCartVisible, toggleCart }) => {
 
         const availableMCoin = Number(responseData.availableMCoinBalance || 0);
         const earnMCoin = Number(responseData.earnMCoin || 0);
-        const mCoinRedeemPoint = Number(responseData.m_coin_redeem_point || 0);
+
+        const redeemPointRaw = responseData?.m_coin_redeem_point;
+        const redeemPoint =
+          redeemPointRaw !== null &&
+          redeemPointRaw !== undefined &&
+          redeemPointRaw !== ""
+            ? Number(redeemPointRaw)
+            : null;
+
+        // ✅ set only from API
+        setMCoinRedeemPoint(
+          redeemPoint && !Number.isNaN(redeemPoint) && redeemPoint > 0
+            ? redeemPoint
+            : null
+        );
+
         setAvailableMCoinBalance(availableMCoin);
         setMCoinRedeemPoint(mCoinRedeemPoint);
         setEarnMCoin(earnMCoin);
