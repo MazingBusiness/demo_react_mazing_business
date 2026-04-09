@@ -63,6 +63,7 @@ const BestSellers = () => {
           const fastDeliveryTag = Number(item.fast_delivery_tag) === 1;
           const hasWarranty = Number(item.is_warranty) === 1;
           const offerList = Array.isArray(item.offer) ? item.offer : [];
+          const discount_price = item.discount_price.toString().replace(/₹/g, "")
           const now = new Date();
           const hasActiveOffer = offerList.some((offerItem) => {
             const start = offerItem?.offer_validity_start
@@ -120,6 +121,7 @@ const BestSellers = () => {
             hasActiveOffer,
             stocks: item.stocks || [],
             reviews: item.reviews || [],
+            earnMCoin: discount_price * item.c_instock_m_coin
           };
         });
 
@@ -362,26 +364,30 @@ const BestSellers = () => {
                     </h4>
 
                     {product.user_id != null && (
-                      <div className="prices">
-                        <span className="old">{product.oldPrice}</span>
-                        <span className="new">{product.newPrice}</span>
-                      </div>
+                      <>
+                        <div className="prices">
+                          <span className="old">{product.oldPrice}</span>
+                          <span className="new">{product.newPrice}</span>
+                        </div>
+                        <div className="prices">
+                          <span className="emcoin">Earn MCoin : {product.earnMCoin} * X</span>
+                        </div>
+                      </>
                     )}
 
                     {product.user_id == null && <br />}
-
                     <div className="ratingGrp">
                       <div className="ratingGrpLft">
-                        {product.user_id != null && (
+                        {/* {product.user_id != null && (
                           <div className="discount">OFF {product.discount}%</div>
-                        )}
+                        )} */}
 
-                        <div className="rating">
+                        {/* <div className="rating">
                           {renderRating(product.rating)}
                           <span className="rating-count">
                             ({product.totalRatings})
                           </span>
-                        </div>
+                        </div> */}
 
                         {renderWarrantyTag(product)}
                       </div>

@@ -129,6 +129,8 @@ const ProductDetails = () => {
       ? `₹${Number(product.bulk_discount_price).toFixed(2)}`
       : "";
 
+  const earnMCoin = product?.discount_price * product?.c_instock_m_coin;
+
   const pieceByCarton =
     user_id != null && product?.piece_by_carton
       ? `${product.piece_by_carton}`
@@ -303,12 +305,14 @@ const ProductDetails = () => {
                     <div className="product-price">
                       <span className="old-price">{formattedMrp}</span>
                       <span className="new-price">{formattedDiscountPrice}</span>
+                      
                       <span className="unit">{unitLabel}</span>
 
                       <button type="button" onClick={handleAddToCart} disabled={loading || !product?.id} className="add-to-cart-btn-product-details"
                         > Add to Cart </button>
                     </div>
-                  </div>
+                    
+                  </div><span className="emcoinDetails">Earn MCoin : {earnMCoin} * X</span>
                   {product?.is_warranty == 1 && (
                     <div className="warranty-div">
                       <p className="warranty-text">
@@ -342,6 +346,7 @@ const ProductDetails = () => {
                       <span className="highlight">{formattedBulkDiscountPrice}</span>{" "}
                       instead of{" "}
                       <span className="highlight">{formattedDiscountPrice}</span>
+                      <span className="emcoin">Earn MCoin : {earnMCoin} * X</span>
                     </p>
                   </div>
                 </>

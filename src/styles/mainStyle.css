@@ -2225,6 +2225,19 @@ a.all-link svg {
   font-weight: 600;
 }
 
+.emcoin {
+  color: #0e4e80;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.emcoinDetails {
+  color: #0e4e80;
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
 .discount {
   color: #000000;
   font-size: 12px;
@@ -5816,6 +5829,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 .product-stock {
   width: 100%;
+  margin-top: 10px;
 }
 .product-stock .stock-item {
   width: 100%;

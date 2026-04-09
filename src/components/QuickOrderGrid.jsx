@@ -98,6 +98,8 @@ const QuickOrderGrid = ({ filters, onPriceRangeUpdate }) => {
           const fastDeliveryTag = item.fast_delivery_tag === 1;
           const hasWarranty = item.is_warranty === 1;
 
+          const earnMCoin = item.is_warranty = item.discount_price * item.c_instock_m_coin;
+
           const rating = item.rating && item.rating !== 0 ? item.rating : 4;
           const totalRatings =
             Array.isArray(item.reviews) && item.reviews.length > 0
@@ -152,6 +154,7 @@ const QuickOrderGrid = ({ filters, onPriceRangeUpdate }) => {
             fast_delivery_tag: item.fast_delivery_tag,
             stocks: item.stocks || [],
             reviews: item.reviews || [],
+            earnMCoin:earnMCoin||0
           };
         });
 
@@ -472,10 +475,15 @@ const QuickOrderGrid = ({ filters, onPriceRangeUpdate }) => {
                 </h3>
 
                 {product.user_id != null && (
-                  <div className="prices">
-                    <span className="old">{product.oldPrice}</span>
-                    <span className="new">{product.newPrice}</span>
-                  </div>
+                  <>
+                    <div className="prices">
+                      <span className="old">{product.oldPrice}</span>
+                      <span className="new">{product.newPrice}</span>
+                    </div>
+                    <div className="prices">
+                      <span className="emcoin">Earn MCoin : {product.earnMCoin} * X</span>
+                    </div>
+                  </>
                 )}
 
                 <div className="ratingGrp">

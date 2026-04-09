@@ -85,6 +85,9 @@ const OfferItems = () => {
           const offerList = Array.isArray(item.offer) ? item.offer : [];
           const now = new Date();
 
+          const earnMCoin = item?.discount_price * item?.c_instock_m_coin;
+
+
           const hasActiveOfferByDate = offerList.some((offerItem) => {
             const start = parseOfferDate(offerItem?.offer_validity_start);
             const end = parseOfferDate(offerItem?.offer_validity_end);
@@ -145,7 +148,8 @@ const OfferItems = () => {
             fast_delivery_tag: item.fast_delivery_tag || 0,
             stocks: details.stocks || [],
             reviews: details.reviews || item.reviews || [],
-
+            earnMCoin:item.discount_price * details.c_instock_m_coin,
+            
             offer: offerList,
             hasActiveOffer,
           };
@@ -377,10 +381,15 @@ const OfferItems = () => {
                       </h3>
 
                       {product.user_id != null && (
-                        <div className="prices">
-                          <span className="old">{product.oldPrice}</span>
-                          <span className="new">{product.newPrice}</span>
-                        </div>
+                        <>
+                          <div className="prices">
+                            <span className="old">{product.oldPrice}</span>
+                            <span className="new">{product.newPrice}</span>
+                          </div>
+                          <div className="prices">
+                            <span className="emcoin">Earn MCoin : {product.earnMCoin} * X</span>
+                          </div>
+                        </>
                       )}
 
                       <div className="ratingGrp">

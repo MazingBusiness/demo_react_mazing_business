@@ -86,8 +86,10 @@ const NewArrivals = () => {
           const newPriceValue = item?.discount_price
             ? normalizePriceString(item.discount_price)
             : formatPrice(oldPriceValue);
-
+          
           const offerList = Array.isArray(item.offer) ? item.offer : [];
+          const discount_price = item.discount_price.toString().replace(/₹/g, "");
+          const m_coin_value = product.c_instock_m_coin || 1; 
           const now = new Date();
           const hasActiveOffer = offerList.some((offerItem) => {
             const start = offerItem?.offer_validity_start
@@ -134,6 +136,7 @@ const NewArrivals = () => {
             category_group_id: item?.category_group_id || product?.group_id || "",
             category_id: item?.category_id || product?.category_id || "",
             brand_id: item?.brand_id || product?.brand_id || "",
+            earnMCoin: discount_price * m_coin_value
           };
 
           return {
@@ -164,7 +167,7 @@ const NewArrivals = () => {
             category_id: item?.category_id || "",
             brand_id: item?.brand_id || "",
             fast_delivery_tag: item?.fast_delivery_tag || 0,
-
+            earnMCoin: discount_price * m_coin_value,
             stocks: product?.stocks || [],
             reviews,
             rating_raw: product?.rating || 0,
@@ -424,26 +427,31 @@ const NewArrivals = () => {
                       </h4>
 
                       {product.user_id != null && (
-                        <div className="prices">
-                          <span className="old">{product.oldPrice}</span>
-                          <span className="new">{product.newPrice}</span>
-                        </div>
+                        <>
+                          <div className="prices">
+                            <span className="old">{product.oldPrice}</span>
+                            <span className="new">{product.newPrice}</span>
+                          </div>
+                          <div className="prices">
+                            <span className="emcoin">Earn MCoin : {product.earnMCoin} * X</span>
+                          </div>
+                        </>
                       )}
 
                       {product.user_id == null && <br />}
 
                       <div className="ratingGrp">
                         <div className="ratingGrpLft">
-                          {product.user_id != null && (
+                          {/* {product.user_id != null && (
                             <div className="discount">OFF {product.discount}%</div>
-                          )}
+                          )} */}
 
-                          <div className="rating">
+                          {/* <div className="rating">
                             {renderRating(product.rating)}
                             <span className="rating-count">
                               ({product.totalRatings})
                             </span>
-                          </div>
+                          </div> */}
 
                           {renderWarrantyTag(product)}
                         </div>
