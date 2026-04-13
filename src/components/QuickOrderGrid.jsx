@@ -68,6 +68,7 @@ const QuickOrderGrid = ({ filters, onPriceRangeUpdate }) => {
         filters?.cat_groups || [],
         filters?.categories || [],
         filters?.brands || [],
+        filters?.m_coin_rates || [],
         filters?.search_text || "",
         filters?.min_price || "",
         filters?.max_price || "",
@@ -94,11 +95,17 @@ const QuickOrderGrid = ({ filters, onPriceRangeUpdate }) => {
         }
 
         const transformedData = productList.map((item) => {
-          const noCredit = item.cash_and_carry_item === 1;
-          const fastDeliveryTag = item.fast_delivery_tag === 1;
-          const hasWarranty = item.is_warranty === 1;
+          const noCredit = Number(item.cash_and_carry_item) === 1;
+          const fastDeliveryTag = Number(item.fast_delivery_tag) === 1;
+          const hasWarranty = Number(item.is_warranty) === 1;
 
-          const earnMCoin = item.is_warranty = item.discount_price * item.c_instock_m_coin;
+          const discountPrice = Number(
+            String(item.discount_price || 0).replace(/[^0-9.]/g, "")
+          );
+
+          const cInstockMCoin = Number(item.c_instock_m_coin || 0);
+
+          const earnMCoin = discountPrice * cInstockMCoin;
 
           const rating = item.rating && item.rating !== 0 ? item.rating : 4;
           const totalRatings =
@@ -130,10 +137,10 @@ const QuickOrderGrid = ({ filters, onPriceRangeUpdate }) => {
             slug: item.slug,
             name: item.name,
             img: item.thumb_img?.file_name || no_image,
-            oldPrice: item.mrp ? `₹${parseFloat(item.mrp).toFixed(2)}` : "₹0.00",
+            oldPrice: item.mrp ? `₹${parseFloat(String(item.mrp).replace(/[^0-9.]/g, "") || 0).toFixed(2)}` : "₹0.00",
             newPrice: item.discount_price
               ? `₹${parseFloat(
-                  String(item.discount_price).replace(/₹/g, "")
+                  String(item.discount_price).replace(/[^0-9.]/g, "")
                 ).toFixed(2)}`
               : "₹0.00",
             rating,
@@ -154,7 +161,8 @@ const QuickOrderGrid = ({ filters, onPriceRangeUpdate }) => {
             fast_delivery_tag: item.fast_delivery_tag,
             stocks: item.stocks || [],
             reviews: item.reviews || [],
-            earnMCoin:earnMCoin||0
+            earnMCoin: earnMCoin || 0,
+            c_instock_m_coin: cInstockMCoin || 0,
           };
         });
 
@@ -202,6 +210,7 @@ const QuickOrderGrid = ({ filters, onPriceRangeUpdate }) => {
         toCsv(filters?.cat_groups),
         toCsv(filters?.categories),
         toCsv(filters?.brands),
+        toCsv(filters?.m_coin_rates),
         filters?.search_text || "",
         filters?.min_price || "",
         filters?.max_price || "",
@@ -251,6 +260,7 @@ const QuickOrderGrid = ({ filters, onPriceRangeUpdate }) => {
         toCsv(filters?.cat_groups),
         toCsv(filters?.categories),
         toCsv(filters?.brands),
+        toCsv(filters?.m_coin_rates),
         filters?.search_text || "",
         filters?.min_price || "",
         filters?.max_price || "",
@@ -376,6 +386,7 @@ const QuickOrderGrid = ({ filters, onPriceRangeUpdate }) => {
     filters?.cat_groups,
     filters?.categories,
     filters?.brands,
+    filters?.m_coin_rates,
     filters?.search_text,
     filters?.min_price,
     filters?.max_price,
@@ -392,6 +403,7 @@ const QuickOrderGrid = ({ filters, onPriceRangeUpdate }) => {
     filters?.cat_groups,
     filters?.categories,
     filters?.brands,
+    filters?.m_coin_rates,
     filters?.search_text,
     filters?.min_price,
     filters?.max_price,
@@ -422,38 +434,38 @@ const QuickOrderGrid = ({ filters, onPriceRangeUpdate }) => {
   return (
     <div className="product-section-wrapper">
       <div className="product-header">
-        <div className="sort-by">
-          {/*
-          <span>Sort By:</span>
-          <select
-            value={price_sort}
-            onChange={(e) => handleSortChange(e.target.value)}
-          >
-            <option value="popularity">Popularity</option>
-            <option value="low_to_high">Price: Low to High</option>
-            <option value="high_to_low">Price: High to Low</option>
-          </select>
-          */}
-        </div>
+        <div className="product-header-left">
+          <div className="sort-by">
+            <span>Sort By:</span>
+            <select
+              value={price_sort}
+              onChange={(e) => handleSortChange(e.target.value)}
+            >
+              <option value="popularity">Popularity</option>
+              <option value="mcoin_low_to_high">M Coin: Low to High</option>
+              <option value="mcoin_high_to_low">M Coin: High to Low</option>
+            </select>
+          </div>
 
-        <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
-          <button
-            className="download-pdf-btn"
-            type="button"
-            onClick={handleDownloadPdf}
-            disabled={pdfDownloading}
-          >
-            {pdfDownloading ? "Downloading PDF..." : "Download Net Price (PDF)"}
-          </button>
+          <div className="download-actions">
+            <button
+              className="download-pdf-btn"
+              type="button"
+              onClick={handleDownloadPdf}
+              disabled={pdfDownloading}
+            >
+              {pdfDownloading ? "Downloading PDF..." : "Download Net Price (PDF)"}
+            </button>
 
-          <button
-            className="download-excel-btn"
-            type="button"
-            onClick={handleDownloadExcel}
-            disabled={excelDownloading}
-          >
-            {excelDownloading ? "Downloading Excel..." : "Download Net Price (EXCEL)"}
-          </button>
+            <button
+              className="download-excel-btn"
+              type="button"
+              onClick={handleDownloadExcel}
+              disabled={excelDownloading}
+            >
+              {excelDownloading ? "Downloading Excel..." : "Download Net Price (EXCEL)"}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -481,7 +493,9 @@ const QuickOrderGrid = ({ filters, onPriceRangeUpdate }) => {
                       <span className="new">{product.newPrice}</span>
                     </div>
                     <div className="prices">
-                      <span className="emcoin">Earn MCoin : {product.earnMCoin} * X</span>
+                      <span className="emcoin">
+                        Earn MCoin : {Number(product.earnMCoin || 0).toFixed(2)}
+                      </span>
                     </div>
                   </>
                 )}

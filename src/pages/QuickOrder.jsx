@@ -6,7 +6,7 @@ import { FaAngleDown, FaAngleUp, FaFilter } from "react-icons/fa";
 import QuickOrderGrid from "../components/QuickOrderGrid.jsx";
 
 // Api Call
-import { getAllBrands, getAllCategoryGroups } from "../api/apiRequest";
+import { getAllBrands, getAllCategoryGroups, getAllMCoinRate } from "../api/apiRequest";
 
 const deliveryOptions = [
   { value: 1, label: "Delivery in 3 - 4 Days" },
@@ -25,6 +25,7 @@ const QuickOrder = () => {
   const [selectedCatGIds, setSelectedCatGIds] = useState([]);
   const [selectedChildCatIds, setSelectedChildCatIds] = useState([]);
   const [selectedBrands, setSelectedBrands] = useState([]);
+  const [selectedMCoinRates, setSelectedMCoinRates] = useState([]);
   const [selectedDelivery, setSelectedDelivery] = useState(null);
   const [search_text, setSearchText] = useState("");
   const [location_id, setLocationId] = useState(null);
@@ -33,12 +34,14 @@ const QuickOrder = () => {
 
   const [allCategoryGroups, setAllCategoryGroups] = useState([]);
   const [allBrands, setAllBrands] = useState([]);
+  const [allMCoinRate, setAllMCoinRate] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
 
   const [categoryGroupSearch, setCategoryGroupSearch] = useState("");
   const [categorySearch, setCategorySearch] = useState("");
   const [brandSearch, setBrandSearch] = useState("");
+  const [mCoinRateSearch, setMCoinRateSearch] = useState("");
 
   const [availableMin, setAvailableMin] = useState(1000);
   const [availableMax, setAvailableMax] = useState(7500);
@@ -54,7 +57,6 @@ const QuickOrder = () => {
 
   const [isPriceDirty, setIsPriceDirty] = useState(false);
 
-  // ✅ live refs to avoid stale closure issues
   const isPriceDirtyRef = useRef(false);
   const currentMinRef = useRef(1000);
   const currentMaxRef = useRef(7500);
@@ -69,6 +71,7 @@ const QuickOrder = () => {
 
   const [showMoreCatG, setShowMoreCatG] = useState(5);
   const [showMoreBrands, setShowMoreBrands] = useState(5);
+  const [showMoreMCoinRates, setShowMoreMCoinRates] = useState(5);
   const [showMoreDelivery, setShowMoreDelivery] = useState(2);
 
   const CATEGORY_INITIAL_LIMIT = 5;
@@ -106,6 +109,7 @@ const QuickOrder = () => {
       cat_groups: selectedCatGIds,
       categories: selectedChildCatIds,
       brands: selectedBrands,
+      m_coin_rates: selectedMCoinRates,
       delivery: selectedDelivery,
       search_text,
       min_price: isPriceDirty ? currentMin : "",
@@ -118,6 +122,7 @@ const QuickOrder = () => {
       selectedCatGIds,
       selectedChildCatIds,
       selectedBrands,
+      selectedMCoinRates,
       selectedDelivery,
       search_text,
       currentMin,
@@ -225,8 +230,44 @@ const QuickOrder = () => {
     }
   };
 
+  const getAllMCoinRateFromAPI = async () => {
+    try {
+      setLoading(true);
+
+      const apiRes = await getAllMCoinRate();
+      const responseData = await apiRes.json();
+
+      if (responseData?.res && Array.isArray(responseData?.data)) {
+        const rawMCoins = responseData.data;
+
+        const uniqueMCoins = rawMCoins.filter(
+          (item, index, self) =>
+            index ===
+            self.findIndex(
+              (x) =>
+                Number(x.c_instock_m_coin) === Number(item.c_instock_m_coin)
+            )
+        );
+
+        const sortedMCoins = uniqueMCoins.sort(
+          (a, b) => Number(a.c_instock_m_coin) - Number(b.c_instock_m_coin)
+        );
+
+        setAllMCoinRate(sortedMCoins);
+      } else {
+        setAllMCoinRate([]);
+      }
+    } catch (error) {
+      console.error("Fetch error:", error);
+      setAllMCoinRate([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     getAllCategoryGroupsFromAPI();
+    getAllMCoinRateFromAPI();
   }, []);
 
   useEffect(() => {
@@ -286,6 +327,17 @@ const QuickOrder = () => {
       (brand?.name || "").toLowerCase().includes(keyword)
     );
   }, [allBrands, brandSearch]);
+
+  const filteredMCoinRates = useMemo(() => {
+    const keyword = mCoinRateSearch.trim().toLowerCase();
+    if (!keyword) return allMCoinRate;
+
+    return (allMCoinRate || []).filter((item) =>
+      String(item?.c_instock_m_coin ?? "")
+        .toLowerCase()
+        .includes(keyword)
+    );
+  }, [allMCoinRate, mCoinRateSearch]);
 
   useEffect(() => {
     if (!groupsWithSortedChildren.length) return;
@@ -368,6 +420,21 @@ const QuickOrder = () => {
   }, [selectedBrands, allBrands, showMoreBrands]);
 
   useEffect(() => {
+    if (!selectedMCoinRates.length || !allMCoinRate.length) return;
+
+    const firstSelectedMCoinRate = selectedMCoinRates[0];
+
+    const selectedIndex = allMCoinRate.findIndex(
+      (item) =>
+        Number(item.c_instock_m_coin) === Number(firstSelectedMCoinRate)
+    );
+
+    if (selectedIndex !== -1 && selectedIndex + 1 > showMoreMCoinRates) {
+      setShowMoreMCoinRates(selectedIndex + 1);
+    }
+  }, [selectedMCoinRates, allMCoinRate, showMoreMCoinRates]);
+
+  useEffect(() => {
     if (!selectedChildCatIds.length || !groupsWithSortedChildren.length) return;
 
     setShowMoreCategories((prev) => {
@@ -393,7 +460,6 @@ const QuickOrder = () => {
     });
   }, [selectedChildCatIds, groupsWithSortedChildren]);
 
-  // ✅ reset price state immediately when non-price filters change
   useEffect(() => {
     isPriceDirtyRef.current = false;
     setIsPriceDirty(false);
@@ -401,6 +467,7 @@ const QuickOrder = () => {
     selectedCatGIds,
     selectedChildCatIds,
     selectedBrands,
+    selectedMCoinRates,
     selectedDelivery,
     search_text,
     location_id,
@@ -442,10 +509,25 @@ const QuickOrder = () => {
     );
   };
 
+  const toggleMCoinRate = (rate) => {
+    setSelectedMCoinRates((prev) =>
+      prev.includes(rate)
+        ? prev.filter((item) => item !== rate)
+        : [...prev, rate]
+    );
+  };
+
   const clearBrand = () => {
     setSelectedBrands([]);
     setShowMoreBrands(5);
     setBrandSearch("");
+    setPriceDirtyState(false);
+  };
+
+  const clearMCoinRate = () => {
+    setSelectedMCoinRates([]);
+    setShowMoreMCoinRates(5);
+    setMCoinRateSearch("");
     setPriceDirtyState(false);
   };
 
@@ -489,6 +571,12 @@ const QuickOrder = () => {
     setShowMoreBrands((prev) => (prev >= filteredBrands.length ? 5 : prev + 5));
   };
 
+  const toggleMCoinRates = () => {
+    setShowMoreMCoinRates((prev) =>
+      prev >= filteredMCoinRates.length ? 5 : prev + 5
+    );
+  };
+
   const toggleDelivery = () => {
     setShowMoreDelivery((prev) =>
       prev >= deliveryOptions.length ? 3 : prev + 3
@@ -525,6 +613,15 @@ const QuickOrder = () => {
   const allVisibleBrandsSelected =
     visibleBrandIds.length > 0 &&
     visibleBrandIds.every((id) => selectedBrands.includes(id));
+
+  const visibleMCoinRateValues = filteredMCoinRates.map((item) =>
+    Number(item.c_instock_m_coin)
+  );
+  const allVisibleMCoinRatesSelected =
+    visibleMCoinRateValues.length > 0 &&
+    visibleMCoinRateValues.every((rate) =>
+      selectedMCoinRates.includes(rate)
+    );
 
   const visibleDeliveryIds = deliveryOptions.map((opt) => opt.value);
   const allVisibleDeliverySelected =
@@ -570,6 +667,18 @@ const QuickOrder = () => {
       );
     } else {
       setSelectedBrands((prev) => [...new Set([...prev, ...visibleBrandIds])]);
+    }
+  };
+
+  const handleSelectAllMCoinRates = () => {
+    if (allVisibleMCoinRatesSelected) {
+      setSelectedMCoinRates((prev) =>
+        prev.filter((rate) => !visibleMCoinRateValues.includes(rate))
+      );
+    } else {
+      setSelectedMCoinRates((prev) => [
+        ...new Set([...prev, ...visibleMCoinRateValues]),
+      ]);
     }
   };
 
@@ -733,7 +842,6 @@ const QuickOrder = () => {
     setAvailableMin(nextMin);
     setAvailableMax(nextMax);
 
-    // ✅ use ref instead of stale state
     if (!isPriceDirtyRef.current) {
       setMinState(nextMin);
       setMaxState(nextMax);
@@ -1058,6 +1166,95 @@ const QuickOrder = () => {
                 )}
               </div>
 
+              {/* M Coin Rate */}
+              <div className="filter-section">
+                <h4>
+                  M Coin Rate{" "}
+                  <button
+                    onClick={clearMCoinRate}
+                    className="clear-btn"
+                    type="button"
+                  >
+                    ✕ CLEAR
+                  </button>
+                </h4>
+
+                <input
+                  type="text"
+                  placeholder="Search M Coin rate..."
+                  value={mCoinRateSearch}
+                  onChange={(e) => {
+                    setMCoinRateSearch(e.target.value);
+                    setShowMoreMCoinRates(5);
+                  }}
+                  className="filter-search-input"
+                />
+
+                <label
+                  className={`animated-checkbox ${
+                    allVisibleMCoinRatesSelected ? "checked" : ""
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={allVisibleMCoinRatesSelected}
+                    onChange={handleSelectAllMCoinRates}
+                  />
+                  <span className="custom-check" />
+                  Select All
+                </label>
+
+                <div className="checkbox-group brand-group fade-in">
+                  {filteredMCoinRates
+                    .slice(0, showMoreMCoinRates)
+                    .map((item, index) => {
+                      const rate = Number(item.c_instock_m_coin);
+                      const isSelected = selectedMCoinRates.includes(rate);
+
+                      return (
+                        <label
+                          key={`mcoin-${rate}-${index}`}
+                          className={`animated-checkbox ${
+                            isSelected ? "checked" : ""
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => toggleMCoinRate(rate)}
+                          />
+                          <span className="custom-check" />
+                          {rate}
+                        </label>
+                      );
+                    })}
+
+                  {filteredMCoinRates.length === 0 && (
+                    <div style={{ fontSize: 12, color: "#6b7280" }}>
+                      No M Coin rate found.
+                    </div>
+                  )}
+                </div>
+
+                {filteredMCoinRates.length > 5 && (
+                  <button
+                    onClick={toggleMCoinRates}
+                    className="show-more"
+                    type="button"
+                  >
+                    {showMoreMCoinRates >= filteredMCoinRates.length ? (
+                      <>
+                        <FaAngleUp /> SHOW LESS
+                      </>
+                    ) : (
+                      <>
+                        <FaAngleDown /> SHOW MORE
+                      </>
+                    )}
+                  </button>
+                )}
+              </div>
+
               {/* Delivery */}
               <div className="filter-section">
                 <h4>
@@ -1168,47 +1365,6 @@ const QuickOrder = () => {
                         className="filter-search-input"
                       />
                     </div>
-                  </div>
-
-                  <div
-                    className="values"
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      marginBottom: 8,
-                    }}
-                  >
-                    <div>₹{min}</div>
-                    <div>₹{max}</div>
-                  </div>
-
-                  <div ref={sliderRef} id="slider">
-                    <div ref={minValueRef} id="min" data-content={currentMin}>
-                      <div
-                        id="min-drag"
-                        onMouseDown={startMinDrag}
-                        onTouchStart={startMinDrag}
-                      ></div>
-                    </div>
-
-                    <div ref={maxValueRef} id="max" data-content={currentMax}>
-                      <div
-                        id="max-drag"
-                        onMouseDown={startMaxDrag}
-                        onTouchStart={startMaxDrag}
-                      ></div>
-                    </div>
-                  </div>
-
-                  <div
-                    style={{
-                      marginTop: 12,
-                      fontSize: 13,
-                      fontWeight: 600,
-                      textAlign: "center",
-                    }}
-                  >
-                    ₹{currentMin} - ₹{currentMax}
                   </div>
                 </div>
               </div>

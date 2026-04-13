@@ -338,6 +338,11 @@ const ProductModal = ({ product, isOpen, onClose }) => {
 
   if (!isOpen || !product) return null;
 
+  const earnedMCoin =
+    (Number(unitPrice) || 0) *
+    (Number(productDetails?.c_instock_m_coin) || 0) *
+    (Number(quantity) || 0);
+
   return (
     <div className={`product-modal-overlay ${isOpen ? "open" : ""}`}>
       <div className={`product-modal-box ${isOpen ? "open" : ""}`} ref={modalRef}>
@@ -450,6 +455,9 @@ const ProductModal = ({ product, isOpen, onClose }) => {
                         Updating price...
                       </span>
                     )}
+                  </div>
+                  <div className="prices">
+                    <span className="emcoin" id="spanMCoin">Earn MCoin : {earnedMCoin.toFixed(2)}</span>
                   </div>
 
                   {!!qtyAlert && (

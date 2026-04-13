@@ -136,6 +136,7 @@ export const getQuickOrderProduct = async (
   cat_groups,
   categories,
   brands,
+  m_coin_rates,
   search_text,
   min_price,
   max_price,
@@ -150,23 +151,69 @@ export const getQuickOrderProduct = async (
   const header = getHeader();
 
   const queryParams = new URLSearchParams();
-  if (cat_groups) queryParams.append("cat_groups", cat_groups);
-  if (categories) queryParams.append("categories", categories);
-  if (brands) queryParams.append("brands", brands);
-  if (search_text) queryParams.append("search_text", search_text);
-  if (min_price) queryParams.append("min_price", min_price);
-  if (max_price) queryParams.append("max_price", max_price);
-  if (location_id) queryParams.append("location_id", location_id);
 
-  // ✅ delivery -> inhouse_product (as per your current logic)
-  if (delivery !== null && delivery !== undefined && delivery !== "") {
-    queryParams.append("inhouse_product", delivery);
+  if (cat_groups && String(cat_groups).trim() !== "") {
+    queryParams.append("cat_groups", Array.isArray(cat_groups) ? cat_groups.join(",") : cat_groups);
   }
 
-  if (page) queryParams.append("page", page);
-  if (price_sort) queryParams.append("price_sort", price_sort);
-  if (pagination) queryParams.append("pagination", pagination);
-  if (user?.id) queryParams.append("user_id", user.id);
+  if (categories && String(categories).trim() !== "") {
+    queryParams.append("categories", Array.isArray(categories) ? categories.join(",") : categories);
+  }
+
+  if (brands && String(brands).trim() !== "") {
+    queryParams.append("brands", Array.isArray(brands) ? brands.join(",") : brands);
+  }
+
+  if (m_coin_rates && String(m_coin_rates).trim() !== "") {
+    queryParams.append(
+      "m_coin_rates",
+      Array.isArray(m_coin_rates) ? m_coin_rates.join(",") : m_coin_rates
+    );
+  }
+
+  if (search_text) {
+    queryParams.append("search_text", search_text);
+  }
+
+  if (min_price !== null && min_price !== undefined && min_price !== "") {
+    queryParams.append("min_price", min_price);
+  }
+
+  if (max_price !== null && max_price !== undefined && max_price !== "") {
+    queryParams.append("max_price", max_price);
+  }
+
+  if (location_id !== null && location_id !== undefined && location_id !== "") {
+    queryParams.append("location_id", location_id);
+  }
+
+  if (
+    inhouse_product !== null &&
+    inhouse_product !== undefined &&
+    inhouse_product !== ""
+  ) {
+    queryParams.append("inhouse_product", inhouse_product);
+  }
+
+  if (delivery !== null && delivery !== undefined && delivery !== "") {
+    queryParams.append("delivery", delivery);
+  }
+
+  if (page) {
+    queryParams.append("page", page);
+  }
+
+  if (price_sort) {
+    queryParams.append("price_sort", price_sort);
+  }
+
+  if (pagination) {
+    queryParams.append("pagination", pagination);
+  }
+
+  if (user?.id) {
+    queryParams.append("user_id", user.id);
+  }
 
   const url = `${API_BASE_URL}product/quick-order?${queryParams.toString()}`;
 
@@ -174,11 +221,9 @@ export const getQuickOrderProduct = async (
     method: "GET",
     headers: {
       ...(header?.headers || {}),
-      Accept: "application/json",          // ✅ IMPORTANT
+      Accept: "application/json",
       "Content-Type": "application/json",
     },
-    // if your backend uses cookies/session auth:
-    // credentials: "include",
   });
 
   return response;
@@ -329,6 +374,20 @@ export const getAllBrands = async (category_group_id, category_id) => {
   return response;
 };
 
+// Get All Brands
+export const getAllMCoinRate = async () => {
+  const url = `${API_BASE_URL}product/all-mCoin-rate`;
+
+  const response = await fetch(url, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+
+  // const data = await response.json();
+  return response;
+};
 export const saveForLater = async ({ cart_id }) => {
   const header = getHeader();
   if (!header) throw new Error("Authorization token missing");

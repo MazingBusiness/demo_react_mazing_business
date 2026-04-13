@@ -199,6 +199,7 @@ const ProfileOrderDetails = () => {
                   ) : (
                     details.map((row, idx) => {
                       const productName = row?.product?.name || "-";
+                      const earnedMCoin = row?.c_m_coin_value || "0";
                       const partNo = String(row?.product?.part_no || "").trim() || "-";
                       const qty = row?.quantity ?? "-";
                       const approvedQty = row?.approved_quantity ?? "-";
@@ -218,7 +219,10 @@ const ProfileOrderDetails = () => {
                           {/* ✅ Main Row */}
                           <tr>
                             <td>{String(idx + 1).padStart(2, "0")}</td>
-                            <td>{productName}</td>
+                            <td>
+                              {productName}
+                              <br/><strong>Earned MCoin : {earnedMCoin}</strong>
+                            </td>
                             <td>{partNo}</td>
                             <td>{qty}</td>
                             <td>{approvedQty}</td>
