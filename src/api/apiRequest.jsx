@@ -639,10 +639,34 @@ export const statementDownload = async () => {
   return json; // { pdf_url: "..." }
 };
 
-export const downloadUserStatement = async ({ party_code, data_from = "live" }) => {
+// export const downloadUserStatement = async ({ party_code, data_from = "live" }) => {
+//   const params = new URLSearchParams();
+//   params.append("party_code", party_code);
+//   if (data_from) params.append("data_from", data_from);
+
+//   const res = await fetch(
+//     `${API_BASE_URL}user/statement-download?${params.toString()}`,
+//     {
+//       method: "GET",
+//       headers: { Accept: "application/json", ...(getHeader()?.headers || {}) },
+//     }
+//   );
+
+//   return res.json(); // { pdf_url: "https://....pdf" }
+// };
+
+export const downloadUserStatement = async ({
+  party_code,
+  data_from = "live",
+  from_date = "",
+  to_date = "",
+}) => {
   const params = new URLSearchParams();
   params.append("party_code", party_code);
+
   if (data_from) params.append("data_from", data_from);
+  if (from_date) params.append("from_date", from_date);
+  if (to_date) params.append("to_date", to_date);
 
   const res = await fetch(
     `${API_BASE_URL}user/statement-download?${params.toString()}`,
@@ -819,6 +843,43 @@ export const getStatementDetails = async ({party_code, data_from = "database", f
   });
 
   return res.json();
+};
+
+export const getMCoinStatement = async (payload = {}) => {
+  const header = getHeader?.() || {};
+  const queryParams = new URLSearchParams();
+
+  // if (payload.party_code) queryParams.append("party_code", payload.party_code);
+  if (payload.from_date) queryParams.append("from_date", payload.from_date);
+  if (payload.to_date) queryParams.append("to_date", payload.to_date);
+  // alert(payload.from_date);
+  const url = `${API_BASE_URL}user/m-coin-statement${
+    queryParams.toString() ? `?${queryParams.toString()}` : ""
+  }`;
+
+  const response = await fetch(url, {
+    method: "GET",
+    headers: {
+      Accept: "application/json",
+      ...(header.headers || {}),
+    },
+  });
+
+  const contentType = response.headers.get("content-type") || "";
+  let data;
+
+  if (contentType.includes("application/json")) {
+    data = await response.json();
+  } else {
+    const text = await response.text();
+    throw new Error(text || `Request failed with status ${response.status}`);
+  }
+
+  if (!response.ok) {
+    throw new Error(data?.msg || `Request failed with status ${response.status}`);
+  }
+
+  return data;
 };
 
 export const refreshStatementDetails = async ({party_code, data_from = "live" }) => {

@@ -16,6 +16,7 @@ import ProfileOrderDetails from "../pages/user-profile/ProfileOrderDetails";
 import ManageProfile from "../pages/user-profile/ManageProfile";
 import ProfileStatement from "../pages/user-profile/ProfileStatement";
 import ProfileStatementDetails from "../pages/user-profile/ProfileStatementDetails";
+import MCoinStatement from "../pages/user-profile/MCoinStatement";
 import ProfileRewards from "../pages/user-profile/ProfileRewards";
 import ProfileWishlist from "../pages/user-profile/ProfileWishlist";
 import ProfileSupportTicket from "../pages/user-profile/ProfileSupportTicket";
@@ -75,6 +76,7 @@ const AppRoutes = () => (
       <Route path="/manage-profile" element={<PrivateRoute><ManageProfile /></PrivateRoute>} />
       <Route path="/statement" element={<PrivateRoute><ProfileStatement /></PrivateRoute>} />
       <Route path="/profile-statement-details" element={<PrivateRoute><ProfileStatementDetails /></PrivateRoute>} />
+      <Route path="/mcoin-statement" element={<PrivateRoute><MCoinStatement /></PrivateRoute>} />
       <Route path="/rewards" element={<PrivateRoute><ProfileRewards /></PrivateRoute>} />
       <Route path="/wishlist" element={<PrivateRoute><ProfileWishlist /></PrivateRoute>} />
       <Route path="/support-tickets" element={<PrivateRoute><ProfileSupportTicket /></PrivateRoute>} />

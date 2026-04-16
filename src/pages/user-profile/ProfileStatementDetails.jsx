@@ -152,12 +152,18 @@ const ProfileStatementDetails = () => {
       try {
         setDownloading(true);
 
-        const r = await downloadUserStatement({ party_code, data_from });
+        // const r = await downloadUserStatement({ party_code, data_from });
+        const response = await downloadUserStatement({
+          party_code,
+          data_from: "live",
+          from_date: fromDate,
+          to_date: toDate,
+        });
 
-        if (r?.pdf_url) {
-          window.open(r.pdf_url, "_blank", "noopener,noreferrer");
+        if (response?.pdf_url) {
+          window.open(response.pdf_url, "_blank", "noopener,noreferrer");
         } else {
-          console.log("pdf_url missing:", r);
+          console.log("pdf_url missing:", response);
           alert("PDF link not found");
         }
       } catch (err) {
@@ -424,10 +430,27 @@ const ProfileStatementDetails = () => {
                       >
                         <td>{formatDateDMY(r?.trn_date)}</td>
                         <td>
-                          {r?.vouchertypebasename || r?.ledgername || "-"}
+                          {r?.vouchertypebasename || r?.ledgername || "-"}                          
                           <p><small>{overdue_status}</small></p>
                           </td>
-                        <td>{r?.trn_no || "-"}</td>
+                        <td>
+                          {r?.trn_no || "-"}
+                          {r?.early_payment_m_coin && (
+                              <p>
+                                  <small style={{ fontSize: "9px", fontWeight: "bold" }}>Early Payment M Coin : {r.early_payment_m_coin}</small>
+                              </p>
+                          )}
+                          {r?.invoice_creation_m_coin && (
+                              <p>
+                                  <small style={{ fontSize: "9px", fontWeight: "bold" }}>Invoice Creation M Coin : {r.invoice_creation_m_coin}</small>
+                              </p>
+                          )}
+                          {r?.overdue_m_coin && (
+                              <p>
+                                  <small style={{ fontSize: "9px", fontWeight: "bold" }}>Overdue M Coin : {r.overdue}</small>
+                              </p>
+                          )}
+                        </td>
                         <td>
                           <span className={dr > 0 ? "red" : ""}>{money(dr)}</span>
                         </td>

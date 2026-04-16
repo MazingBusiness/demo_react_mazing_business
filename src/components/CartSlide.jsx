@@ -170,7 +170,7 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
       }
 
       const json = await res.json();
-      console.log("getMCoin json:", json);
+      // console.log("getMCoin json:", json);
 
       const applied = Number(
         json?.data?.coins ??
@@ -181,7 +181,7 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
 
       setSavedAppliedCoins(applied > 0 ? applied : 0);
     } catch (e) {
-      console.error("getMCoin error:", e);
+      // console.error("getMCoin error:", e);
       setSavedAppliedCoins(0);
     }
   };

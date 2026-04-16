@@ -17,7 +17,7 @@ const ProfileSidebar = () => {
   const location = useLocation();
   const currentPath = location.pathname;
   const user = getLoggedInUser();
-  console.log("✅ Logged In User:", user);
+  // console.log("✅ Logged In User:", user);
 
   // ✅ Define aliases: key = currentPath, value = base route to activate
   const routeAliases = {
@@ -83,6 +83,17 @@ const ProfileSidebar = () => {
             <img src={icon4} alt="Statement" />
           </span>
           <span className="menu-title">Statement</span>
+        </NavLink>
+
+        <NavLink to="/mcoin-statement"
+          className={`sidebar-menu-item ${
+            isActive("/mcoin-statement") ? "active" : ""
+          }`}
+        >
+          <span className="menu-icon">
+            <img src={icon4} alt="Statement" />
+          </span>
+          <span className="menu-title">Mcoin Statement</span>
         </NavLink>
         {/*<NavLink
           to="/manage-profile"

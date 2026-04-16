@@ -442,8 +442,8 @@ const QuickOrderGrid = ({ filters, onPriceRangeUpdate }) => {
               onChange={(e) => handleSortChange(e.target.value)}
             >
               <option value="popularity">Popularity</option>
-              <option value="mcoin_low_to_high">M Coin: Low to High</option>
-              <option value="mcoin_high_to_low">M Coin: High to Low</option>
+              <option value="low_to_high">Price: Low to High</option>
+              <option value="high_to_low">Price: High to Low</option>
             </select>
           </div>
 
