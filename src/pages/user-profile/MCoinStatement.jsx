@@ -37,6 +37,7 @@ const MCoinStatement = () => {
   const [partyCode, setPartyCode] = useState(initialPartyCode);
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
+  const [balance, setBalance] = useState("");
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -128,6 +129,7 @@ const MCoinStatement = () => {
 
     const grandTotalDr = totalDr + closingCr;
     const grandTotalCr = totalCr + closingDr;
+    setBalance(closingBalance);
 
     return {
       totalDr,
@@ -141,13 +143,21 @@ const MCoinStatement = () => {
 
   return (
     <UserProfileLayout>
+      <div className="statementHr">
+          <div className="statementpaybox">
+            <div className="statementpayboxInfo">
+              <h2>{balance}</h2>
+              <p>Balance</p>
+            </div>
+          </div>
+        </div>
       <div className="order-details">
         <div className="orderdetailsHr">
           <div className="orderdetailsHrLft">
             <div className="breadcrumb">
               <Link to="/statement">
                 <IoIosArrowBack />
-                My M Coin Statement
+                Statement
               </Link>
               {" / Party Code: "}
               <span>{partyCode || "-"}</span>
