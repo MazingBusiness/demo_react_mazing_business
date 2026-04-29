@@ -229,6 +229,46 @@ export const getQuickOrderProduct = async (
   return response;
 };
 
+export const getRewardProducts = async ({
+  search_text = "",
+  price_sort = "",
+  page = 1,
+  pagination = 16,
+} = {}) => {
+  const user = getLoggedInUser();
+  const header = getHeader();
+
+  const queryParams = new URLSearchParams();
+
+  if (search_text && String(search_text).trim() !== "") {
+    queryParams.append("search_text", String(search_text).trim());
+  }
+
+  if (price_sort && String(price_sort).trim() !== "") {
+    queryParams.append("price_sort", price_sort);
+  }
+
+  queryParams.append("page", page);
+  queryParams.append("pagination", pagination);
+
+  if (user?.id) {
+    queryParams.append("user_id", user.id);
+  }
+
+  const url = `${API_BASE_URL}product/reward-products?${queryParams.toString()}`;
+
+  const response = await fetch(url, {
+    method: "GET",
+    headers: {
+      ...(header?.headers || {}),
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    },
+  });
+
+  return response;
+};
+
 // Product Details
 export const getProductDetails = async (id) => {
   const user = getLoggedInUser();

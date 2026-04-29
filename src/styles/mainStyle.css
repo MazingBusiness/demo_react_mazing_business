@@ -3218,6 +3218,371 @@ a.all-link svg {
   white-space: nowrap;
 }
 
+.mcoin-page {
+  padding: 18px 0 40px;
+  color: #111827;
+}
+
+.mcoin-balance-card {
+  position: relative;
+  background: linear-gradient(135deg, #064985 0%, #075fa3 55%, #0c4d91 100%);
+  color: #fff;
+  border-radius: 14px;
+  padding: 28px 34px;
+  min-height: 190px;
+  overflow: hidden;
+  box-shadow: 0 12px 28px rgba(2, 62, 120, 0.18);
+  margin-bottom: 32px;
+}
+
+.mcoin-balance-card:after {
+  content: "";
+  position: absolute;
+  right: 48px;
+  top: 28px;
+  width: 95px;
+  height: 95px;
+  background: rgba(255,255,255,0.08);
+  clip-path: polygon(50% 0%, 95% 25%, 95% 75%, 50% 100%, 5% 75%, 5% 25%);
+}
+
+.mcoin-balance-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  font-size: 13px;
+  font-weight: 700;
+  opacity: .82;
+  margin-bottom: 8px;
+}
+
+.mcoin-star {
+  width: 18px;
+  height: 18px;
+  background: #fff;
+  color: #064985;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+}
+
+.mcoin-balance-amount {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.mcoin-balance-amount h1 {
+  margin: 0;
+  color: #fff;
+  font-size: 46px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.mcoin-balance-amount span {
+  font-size: 18px;
+  opacity: .65;
+  padding-bottom: 6px;
+}
+
+.mcoin-mini-cards {
+  display: flex;
+  gap: 12px;
+}
+
+.mcoin-mini-card {
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 7px;
+  padding: 10px 18px;
+  min-width: 96px;
+}
+
+.mcoin-mini-card small {
+  display: block;
+  text-transform: uppercase;
+  font-size: 9px;
+  font-weight: 800;
+  opacity: .55;
+  margin-bottom: 4px;
+}
+
+.mcoin-mini-card strong {
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.mcoin-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border: 2px solid #0b5792;
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 34px;
+  background: #fff;
+}
+
+.mcoin-tab-btn {
+  border: none;
+  background: #fff;
+  color: #07558f;
+  padding: 13px 20px;
+  font-size: 21px;
+  line-height: 1;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.mcoin-tab-btn.active {
+  background: #064985;
+  color: #fff;
+}
+
+.mcoin-rewards-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.mcoin-rewards-title h2 {
+  color: #263d96;
+  margin: 0 0 4px;
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.mcoin-rewards-title p {
+  margin: 0;
+  color: #8a92a6;
+  font-size: 14px;
+}
+
+.mcoin-rewards-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.mcoin-search-box {
+  height: 38px;
+  width: 210px;
+  border: 1px solid #e2e8f0;
+  border-radius: 7px;
+  padding: 0 12px;
+  font-size: 13px;
+  outline: none;
+}
+
+.mcoin-action-btn {
+  height: 38px;
+  border: none;
+  background: #eef0f4;
+  border-radius: 7px;
+  padding: 0 14px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #2f3746;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  cursor: pointer;
+}
+
+.mcoin-sort-select {
+  height: 38px;
+  border: none;
+  background: #eef0f4;
+  border-radius: 7px;
+  padding: 0 12px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #2f3746;
+  outline: none;
+}
+
+.mcoin-products-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.mcoin-product-card {
+  background: #fff;
+  border-radius: 4px;
+  box-shadow: 0 8px 24px rgba(20, 46, 84, 0.08);
+  border: 1px solid #f0f2f7;
+  overflow: hidden;
+}
+
+.mcoin-product-img {
+  height: 165px;
+  background: #f8fafc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+}
+
+.mcoin-product-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.mcoin-product-body {
+  padding: 18px 18px 16px;
+}
+
+.mcoin-product-cat {
+  text-transform: uppercase;
+  color: #8e99ad;
+  font-size: 10px;
+  letter-spacing: 1.4px;
+          font-weight: 800;
+          margin-bottom: 8px;
+        }
+
+        .mcoin-product-name {
+          min-height: 44px;
+          font-size: 17px;
+          line-height: 1.22;
+          color: #1f2937;
+          font-weight: 800;
+          margin-bottom: 18px;
+        }
+
+        .mcoin-product-bottom {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 8px;
+        }
+
+        .mcoin-price {
+          color: #164f94;
+          font-size: 17px;
+          font-weight: 900;
+          white-space: nowrap;
+          display: flex;
+          align-items: center;
+          gap: 5px;
+        }
+
+        .mcoin-price small {
+          color: #95a0b3;
+          font-size: 11px;
+          font-weight: 500;
+        }
+
+        .redeem-btn {
+          border: none;
+          background: #064985;
+          color: #fff;
+          height: 34px;
+          padding: 0 14px;
+          border-radius: 7px;
+          font-size: 12px;
+          font-weight: 900;
+          text-transform: uppercase;
+          cursor: pointer;
+        }
+
+        .mcoin-empty {
+          padding: 40px 20px;
+          text-align: center;
+          background: #fff;
+          border-radius: 10px;
+          border: 1px solid #eef2f7;
+          color: #6b7280;
+          font-weight: 600;
+        }
+
+        .mcoin-pagination {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          gap: 10px;
+          margin-top: 24px;
+        }
+
+        .mcoin-page-btn {
+          border: none;
+          background: #064985;
+          color: #fff;
+          border-radius: 7px;
+          padding: 8px 14px;
+          font-size: 13px;
+          font-weight: 800;
+          cursor: pointer;
+        }
+
+        .mcoin-page-btn:disabled {
+          opacity: .45;
+          cursor: not-allowed;
+        }
+
+        .mcoin-page-info {
+          color: #334155;
+          font-size: 14px;
+          font-weight: 700;
+        }
+
+        .mcoin-statement-wrap {
+          margin-top: 8px;
+        }
+
+        @media (max-width: 1100px) {
+          .mcoin-products-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+          }
+
+          .mcoin-rewards-head {
+            align-items: flex-start;
+            flex-direction: column;
+          }
+
+          .mcoin-rewards-actions {
+            flex-wrap: wrap;
+          }
+        }
+
+        @media (max-width: 640px) {
+          .mcoin-balance-card {
+            padding: 22px;
+            min-height: auto;
+          }
+
+          .mcoin-balance-amount h1 {
+            font-size: 34px;
+          }
+
+          .mcoin-tab-btn {
+            font-size: 15px;
+          }
+
+          .mcoin-search-box {
+            width: 100%;
+          }
+
+          .mcoin-rewards-actions {
+            width: 100%;
+          }
+
+          .mcoin-products-grid {
+            grid-template-columns: 1fr;
+          }
+        }
+
 /* Responsive */
 @media (max-width: 991px) {
   .product-header-left {
