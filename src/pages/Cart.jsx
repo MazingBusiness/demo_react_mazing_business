@@ -939,14 +939,16 @@ const Cart = ({ isCartVisible, toggleCart }) => {
                                 className={item?.applied_offer_id != null ? "tem-row" : ""}
                               >
                                 <td data-label="">
-                                  <label className="animated-checkbox">
-                                    <input
-                                      type="checkbox"
-                                      checked={selectedCartIds.includes(String(item.id))} // ✅ FIX
-                                      onChange={() => handleCartCheckbox(item.id)}        // ✅ FIX
-                                    />
-                                    <span className="custom-check"></span>
-                                  </label>
+                                  {item?.product?.is_reward_product == 0 && (
+                                    <label className="animated-checkbox">
+                                      <input
+                                        type="checkbox"
+                                        checked={selectedCartIds.includes(String(item.id))} // ✅ FIX
+                                        onChange={() => handleCartCheckbox(item.id)}        // ✅ FIX
+                                      />
+                                      <span className="custom-check"></span>
+                                    </label>
+                                  )}
                                 </td>
 
                                 <td className="narrow1" data-label="Product">
@@ -962,23 +964,24 @@ const Cart = ({ isCartVisible, toggleCart }) => {
       
                                     <div className="cartproduct-details">
                                       <span className="product-name">{item?.product?.name}</span>
-      
-                                      <span className="m-coin">
-                                        Earn M Coin :{" "}
-                                        <strong>
-                                          {(() => {
-                                            const lineAmount =
-                                              Number(item.price || 0) * Number(item.quantity || 1);
-      
-                                            const itemMCoin =
-                                              Number(item?.product?.current_stock) === 1
-                                                ? Number(item?.product?.c_instock_m_coin || 0) * lineAmount
-                                                : Number(item?.product?.c_m_coin || 0) * lineAmount;
-      
-                                            return itemMCoin;
-                                          })()}
-                                        </strong>
-                                      </span>
+                                      {item?.product?.is_reward_product == 0 && (
+                                        <span className="m-coin">
+                                          Earn M Coin :{" "}
+                                          <strong>
+                                            {(() => {
+                                              const lineAmount =
+                                                Number(item.price || 0) * Number(item.quantity || 1);
+        
+                                              const itemMCoin =
+                                                Number(item?.product?.current_stock) === 1
+                                                  ? Number(item?.product?.c_instock_m_coin || 0) * lineAmount
+                                                  : Number(item?.product?.c_m_coin || 0) * lineAmount;
+        
+                                              return itemMCoin;
+                                            })()}
+                                          </strong>
+                                        </span>
+                                      )}
       
                                       {item?.product?.cash_and_carry_item == 1 && (
                                         <span className="no-credit">No Credit Item</span>
@@ -1008,24 +1011,26 @@ const Cart = ({ isCartVisible, toggleCart }) => {
                                   </div>
 
                                   {/* ✅ RED ALERT BOX */}
-                                  <div className="ratingGrp">
-                                    {qtyAlertsById[item.id] && (
-                                      <div
-                                        style={{
-                                          marginTop: "2px",
-                                          padding: "6px 8px",
-                                          border: "1px solid #ff4d4f",
-                                          background: "#fff1f0",
-                                          color: "#ff4d4f",
-                                          borderRadius: 6,
-                                          fontSize: 12,
-                                          fontWeight: 600,
-                                        }}
-                                      >
-                                        {qtyAlertsById[item.id]}
-                                      </div>
-                                    )}
-                                  </div>
+                                  {item?.product?.is_reward_product == 0 && qtyAlertsById[item.id] && (
+                                    <div className="ratingGrp">
+                                      {qtyAlertsById[item.id] && (
+                                        <div
+                                          style={{
+                                            marginTop: "2px",
+                                            padding: "6px 8px",
+                                            border: "1px solid #ff4d4f",
+                                            background: "#fff1f0",
+                                            color: "#ff4d4f",
+                                            borderRadius: 6,
+                                            fontSize: 12,
+                                            fontWeight: 600,
+                                          }}
+                                        >
+                                          {qtyAlertsById[item.id]}
+                                        </div>
+                                      )}
+                                    </div>
+                                  )}
                                 </td>
 
                                 <td className="cartprice" data-label="Price">
@@ -1079,20 +1084,22 @@ const Cart = ({ isCartVisible, toggleCart }) => {
                                 </td>
 
                                 <td data-label="Action">
-                                  <button
-                                    onClick={() => moveToSaveForLater(item.id)}
-                                    disabled={
-                                      actionLoading.id === item.id &&
-                                      actionLoading.type === "save"
-                                    }
-                                  >
-                                    {actionLoading.id === item.id &&
-                                    actionLoading.type === "save" ? (
-                                      <span className="btn-loader">Saving...</span>
-                                    ) : (
-                                      <img src={SaveLatericon} alt="SaveLatericon" />
-                                    )}
-                                  </button>
+                                  {item?.product?.is_reward_product == 0 && (
+                                    <button
+                                      onClick={() => moveToSaveForLater(item.id)}
+                                      disabled={
+                                        actionLoading.id === item.id &&
+                                        actionLoading.type === "save"
+                                      }
+                                    >
+                                      {actionLoading.id === item.id &&
+                                      actionLoading.type === "save" ? (
+                                        <span className="btn-loader">Saving...</span>
+                                      ) : (
+                                        <img src={SaveLatericon} alt="SaveLatericon" />
+                                      )}
+                                    </button>
+                                  )}
 
                                   <button onClick={() => deleteFromCart(item.id, 0)}>
                                     <img src={Deleteicon} alt="Deleteicon" />
