@@ -299,7 +299,7 @@ const MCoinStatement = () => {
             <span>Coins</span>
           </div>
 
-          <div className="mcoin-mini-cards">
+          {/* <div className="mcoin-mini-cards">
             <div className="mcoin-mini-card">
               <small>Pending</small>
               <strong>12,400</strong>
@@ -309,7 +309,7 @@ const MCoinStatement = () => {
               <small>Expiring Soon</small>
               <strong>450</strong>
             </div>
-          </div>
+          </div> */}
         </div>
 
         <div className="mcoin-tabs">

@@ -3229,7 +3229,7 @@ a.all-link svg {
   color: #fff;
   border-radius: 14px;
   padding: 28px 34px;
-  min-height: 190px;
+  min-height: auto;
   overflow: hidden;
   box-shadow: 0 12px 28px rgba(2, 62, 120, 0.18);
   margin-bottom: 32px;
