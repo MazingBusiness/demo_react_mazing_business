@@ -266,7 +266,7 @@ const MCoinStatement = () => {
       0
     );
 
-    const closingBalance = totalDr - totalCr;
+    const closingBalance = totalCr - totalDr;
     const closingDr = closingBalance >= 0 ? Math.abs(closingBalance) : 0;
     const closingCr = closingBalance < 0 ? Math.abs(closingBalance) : 0;
 
