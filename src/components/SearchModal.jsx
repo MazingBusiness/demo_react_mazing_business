@@ -116,14 +116,15 @@ const SearchModal = ({
         filters.cat_groups,
         filters.categories,
         filters.brands,
-        q,                      // ✅ search_text (4th param)
+        filters.m_coin_rates, // ✅ 4th param
+        q,                    // ✅ 5th param search_text
         filters.min_price,
         filters.max_price,
         filters.location_id,
         filters.inhouse_product,
         price_sort,
-        filters.delivery,       // ✅ keep as-is as per your working API
-        reqPage                 // ✅ page
+        filters.delivery,
+        reqPage
       );
 
       const responseData = await apiRes.json();
