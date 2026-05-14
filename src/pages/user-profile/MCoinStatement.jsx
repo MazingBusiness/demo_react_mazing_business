@@ -270,8 +270,11 @@ const MCoinStatement = () => {
     const closingDr = closingBalance >= 0 ? Math.abs(closingBalance) : 0;
     const closingCr = closingBalance < 0 ? Math.abs(closingBalance) : 0;
 
-    const grandTotalDr = totalDr + closingCr;
-    const grandTotalCr = totalCr + closingDr;
+    // const grandTotalDr = totalDr + closingCr;
+    // const grandTotalCr = totalCr + closingDr;
+    
+    const grandTotalDr = totalCr + closingCr;
+    const grandTotalCr = totalDr + closingDr;
 
     setBalance(closingBalance);
 
@@ -586,8 +589,23 @@ const MCoinStatement = () => {
                       <>
                         {statementRows.map((row, idx) => (
                           <tr key={`${row?.id || "row"}-${idx}`}>
-                            <td>{formatDateDMY(row?.created_at)}</td>
-                            <td>{toCamelCaseLabel(row?.type)}</td>
+                            <td>
+                              {formatDateDMY(
+                                row?.type === "invoice_creation"
+                                  ? row?.invoice_date
+                                  : row?.type === "early_payment" || row?.type === "overdue"
+                                    ? row?.bill_date
+                                    : row?.created_at
+                              )}
+                            </td>
+                            <td>
+                              {toCamelCaseLabel(row?.type)}
+                              {["early_payment", "overdue"].includes(row?.type) && row?.bill_clear_date_difference && (
+                                <p className="mb-0">
+                                  <small><strong>{row?.bill_clear_date_difference}</strong></small>
+                                </p>
+                              )}
+                            </td>
                             <td>{row?.invoice_no || "-"}</td>
                             <td>
                               {row?.drCoins ? formatCoins(row.drCoins) : "-"}
@@ -626,11 +644,12 @@ const MCoinStatement = () => {
                             <strong>Closing Balance</strong>
                           </td>
                           <td>
-                            <strong>{formatCoins(totals.closingCr)}</strong>
-                          </td>
-                          <td>
                             <strong>{formatCoins(totals.closingDr)}</strong>
                           </td>
+                          <td>
+                            <strong>{formatCoins(totals.closingCr)}</strong>
+                          </td>
+                          
                           <td colSpan="2"></td>
                         </tr>
 
