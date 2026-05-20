@@ -45,6 +45,24 @@ const getRewardImage = (product) => {
   return "";
 };
 
+const FlashMessage = ({ type = "success", message, onClose }) => {
+  if (!message) return null;
+
+  return (
+    <div className={`custom-toast custom-toast-${type}`}>
+      <span>{message}</span>
+
+      <button
+        type="button"
+        className="custom-toast-close"
+        onClick={onClose}
+      >
+        &times;
+      </button>
+    </div>
+  );
+};
+
 const MCoinStatement = () => {
   const location = useLocation();
 
@@ -67,6 +85,7 @@ const MCoinStatement = () => {
   const [rewardProducts, setRewardProducts] = useState([]);
   const [rewardSearch, setRewardSearch] = useState("");
   const [rewardSort, setRewardSort] = useState("featured");
+
   const [rewardPage, setRewardPage] = useState(1);
   const [rewardLastPage, setRewardLastPage] = useState(1);
   const [rewardTotal, setRewardTotal] = useState(0);
@@ -77,6 +96,7 @@ const MCoinStatement = () => {
 
   const fromInputRef = useRef(null);
   const toInputRef = useRef(null);
+  const rewardLoaderRef = useRef(null);
 
   const fetchData = async (opts = {}) => {
     setLoading(true);
@@ -117,7 +137,10 @@ const MCoinStatement = () => {
     page = 1,
     searchText = rewardSearch,
     sortValue = rewardSort,
+    append = false,
   } = {}) => {
+    if (rewardLoading) return;
+
     setRewardLoading(true);
     setRewardError("");
     setRedeemMsg("");
@@ -138,7 +161,10 @@ const MCoinStatement = () => {
       const json = await response.json();
 
       if (!json?.res) {
-        setRewardProducts([]);
+        if (!append) {
+          setRewardProducts([]);
+        }
+
         setRewardPage(1);
         setRewardLastPage(1);
         setRewardTotal(0);
@@ -147,19 +173,29 @@ const MCoinStatement = () => {
       }
 
       const paginatedData = json?.data || {};
+      const newProducts = Array.isArray(paginatedData?.data)
+        ? paginatedData.data
+        : [];
 
-      setRewardProducts(
-        Array.isArray(paginatedData?.data) ? paginatedData.data : []
-      );
+      setRewardProducts((prev) => {
+        if (!append) return newProducts;
+
+        const existingIds = new Set(prev.map((item) => item.id));
+        const filteredNewProducts = newProducts.filter(
+          (item) => !existingIds.has(item.id)
+        );
+
+        return [...prev, ...filteredNewProducts];
+      });
 
       setRewardPage(Number(paginatedData?.current_page || page || 1));
       setRewardLastPage(Number(paginatedData?.last_page || 1));
       setRewardTotal(Number(paginatedData?.total || 0));
     } catch (e) {
-      setRewardProducts([]);
-      setRewardPage(1);
-      setRewardLastPage(1);
-      setRewardTotal(0);
+      if (!append) {
+        setRewardProducts([]);
+      }
+
       setRewardError(e?.message || "Something went wrong.");
     } finally {
       setRewardLoading(false);
@@ -180,9 +216,11 @@ const MCoinStatement = () => {
       });
 
       window.dispatchEvent(new Event("cart-updated"));
-      setRedeemMsg("Successfully added on cart.");
+      setRedeemMsg("Successfully added to cart.");
     } catch (e) {
-      setRewardError(e?.message || "Failed to add product to cart.");
+      setRewardError(
+        e?.message || "You do not have enough M Coins to redeem this product."
+      );
     } finally {
       setRedeemLoadingId(null);
     }
@@ -190,9 +228,69 @@ const MCoinStatement = () => {
 
   useEffect(() => {
     fetchData({ from_date: "", to_date: "" });
-    fetchRewardProducts({ page: 1, searchText: "", sortValue: "featured" });
+    fetchRewardProducts({
+      page: 1,
+      searchText: "",
+      sortValue: "featured",
+      append: false,
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (!rewardError && !redeemMsg) return;
+
+    const timer = setTimeout(() => {
+      setRewardError("");
+      setRedeemMsg("");
+    }, 3000);
+
+    return () => clearTimeout(timer);
+  }, [rewardError, redeemMsg]);
+
+  useEffect(() => {
+    if (activeTab !== "rewards") return;
+
+    const target = rewardLoaderRef.current;
+    if (!target) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const firstEntry = entries[0];
+
+        if (
+          firstEntry.isIntersecting &&
+          !rewardLoading &&
+          rewardPage < rewardLastPage
+        ) {
+          fetchRewardProducts({
+            page: rewardPage + 1,
+            searchText: rewardSearch,
+            sortValue: rewardSort,
+            append: true,
+          });
+        }
+      },
+      {
+        root: null,
+        rootMargin: "250px",
+        threshold: 0,
+      }
+    );
+
+    observer.observe(target);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [
+    activeTab,
+    rewardLoading,
+    rewardPage,
+    rewardLastPage,
+    rewardSearch,
+    rewardSort,
+  ]);
 
   const handleSearch = () => {
     if (fromDate && toDate && new Date(fromDate) > new Date(toDate)) {
@@ -204,31 +302,30 @@ const MCoinStatement = () => {
   };
 
   const handleRewardSearch = () => {
+    setRewardPage(1);
+    setRewardLastPage(1);
+    setRewardTotal(0);
+
     fetchRewardProducts({
       page: 1,
       searchText: rewardSearch,
       sortValue: rewardSort,
+      append: false,
     });
   };
 
   const handleRewardSortChange = (e) => {
     const value = e.target.value;
     setRewardSort(value);
+    setRewardPage(1);
+    setRewardLastPage(1);
+    setRewardTotal(0);
 
     fetchRewardProducts({
       page: 1,
       searchText: rewardSearch,
       sortValue: value,
-    });
-  };
-
-  const handleRewardPageChange = (page) => {
-    if (page < 1 || page > rewardLastPage || rewardLoading) return;
-
-    fetchRewardProducts({
-      page,
-      searchText: rewardSearch,
-      sortValue: rewardSort,
+      append: false,
     });
   };
 
@@ -261,6 +358,7 @@ const MCoinStatement = () => {
       (sum, row) => sum + Number(row.drCoins || 0),
       0
     );
+
     const totalCr = statementRows.reduce(
       (sum, row) => sum + Number(row.crCoins || 0),
       0
@@ -270,9 +368,6 @@ const MCoinStatement = () => {
     const closingDr = closingBalance >= 0 ? Math.abs(closingBalance) : 0;
     const closingCr = closingBalance < 0 ? Math.abs(closingBalance) : 0;
 
-    // const grandTotalDr = totalDr + closingCr;
-    // const grandTotalCr = totalCr + closingDr;
-    
     const grandTotalDr = totalCr + closingCr;
     const grandTotalCr = totalDr + closingDr;
 
@@ -291,6 +386,104 @@ const MCoinStatement = () => {
   return (
     <UserProfileLayout>
       <div className="mcoin-page">
+        <style>{`
+          .custom-toast {
+            position: fixed;
+            top: 145px;
+            right: 25px;
+            z-index: 99999;
+            min-width: 320px;
+            max-width: 460px;
+            padding: 14px 45px 14px 18px;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.18);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            animation: toastSlideIn 0.35s ease-out, toastFadeOut 0.6s ease-in 2.4s forwards;
+          }
+
+          .custom-toast-success {
+            background: #d1e7dd;
+            color: #0f5132;
+            border-left: 7px solid #198754;
+          }
+
+          .custom-toast-danger {
+            background: #f8d7da;
+            color: #842029;
+            border-left: 7px solid #dc3545;
+          }
+
+          .custom-toast-close {
+            position: absolute;
+            top: 8px;
+            right: 12px;
+            border: 0;
+            background: transparent;
+            color: inherit;
+            font-size: 24px;
+            line-height: 1;
+            cursor: pointer;
+            opacity: 0.8;
+          }
+
+          .custom-toast-close:hover {
+            opacity: 1;
+          }
+
+          .mcoin-scroll-loader {
+            text-align: center;
+            padding: 25px 0;
+            font-size: 15px;
+            color: #777;
+            font-weight: 600;
+          }
+
+          .mcoin-scroll-end {
+            text-align: center;
+            padding: 25px 0;
+            font-size: 14px;
+            color: #999;
+          }
+
+          @keyframes toastSlideIn {
+            from {
+              opacity: 0;
+              transform: translateX(60px);
+            }
+            to {
+              opacity: 1;
+              transform: translateX(0);
+            }
+          }
+
+          @keyframes toastFadeOut {
+            from {
+              opacity: 1;
+              transform: translateX(0);
+            }
+            to {
+              opacity: 0;
+              transform: translateX(60px);
+            }
+          }
+        `}</style>
+
+        <FlashMessage
+          type="danger"
+          message={rewardError}
+          onClose={() => setRewardError("")}
+        />
+
+        <FlashMessage
+          type="success"
+          message={redeemMsg}
+          onClose={() => setRedeemMsg("")}
+        />
+
         <div className="mcoin-balance-card">
           <div className="mcoin-balance-label">
             <span className="mcoin-star">★</span>
@@ -301,18 +494,6 @@ const MCoinStatement = () => {
             <h1>{formatCoins(balance)}</h1>
             <span>Coins</span>
           </div>
-
-          {/* <div className="mcoin-mini-cards">
-            <div className="mcoin-mini-card">
-              <small>Pending</small>
-              <strong>12,400</strong>
-            </div>
-
-            <div className="mcoin-mini-card">
-              <small>Expiring Soon</small>
-              <strong>450</strong>
-            </div>
-          </div> */}
         </div>
 
         <div className="mcoin-tabs">
@@ -366,7 +547,7 @@ const MCoinStatement = () => {
                   disabled={rewardLoading}
                 >
                   <FaFilter />
-                  {rewardLoading ? "Loading..." : "Filter"}
+                  {rewardLoading && rewardPage === 1 ? "Loading..." : "Filter"}
                 </button>
 
                 <select
@@ -381,15 +562,7 @@ const MCoinStatement = () => {
               </div>
             </div>
 
-            {rewardError ? (
-              <div className="alert alert-danger">{rewardError}</div>
-            ) : null}
-
-            {redeemMsg ? (
-              <div className="alert alert-success">{redeemMsg}</div>
-            ) : null}
-
-            {rewardLoading ? (
+            {rewardLoading && rewardProducts.length === 0 ? (
               <div className="mcoin-empty">Loading reward products...</div>
             ) : rewardProducts.length === 0 ? (
               <div className="mcoin-empty">No reward products found</div>
@@ -448,29 +621,14 @@ const MCoinStatement = () => {
                   })}
                 </div>
 
-                <div className="mcoin-pagination">
-                  <button
-                    type="button"
-                    className="mcoin-page-btn"
-                    disabled={rewardPage <= 1 || rewardLoading}
-                    onClick={() => handleRewardPageChange(rewardPage - 1)}
-                  >
-                    Previous
-                  </button>
-
-                  <span className="mcoin-page-info">
-                    Page {rewardPage} of {rewardLastPage}
-                    {rewardTotal ? ` (${rewardTotal} Products)` : ""}
-                  </span>
-
-                  <button
-                    type="button"
-                    className="mcoin-page-btn"
-                    disabled={rewardPage >= rewardLastPage || rewardLoading}
-                    onClick={() => handleRewardPageChange(rewardPage + 1)}
-                  >
-                    Next
-                  </button>
+                <div ref={rewardLoaderRef} className="mcoin-scroll-loader">
+                  {rewardLoading && rewardPage > 1
+                    ? "Loading more products..."
+                    : rewardPage < rewardLastPage
+                    ? "Scroll down to load more"
+                    : rewardTotal > 0
+                    ? `All ${rewardProducts.length} products loaded`
+                    : ""}
                 </div>
               </>
             )}
@@ -508,7 +666,11 @@ const MCoinStatement = () => {
                         const value = e.target.value;
                         setFromDate(value);
 
-                        if (toDate && value && new Date(value) > new Date(toDate)) {
+                        if (
+                          toDate &&
+                          value &&
+                          new Date(value) > new Date(toDate)
+                        ) {
                           setToDate("");
                         }
                       }}
@@ -593,19 +755,28 @@ const MCoinStatement = () => {
                               {formatDateDMY(
                                 row?.type === "invoice_creation"
                                   ? row?.invoice_date
-                                  : row?.type === "early_payment" || row?.type === "overdue"
-                                    ? row?.bill_date
-                                    : row?.created_at
+                                  : row?.type === "early_payment" ||
+                                    row?.type === "overdue"
+                                  ? row?.bill_date
+                                  : row?.created_at
                               )}
                             </td>
+
                             <td>
                               {toCamelCaseLabel(row?.type)}
-                              {["early_payment", "overdue"].includes(row?.type) && row?.bill_clear_date_difference && (
-                                <p className="mb-0">
-                                  <small><strong>{row?.bill_clear_date_difference}</strong></small>
-                                </p>
-                              )}
+
+                              {["early_payment", "overdue"].includes(row?.type) &&
+                                row?.bill_clear_date_difference && (
+                                  <p className="mb-0">
+                                    <small>
+                                      <strong>
+                                        {row?.bill_clear_date_difference}
+                                      </strong>
+                                    </small>
+                                  </p>
+                                )}
                             </td>
+
                             <td>{row?.invoice_no || "-"}</td>
                             <td>
                               {row?.drCoins ? formatCoins(row.drCoins) : "-"}
@@ -649,7 +820,6 @@ const MCoinStatement = () => {
                           <td>
                             <strong>{formatCoins(totals.closingCr)}</strong>
                           </td>
-                          
                           <td colSpan="2"></td>
                         </tr>
 
