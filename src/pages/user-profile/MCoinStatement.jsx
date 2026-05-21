@@ -389,7 +389,7 @@ const MCoinStatement = () => {
         <style>{`
           .custom-toast {
             position: fixed;
-            top: 145px;
+            top: 30px;
             right: 25px;
             z-index: 99999;
             min-width: 320px;
@@ -397,7 +397,7 @@ const MCoinStatement = () => {
             padding: 14px 45px 14px 18px;
             border-radius: 8px;
             font-size: 15px;
-            font-weight: 600;
+            font-weight: 800;
             box-shadow: 0 8px 25px rgba(0, 0, 0, 0.18);
             display: flex;
             align-items: center;

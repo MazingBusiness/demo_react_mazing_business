@@ -450,6 +450,11 @@ const ProfileStatementDetails = () => {
                                   <small style={{ fontSize: "9px", fontWeight: "bold" }}>Overdue M Coin : {r.overdue}</small>
                               </p>
                           )}
+                          {r?.credit_note_m_coin && (
+                              <p>
+                                  <small style={{ fontSize: "9px", fontWeight: "bold" }}>Reedem M Coin : {r.credit_note_m_coin}</small>
+                              </p>
+                          )}
                         </td>
                         <td>
                           <span className={dr > 0 ? "red" : ""}>{money(dr)}</span>
