@@ -1,15 +1,561 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { FaStar, FaStarHalfAlt, FaRegStar } from "react-icons/fa";
 import { GoDotFill } from "react-icons/go";
+import { FiX } from "react-icons/fi";
 import { useParams, useNavigate } from "react-router-dom";
 
 import MainLayout from "../layouts/MainLayout";
 import fastDeliveryIcon from "../assets/icons/fast-delivery.svg";
 import warrantyIcon from "../assets/icons/warranty.jpeg";
+import no_image from "../assets/images/no-image.png";
+import CartIcon from "../assets/icons/CartIcon.svg";
 
 import { getLoggedInUser } from "../utils/authUtils";
-import { productDetails } from "../api/apiRequest";
+import { addToCart, productDetails } from "../api/apiRequest";
 import ProductModal from "../components/ProductModal";
+
+/*
+const GenericProductsModal = ({ isOpen, onClose, genericLink }) => {
+  if (!isOpen || !genericLink) return null;
+
+  const products = Array.isArray(genericLink?.products) ? genericLink.products : [];
+
+  return (
+    <div className="product-modal-overlay open" style={{ zIndex: 99999 }}>
+      <div
+        className="product-modal-box open"
+        style={{
+          maxWidth: "950px",
+          width: "95%",
+          maxHeight: "90vh",
+          overflowY: "auto",
+          padding: "20px",
+        }}
+      >
+        <button className="product-modal-close" onClick={onClose} type="button">
+          <FiX />
+        </button>
+
+        <h3 style={{ marginBottom: "15px" }}>{genericLink?.name}</h3>
+
+        {products.length === 0 ? (
+          <p>No products found.</p>
+        ) : (
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))",
+              gap: "15px",
+            }}
+          >
+            {products.map((item) => {
+              const imageUrl =
+                item?.thumb_img?.file_name || item?.images?.[0]?.file_name || "";
+
+              return (
+                <div
+                  key={item.id}
+                  style={{
+                    border: "1px solid #eee",
+                    borderRadius: "10px",
+                    padding: "10px",
+                    background: "#fff",
+                    boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
+                  }}
+                >
+                  <div
+                    style={{
+                      width: "100%",
+                      height: "130px",
+                      background: "#f7f7f7",
+                      borderRadius: "8px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      overflow: "hidden",
+                      marginBottom: "10px",
+                    }}
+                  >
+                    {imageUrl ? (
+                      <img
+                        src={imageUrl}
+                        alt={item?.name}
+                        style={{
+                          width: "100%",
+                          height: "100%",
+                          objectFit: "contain",
+                        }}
+                        onError={(e) => {
+                          e.currentTarget.style.display = "none";
+                        }}
+                      />
+                    ) : (
+                      <span style={{ fontSize: "12px", color: "#999" }}>
+                        No Image
+                      </span>
+                    )}
+                  </div>
+
+                  <h4
+                    style={{
+                      fontSize: "13px",
+                      lineHeight: "18px",
+                      minHeight: "38px",
+                      marginBottom: "6px",
+                    }}
+                  >
+                    {item?.name}
+                  </h4>
+
+                  <p style={{ fontSize: "12px", marginBottom: "5px" }}>
+                    Part No: <b>{item?.part_no}</b>
+                  </p>
+
+                  <p style={{ fontSize: "13px", fontWeight: 700 }}>
+                    ₹{Number(item?.mrp || 0).toFixed(2)}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+*/
+
+const GenericProductsModal = ({ isOpen, onClose, genericLink }) => {
+  const [quantities, setQuantities] = useState({});
+  const [bulkDiscountApplied, setBulkDiscountApplied] = useState({});
+  const [addingId, setAddingId] = useState(null);
+
+  if (!isOpen || !genericLink) return null;
+
+  const products = Array.isArray(genericLink?.products) ? genericLink.products : [];
+
+  const getProductQty = (item) => Number(quantities[item?.id] || item?.min_qty || 1);
+  const getItemPrice = (item) => Number(item?.discount_price || item?.price || item?.mrp || 0);
+  const getItemMrp = (item) => Number(item?.mrp || item?.unit_price || getItemPrice(item) || 0);
+  const getItemBulkQty = (item) => Number(item?.piece_by_carton || item?.min_qty || 10);
+  const getItemBulkPrice = (item) =>
+    Number(item?.bulk_discount_price || item?.bulk_price || getItemPrice(item));
+
+  const updateGenericQty = (item, nextQty) => {
+    const safeQty = Math.max(1, Number(nextQty) || 1);
+    setQuantities((prev) => ({ ...prev, [item.id]: safeQty }));
+  };
+
+  const handleGenericAddToCart = async (item) => {
+    try {
+      const qty = getProductQty(item);
+      const type =
+        bulkDiscountApplied[item.id] || qty >= getItemBulkQty(item)
+          ? "bulk"
+          : "piece";
+
+      setAddingId(item.id);
+      const res = await addToCart({ product_id: item.id, quantity: qty, type });
+      window.dispatchEvent(new Event("cart-updated"));
+      alert(res?.msg || "Added to cart");
+    } catch (err) {
+      console.error(err);
+      alert(err?.message || "Failed to add to cart");
+    } finally {
+      setAddingId(null);
+    }
+  };
+
+  return (
+    <div
+      className="product-modal-overlay open"
+      style={{
+        zIndex: 99999,
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "18px",
+      }}
+    >
+      <div
+        className="product-modal-box open"
+        style={{
+          maxWidth: "1180px",
+          width: "95%",
+          maxHeight: "90vh",
+          overflow: "hidden",
+          padding: 0,
+          borderRadius: "10px",
+          background: "#fff",
+        }}
+      >
+        <div
+          style={{
+            position: "sticky",
+            top: 0,
+            zIndex: 3,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: "14px",
+            padding: "18px 34px",
+            background: "#f2f4f7",
+            borderBottom: "1px solid #e5e7eb",
+          }}
+        >
+          <div>
+            <h3 style={{ margin: 0, fontSize: "16px", fontWeight: 800, color: "#30343b" }}>
+              {genericLink?.name || "Generic Products"}
+            </h3>
+            <p style={{ margin: "6px 0 0", fontSize: "13px", color: "#6b7280", fontWeight: 600 }}>
+              Verified compatible products
+            </p>
+          </div>
+
+          <button
+            onClick={onClose}
+            type="button"
+            aria-label="Close"
+            style={{
+              width: "36px",
+              height: "36px",
+              border: 0,
+              background: "transparent",
+              color: "#606875",
+              cursor: "pointer",
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: "24px",
+              flex: "0 0 auto",
+            }}
+          >
+            <FiX />
+          </button>
+        </div>
+
+        {products.length === 0 ? (
+          <p style={{ padding: "24px 34px", margin: 0 }}>No products found.</p>
+        ) : (
+          <div
+            style={{
+              maxHeight: "calc(90vh - 82px)",
+              overflowY: "auto",
+              padding: "28px 34px 34px",
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fill, minmax(235px, 1fr))",
+              gap: "22px",
+              background: "#fff",
+            }}
+          >
+            {products.map((item) => {
+              const imageUrl =
+                item?.thumb_img?.file_name || item?.images?.[0]?.file_name || no_image;
+              const qty = getProductQty(item);
+              const normalPrice = getItemPrice(item);
+              const mrp = getItemMrp(item);
+              const bulkQty = getItemBulkQty(item);
+              const bulkPrice = getItemBulkPrice(item);
+              const useBulkDiscount =
+                bulkDiscountApplied[item.id] || (bulkQty > 0 && qty >= bulkQty);
+              const price = useBulkDiscount ? bulkPrice : normalPrice;
+              const subtotal = price * Number(qty || 1);
+              const hasFastDelivery = Number(item?.fast_delivery_tag) === 1;
+              const hasWarranty = Number(item?.is_warranty) === 1;
+              const earnedMCoin =
+                price * Number(item?.c_instock_m_coin || 0) * Number(qty || 1);
+
+              return (
+                <div
+                  key={item.id}
+                  style={{
+                    position: "relative",
+                    display: "flex",
+                    flexDirection: "column",
+                    minHeight: "100%",
+                    border: "1px solid #f1f3f6",
+                    borderRadius: "8px",
+                    padding: "16px",
+                    background: "#fff",
+                    boxShadow: "0 6px 18px rgba(17,24,39,0.06)",
+                  }}
+                >
+                  <button
+                    type="button"
+                    onClick={() => handleGenericAddToCart(item)}
+                    disabled={addingId === item.id}
+                    style={{
+                      position: "absolute",
+                      top: "10px",
+                      right: "12px",
+                      zIndex: 2,
+                      height: "38px",
+                      padding: "0 16px",
+                      border: "1px solid #d9dee6",
+                      borderRadius: "999px",
+                      background: "#fff",
+                      color: "#111827",
+                      fontSize: "14px",
+                      fontWeight: 500,
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "8px",
+                      cursor: addingId === item.id ? "not-allowed" : "pointer",
+                      opacity: addingId === item.id ? 0.7 : 1,
+                      boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
+                    }}
+                  >
+                    <img src={CartIcon} alt="" style={{ width: "15px", height: "15px" }} />
+                    {addingId === item.id ? "Adding..." : "Add to Cart"}
+                  </button>
+
+                  <div
+                    style={{
+                      position: "relative",
+                      width: "100%",
+                      height: "190px",
+                      background: "#fbfcfe",
+                      borderRadius: "8px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      overflow: "hidden",
+                      marginBottom: "16px",
+                    }}
+                  >
+                    <img
+                      src={imageUrl}
+                      alt={item?.name || "Product"}
+                      style={{ width: "100%", height: "100%", objectFit: "contain" }}
+                      onError={(e) => {
+                        e.currentTarget.onerror = null;
+                        e.currentTarget.src = no_image;
+                      }}
+                    />
+
+                    {(hasFastDelivery || hasWarranty) && (
+                      <div
+                        style={{
+                          position: "absolute",
+                          left: 0,
+                          bottom: "12px",
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: "flex-start",
+                          gap: "6px",
+                        }}
+                      >
+                        {hasFastDelivery && (
+                          <span
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "6px",
+                              minHeight: "32px",
+                              padding: "6px 12px",
+                              borderRadius: "0 16px 16px 0",
+                              background: "#00d52f",
+                              color: "#fff",
+                              fontSize: "13px",
+                              fontWeight: 800,
+                            }}
+                          >
+                            <img
+                              src={fastDeliveryIcon}
+                              alt=""
+                              style={{ width: "16px", height: "16px", filter: "brightness(0) invert(1)" }}
+                              onError={(e) => {
+                                e.currentTarget.style.display = "none";
+                              }}
+                            />
+                            Fast Delivery
+                          </span>
+                        )}
+
+                        {hasWarranty && (
+                          <span
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "6px",
+                              minHeight: "32px",
+                              padding: "6px 12px",
+                              borderRadius: "0 16px 16px 0",
+                              background: "#00d52f",
+                              color: "#fff",
+                              fontSize: "13px",
+                              fontWeight: 800,
+                            }}
+                          >
+                            <img
+                              src={warrantyIcon}
+                              alt=""
+                              style={{ width: "16px", height: "16px", borderRadius: "50%" }}
+                              onError={(e) => {
+                                e.currentTarget.style.display = "none";
+                              }}
+                            />
+                            Warranty
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  <h4
+                    style={{
+                      fontSize: "15px",
+                      lineHeight: "20px",
+                      minHeight: "42px",
+                      margin: "0 0 8px",
+                      color: "#111827",
+                      fontWeight: 800,
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    {item?.name?.length > 70 ? `${item.name.substring(0, 70)}...` : item?.name}
+                  </h4>
+
+                  <p style={{ margin: "0 0 8px", color: "#6b7280", fontSize: "12px", fontWeight: 700 }}>
+                    Part No: <b>{item?.part_no}</b>
+                  </p>
+
+                  <div style={{ display: "flex", alignItems: "baseline", gap: "10px", marginBottom: "8px" }}>
+                    <span
+                      style={{
+                        color: "#b9b9b9",
+                        fontSize: "16px",
+                        fontWeight: 800,
+                        textDecoration: "line-through",
+                      }}
+                    >
+                      ₹{mrp.toFixed(2)}
+                    </span>
+                    <span style={{ color: "#008b12", fontSize: "18px", fontWeight: 900 }}>
+                      ₹{price.toFixed(2)}
+                    </span>
+                  </div>
+
+                  <p style={{ margin: "0 0 14px", color: "#004d84", fontSize: "13px", fontWeight: 800 }}>
+                    Earn MCoin : {earnedMCoin.toFixed(2)}
+                  </p>
+
+                  <p style={{ margin: "0 0 14px", color: "#111827", fontSize: "13px", fontWeight: 800 }}>
+                    Subtotal : ₹{subtotal.toFixed(2)}
+                  </p>
+
+                  <div style={{ marginTop: "auto" }}>
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "42px 1fr 42px",
+                        alignItems: "center",
+                        height: "38px",
+                        overflow: "hidden",
+                        borderRadius: "5px",
+                        background: "#eef0f2",
+                        marginBottom: "12px",
+                      }}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => updateGenericQty(item, qty - 1)}
+                        style={{
+                          height: "100%",
+                          border: 0,
+                          background: "transparent",
+                          color: "#6b7280",
+                          fontSize: "18px",
+                          fontWeight: 800,
+                          cursor: "pointer",
+                        }}
+                      >
+                        -
+                      </button>
+
+                      <input
+                        type="number"
+                        min="1"
+                        value={qty}
+                        onChange={(e) => updateGenericQty(item, e.target.value)}
+                        style={{
+                          width: "100%",
+                          height: "100%",
+                          border: 0,
+                          background: "transparent",
+                          color: "#111827",
+                          textAlign: "center",
+                          fontSize: "14px",
+                          fontWeight: 800,
+                          outline: "none",
+                        }}
+                      />
+
+                      <button
+                        type="button"
+                        onClick={() => updateGenericQty(item, qty + 1)}
+                        style={{
+                          height: "100%",
+                          border: 0,
+                          background: "transparent",
+                          color: "#6b7280",
+                          fontSize: "18px",
+                          fontWeight: 800,
+                          cursor: "pointer",
+                        }}
+                      >
+                        +
+                      </button>
+                    </div>
+
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "10px" }}>
+                      <p
+                        style={{
+                          margin: 0,
+                          color: "#111827",
+                          fontSize: "11px",
+                          lineHeight: "15px",
+                          fontWeight: 800,
+                          textTransform: "uppercase",
+                        }}
+                      >
+                        Bulk Discount: Buy {bulkQty} pcs and get at ₹{bulkPrice.toFixed(2)}/-
+                      </p>
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setBulkDiscountApplied((prev) => ({
+                            ...prev,
+                            [item.id]: true,
+                          }))
+                        }
+                        style={{
+                          flex: "0 0 auto",
+                          minHeight: "32px",
+                          border: 0,
+                          borderRadius: "5px",
+                          padding: "7px 10px",
+                          background: useBulkDiscount ? "#008b12" : "#004d84",
+                          color: "#fff",
+                          fontSize: "12px",
+                          fontWeight: 800,
+                          cursor: "pointer",
+                        }}
+                      >
+                        {useBulkDiscount ? "Discount Applied" : "Get Discount"}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
 
 const ProductDetails = () => {
   const { slug } = useParams();
@@ -25,6 +571,10 @@ const ProductDetails = () => {
   const [product, setProduct] = useState(null);
   const [apiAttributes, setApiAttributes] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [useMainBulkDiscount, setUseMainBulkDiscount] = useState(false);
+
+  const [genericModalOpen, setGenericModalOpen] = useState(false);
+  const [selectedGenericLink, setSelectedGenericLink] = useState(null);
 
   const renderRating = (rating) => {
     const r = Number(rating || 0);
@@ -41,10 +591,9 @@ const ProductDetails = () => {
     }
 
     const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
+
     for (let i = 0; i < emptyStars; i++) {
-      stars.push(
-        <FaRegStar key={`empty-${i}`} className="star-icon empty-star" />
-      );
+      stars.push(<FaRegStar key={`empty-${i}`} className="star-icon empty-star" />);
     }
 
     return stars;
@@ -86,9 +635,7 @@ const ProductDetails = () => {
 
       {
         label: "Shipping Days",
-        value: product?.est_shipping_days
-          ? `${product.est_shipping_days} Days`
-          : "",
+        value: product?.est_shipping_days ? `${product.est_shipping_days} Days` : "",
       },
       {
         label: "Warranty",
@@ -115,13 +662,20 @@ const ProductDetails = () => {
   const crumbCategory = product?.category?.name || "Category";
 
   const formattedMrp =
-    user_id != null && product?.mrp
-      ? `₹${Number(product.mrp).toFixed(2)}`
-      : "";
+    user_id != null && product?.mrp ? `₹${Number(product.mrp).toFixed(2)}` : "";
+
+  const normalProductPrice = Number(product?.discount_price || 0);
+  const bulkProductPrice = Number(product?.bulk_discount_price || normalProductPrice || 0);
+  const displayedProductPrice = useMainBulkDiscount ? bulkProductPrice : normalProductPrice;
 
   const formattedDiscountPrice =
-    user_id != null && product?.discount_price
-      ? `₹${Number(product.discount_price).toFixed(2)}`
+    user_id != null && normalProductPrice
+      ? `₹${normalProductPrice.toFixed(2)}`
+      : "";
+
+  const formattedDisplayedPrice =
+    user_id != null && displayedProductPrice
+      ? `₹${displayedProductPrice.toFixed(2)}`
       : "";
 
   const formattedBulkDiscountPrice =
@@ -129,12 +683,11 @@ const ProductDetails = () => {
       ? `₹${Number(product.bulk_discount_price).toFixed(2)}`
       : "";
 
-  const earnMCoin = product?.discount_price * product?.c_instock_m_coin;
+  const earnMCoin =
+    Number(displayedProductPrice || 0) * Number(product?.c_instock_m_coin || 0);
 
   const pieceByCarton =
-    user_id != null && product?.piece_by_carton
-      ? `${product.piece_by_carton}`
-      : "";
+    user_id != null && product?.piece_by_carton ? `${product.piece_by_carton}` : "";
 
   const unitLabel = product?.unit ? `/${product.unit}` : "/Pc";
 
@@ -159,11 +712,36 @@ const ProductDetails = () => {
 
   const isNoCreditItem = Number(product?.cash_and_carry_item || 0) === 1;
 
+  const genericLinks =
+    product?.generic_master_id && Array.isArray(product?.generic_links)
+      ? product.generic_links
+      : [];
+
+  const mainProducts = Array.isArray(product?.generic_master_product)
+    ? product.generic_master_product
+    : product?.generic_master_product
+      ? [product.generic_master_product]
+      : [];
+
+  const hasMainProduct =
+    product?.generic_master_links_id && mainProducts.length > 0;
+
+  const openGenericProductsModal = (link) => {
+    setSelectedGenericLink(link);
+    setGenericModalOpen(true);
+  };
+
+  const closeGenericProductsModal = () => {
+    setSelectedGenericLink(null);
+    setGenericModalOpen(false);
+  };
+
   const fetchProduct = async () => {
     setLoading(true);
     setErr("");
     setProduct(null);
     setApiAttributes([]);
+    setUseMainBulkDiscount(false);
 
     try {
       const cleanSlug = decodeURIComponent(String(slug || "").trim());
@@ -180,9 +758,7 @@ const ProductDetails = () => {
       if (!p) throw new Error("Product not found in payload.data[0]");
 
       setProduct(p);
-      setApiAttributes(
-        Array.isArray(payload?.attributes) ? payload.attributes : []
-      );
+      setApiAttributes(Array.isArray(payload?.attributes) ? payload.attributes : []);
     } catch (e) {
       setErr(e?.message || "Failed to load product");
     } finally {
@@ -304,15 +880,103 @@ const ProductDetails = () => {
                   <div className="product-modal-info">
                     <div className="product-price">
                       <span className="old-price">{formattedMrp}</span>
-                      <span className="new-price">{formattedDiscountPrice}</span>
-                      
+                      <span className="new-price">{formattedDisplayedPrice}</span>
                       <span className="unit">{unitLabel}</span>
 
-                      <button type="button" onClick={handleAddToCart} disabled={loading || !product?.id} className="add-to-cart-btn-product-details"
-                        > Add to Cart </button>
+                      <button
+                        type="button"
+                        onClick={handleAddToCart}
+                        disabled={loading || !product?.id}
+                        className="add-to-cart-btn-product-details"
+                      >
+                        Add to Cart
+                      </button>
                     </div>
-                    
-                  </div><span className="emcoinDetails">Earn MCoin : {earnMCoin} * X</span>
+                  </div>
+
+                  <span className="emcoinDetails">Earn MCoin : {earnMCoin} * X</span>
+
+                  {(genericLinks.length > 0 || hasMainProduct) && (
+                    <div
+                      style={{
+                        marginTop: "12px",
+                        marginBottom: "12px",
+                        padding: "10px",
+                        border: "1px solid #eee",
+                        borderRadius: "10px",
+                        background: "#fafafa",
+                      }}
+                    >
+                      <p
+                        style={{
+                          fontSize: "13px",
+                          fontWeight: 700,
+                          marginBottom: "8px",
+                        }}
+                      >
+                        {product?.generic_master?.name || "Generic Products"}
+                      </p>
+
+                      <div
+                        style={{
+                          display: "flex",
+                          gap: "8px",
+                          flexWrap: "wrap",
+                        }}
+                      >
+                        {genericLinks.map((link) => (
+                          <button
+                            key={link.id}
+                            type="button"
+                            onClick={() => openGenericProductsModal(link)}
+                            style={{
+                              border: "1px solid #e11d48",
+                              color: "#e11d48",
+                              background: "#fff",
+                              padding: "6px 12px",
+                              borderRadius: "20px",
+                              fontSize: "13px",
+                              fontWeight: 700,
+                              cursor: "pointer",
+                            }}
+                          >
+                            {link.name}
+                            {Array.isArray(link.products) && (
+                              <span style={{ marginLeft: "5px" }}>
+                                ({link.products.length})
+                              </span>
+                            )}
+                          </button>
+                        ))}
+
+                        {hasMainProduct && (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              openGenericProductsModal({
+                                id: "main-product",
+                                name: "Main Product",
+                                products: mainProducts,
+                              })
+                            }
+                            style={{
+                              border: "1px solid #2563eb",
+                              color: "#2563eb",
+                              background: "#fff",
+                              padding: "6px 12px",
+                              borderRadius: "20px",
+                              fontSize: "13px",
+                              fontWeight: 700,
+                              cursor: "pointer",
+                            }}
+                          >
+                            Main Product ({mainProducts.length})
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
                   {product?.is_warranty == 1 && (
                     <div className="warranty-div">
                       <p className="warranty-text">
@@ -329,6 +993,7 @@ const ProductDetails = () => {
                       </p>
                     </div>
                   )}
+
                   {product?.stocks != null && (
                     <div className="product-stock">
                       {(product?.stocks || []).map((warehouse) => (
@@ -348,10 +1013,23 @@ const ProductDetails = () => {
                       <span className="highlight">{formattedDiscountPrice}</span>
                       <span className="emcoin">Earn MCoin : {earnMCoin} * X</span>
                     </p>
+
+                    <button
+                      className="discount-btn"
+                      type="button"
+                      onClick={() => setUseMainBulkDiscount(true)}
+                    >
+                      Get Discount
+                    </button>
                   </div>
                 </>
               ) : (
-                <button type="button" onClick={handleRegisterToCheckPrices} className="before-reg-btn"  style={{ margin: "10px" }}>
+                <button
+                  type="button"
+                  onClick={handleRegisterToCheckPrices}
+                  className="before-reg-btn"
+                  style={{ margin: "10px" }}
+                >
                   Register to check prices
                 </button>
               )}
@@ -455,6 +1133,12 @@ const ProductDetails = () => {
           onRequestClose={closeModal}
         />
       )}
+
+      <GenericProductsModal
+        isOpen={genericModalOpen}
+        onClose={closeGenericProductsModal}
+        genericLink={selectedGenericLink}
+      />
     </MainLayout>
   );
 };

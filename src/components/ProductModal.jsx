@@ -5,114 +5,209 @@ import { Carousel } from "react-responsive-carousel";
 
 import fastDeliveryIcon from "../assets/icons/fast-delivery.svg";
 import warrantyIcon from "../assets/icons/warranty.jpeg";
+import no_image from "../assets/images/no-image.png";
 
 import { FiX } from "react-icons/fi";
 import CartbtnIcon from "../assets/icons/cartbtnIcon.svg";
+import CartIconPlus from "../assets/icons/cartIconplus.svg";
 import { GoDotFill } from "react-icons/go";
 
 import { getProductDetails, addToCart, updateProductQty } from "../api/apiRequest";
 
+
 const GenericProductsModal = ({ isOpen, onClose, genericLink }) => {
+  const [quantities, setQuantities] = useState({});
+  const [addingId, setAddingId] = useState(null);
+
   if (!isOpen || !genericLink) return null;
 
   const products = genericLink?.products || [];
+  const getProductQty = (item) => Number(quantities[item?.id] || item?.min_qty || 1);
+  const getItemPrice = (item) => Number(item?.discount_price || item?.price || item?.mrp || 0);
+  const getItemBulkQty = (item) => Number(item?.piece_by_carton || 10);
+  const getItemBulkPrice = (item) =>
+    Number(item?.bulk_discount_price || item?.bulk_price || getItemPrice(item));
+
+  const updateGenericQty = (item, nextQty) => {
+    const safeQty = Math.max(1, Number(nextQty) || 1);
+    setQuantities((prev) => ({ ...prev, [item.id]: safeQty }));
+  };
+
+  const handleGenericAddToCart = async (item) => {
+    try {
+      const qty = getProductQty(item);
+      const type = qty >= getItemBulkQty(item) ? "bulk" : "piece";
+
+      setAddingId(item.id);
+      const res = await addToCart({ product_id: item.id, quantity: qty, type });
+      window.dispatchEvent(new Event("cart-updated"));
+      alert(res?.msg || "Added to cart");
+    } catch (err) {
+      console.error(err);
+      alert(err?.message || "Failed to add to cart");
+    } finally {
+      setAddingId(null);
+    }
+  };
 
   return (
-    <div className="product-modal-overlay open" style={{ zIndex: 99999 }}>
-      <div
-        className="product-modal-box open"
-        style={{
-          maxWidth: "950px",
-          width: "95%",
-          maxHeight: "90vh",
-          overflowY: "auto",
-          padding: "20px",
-        }}
-      >
-        <button className="product-modal-close" onClick={onClose} type="button">
-          <FiX />
-        </button>
+    <div className="product-modal-overlay open generic-products-modal-overlay">
+      <div className="product-modal-box open generic-products-modal-box">
+        <div className="generic-products-modal-header">
+          <div>
+            <h3 className="generic-products-modal-title">
+              {genericLink?.name || "Compatible Spare Parts"}
+            </h3>
+            <p className="generic-products-modal-subtitle">
+              Verified components for this product
+            </p>
+          </div>
 
-        <h3 style={{ marginBottom: "15px" }}>{genericLink?.name}</h3>
+          <button
+            onClick={onClose}
+            type="button"
+            aria-label="Close"
+            className="generic-products-modal-close"
+          >
+            <FiX />
+          </button>
+        </div>
 
         {products.length === 0 ? (
-          <p>No products found.</p>
+          <p className="generic-products-empty">No products found.</p>
         ) : (
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))",
-              gap: "15px",
-            }}
-          >
+          <div className="generic-products-grid">
             {products.map((item) => {
               const imageUrl =
-                item?.thumb_img?.file_name ||
-                item?.images?.[0]?.file_name ||
-                "";
+                item?.thumb_img?.file_name || item?.images?.[0]?.file_name || no_image;
+              const qty = getProductQty(item);
+              const price = getItemPrice(item);
+              const mrp = Number(item?.mrp || price || 0);
+              const bulkQty = getItemBulkQty(item);
+              const bulkPrice = getItemBulkPrice(item);
+              const activePrice = bulkQty > 0 && qty >= bulkQty ? bulkPrice : price;
+              const hasFastDelivery = Number(item?.fast_delivery_tag) === 1;
+              const hasWarranty = Number(item?.is_warranty) === 1;
+              const earnedMCoin =
+                activePrice * Number(item?.c_instock_m_coin || 0) * Number(qty || 1);
 
               return (
-                <div
-                  key={item.id}
-                  style={{
-                    border: "1px solid #eee",
-                    borderRadius: "10px",
-                    padding: "10px",
-                    background: "#fff",
-                    boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
-                  }}
-                >
-                  <div
-                    style={{
-                      width: "100%",
-                      height: "130px",
-                      background: "#f7f7f7",
-                      borderRadius: "8px",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      overflow: "hidden",
-                      marginBottom: "10px",
-                    }}
-                  >
-                    {imageUrl ? (
-                      <img
-                        src={imageUrl}
-                        alt={item?.name}
-                        style={{
-                          width: "100%",
-                          height: "100%",
-                          objectFit: "contain",
-                        }}
-                        onError={(e) => {
-                          e.currentTarget.style.display = "none";
-                        }}
-                      />
-                    ) : (
-                      <span style={{ fontSize: "12px", color: "#999" }}>
-                        No Image
-                      </span>
+                <div key={item.id} className="generic-product-card">
+                  <div className="generic-product-image-wrap">
+                    <img
+                      src={imageUrl}
+                      alt={item?.name || "Product"}
+                      className="generic-product-image"
+                      onError={(e) => {
+                        e.currentTarget.onerror = null;
+                        e.currentTarget.src = no_image;
+                      }}
+                    />
+
+                    {(hasFastDelivery || hasWarranty) && (
+                      <div className="generic-product-tags">
+                        {hasFastDelivery && (
+                          <span className="generic-product-tag">
+                            <img
+                              src={fastDeliveryIcon}
+                              alt=""
+                              className="generic-product-tag-icon generic-product-tag-icon-invert"
+                              onError={(e) => {
+                                e.currentTarget.style.display = "none";
+                              }}
+                            />
+                            Fast Delivery
+                          </span>
+                        )}
+
+                        {hasWarranty && (
+                          <span className="generic-product-tag">
+                            <img
+                              src={warrantyIcon}
+                              alt=""
+                              className="generic-product-tag-icon generic-product-tag-icon-round"
+                              onError={(e) => {
+                                e.currentTarget.style.display = "none";
+                              }}
+                            />
+                            Warranty
+                          </span>
+                        )}
+                      </div>
                     )}
                   </div>
 
-                  <h4
-                    style={{
-                      fontSize: "13px",
-                      lineHeight: "18px",
-                      minHeight: "38px",
-                      marginBottom: "6px",
-                    }}
-                  >
-                    {item?.name}
+                  <h4 className="generic-product-name">
+                    {item?.name?.length > 70 ? `${item.name.substring(0, 70)}...` : item?.name}
                   </h4>
 
-                  <p style={{ fontSize: "12px", marginBottom: "5px" }}>
-                    Part No: <b>{item?.part_no}</b>
+                  <div className="generic-product-price">
+                    <span className="generic-product-mrp">
+                      ₹{mrp.toFixed(2)}
+                    </span>
+                    <span className="generic-product-active-price">
+                      ₹{activePrice.toFixed(2)}
+                    </span>
+                  </div>
+
+                  <p className="generic-product-mcoin">
+                    Earn MCoin : {earnedMCoin.toFixed(2)}
                   </p>
 
-                  <p style={{ fontSize: "13px", fontWeight: 700 }}>
-                    ₹{Number(item?.mrp || 0).toFixed(2)}
-                  </p>
+                  <div className="generic-product-footer">
+                    <div className="generic-product-qty-cart">
+                      <div className="generic-product-qty">
+                        <button
+                          type="button"
+                          onClick={() => updateGenericQty(item, qty - 1)}
+                          className="generic-product-qty-btn"
+                        >
+                          -
+                        </button>
+
+                        <input
+                          type="number"
+                          min="1"
+                          value={qty}
+                          onChange={(e) => updateGenericQty(item, e.target.value)}
+                          className="generic-product-qty-input"
+                        />
+
+                        <button
+                          type="button"
+                          onClick={() => updateGenericQty(item, qty + 1)}
+                          className="generic-product-qty-btn"
+                        >
+                          +
+                        </button>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => handleGenericAddToCart(item)}
+                        disabled={addingId === item.id}
+                        aria-label="Add to cart"
+                        title="Add to cart"
+                        className="generic-product-cart-btn"
+                      >
+                        <img src={CartIconPlus} alt="" className="generic-product-cart-icon" />
+                      </button>
+                    </div>
+
+                    <div className="generic-product-discount-row">
+                      <p className="generic-product-discount-text">
+                        Bulk Discount: Buy {bulkQty} pcs and get at ₹{bulkPrice.toFixed(2)}/-
+                      </p>
+
+                      <button
+                        type="button"
+                        onClick={() => updateGenericQty(item, bulkQty)}
+                        className="generic-product-discount-btn"
+                      >
+                        Get Discount
+                      </button>
+                    </div>
+                  </div>
                 </div>
               );
             })}
@@ -455,6 +550,15 @@ const ProductModal = ({ product, isOpen, onClose }) => {
       ? productDetails.generic_links
       : [];
 
+  const mainProducts = Array.isArray(productDetails?.generic_master_product)
+    ? productDetails.generic_master_product
+    : productDetails?.generic_master_product
+      ? [productDetails.generic_master_product]
+      : [];
+
+  const hasMainProduct =
+    productDetails?.generic_master_links_id && mainProducts.length > 0;
+
   return (
     <>
       <div className={`product-modal-overlay ${isOpen ? "open" : ""}`}>
@@ -466,7 +570,7 @@ const ProductModal = ({ product, isOpen, onClose }) => {
           <div className="product-modal-grid">
             <div className="product-modal-content">
               {loadingProduct && (
-                <div style={{ padding: 18, fontWeight: 600 }}>Loading product...</div>
+                <div className="product-modal-loading">Loading product...</div>
               )}
 
               {!loadingProduct && (
@@ -564,7 +668,7 @@ const ProductModal = ({ product, isOpen, onClose }) => {
                       <span className="unit">/Pc</span>
 
                       {checkingPrice && (
-                        <span style={{ marginLeft: 10, fontSize: 12, fontWeight: 600 }}>
+                        <span className="product-modal-price-status">
                           Updating price...
                         </span>
                       )}
@@ -576,75 +680,50 @@ const ProductModal = ({ product, isOpen, onClose }) => {
                       </span>
                     </div>
 
-                    {genericLinks.length > 0 && (
-                      <div
-                        style={{
-                          marginTop: "12px",
-                          marginBottom: "12px",
-                          padding: "10px",
-                          border: "1px solid #eee",
-                          borderRadius: "10px",
-                          background: "#fafafa",
-                        }}
-                      >
-                        <p
-                          style={{
-                            fontSize: "13px",
-                            fontWeight: 700,
-                            marginBottom: "8px",
-                          }}
-                        >
+                    {(genericLinks.length > 0 || hasMainProduct) && (
+                      <div className="product-modal-generic-links">
+                        <p className="product-modal-generic-title">
                           {productDetails?.generic_master?.name || "Generic Products"}
                         </p>
 
-                        <div
-                          style={{
-                            display: "flex",
-                            gap: "8px",
-                            flexWrap: "wrap",
-                          }}
-                        >
+                        <div className="product-modal-generic-list">
                           {genericLinks.map((link) => (
                             <button
                               key={link.id}
                               type="button"
                               onClick={() => openGenericProductsModal(link)}
-                              style={{
-                                border: "1px solid #e11d48",
-                                color: "#e11d48",
-                                background: "#fff",
-                                padding: "6px 12px",
-                                borderRadius: "20px",
-                                fontSize: "13px",
-                                fontWeight: 700,
-                                cursor: "pointer",
-                              }}
+                              className="product-modal-generic-chip product-modal-generic-chip-red"
                             >
                               {link.name}
                               {Array.isArray(link.products) && (
-                                <span style={{ marginLeft: "5px" }}>
+                                <span className="product-modal-generic-count">
                                   ({link.products.length})
                                 </span>
                               )}
                             </button>
                           ))}
+
+                          {hasMainProduct && (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                openGenericProductsModal({
+                                  id: "main-product",
+                                  name: "Main Product",
+                                  products: mainProducts,
+                                })
+                              }
+                              className="product-modal-generic-chip product-modal-generic-chip-blue"
+                            >
+                              Main Product ({mainProducts.length})
+                            </button>
+                          )}
                         </div>
                       </div>
                     )}
 
                     {!!qtyAlert && (
-                      <div
-                        style={{
-                          marginTop: 8,
-                          padding: "6px 8px",
-                          border: "1px solid #ff4d4f",
-                          background: "#fff1f0",
-                          color: "#ff4d4f",
-                          borderRadius: 6,
-                          fontSize: 12,
-                          fontWeight: 600,
-                        }}
-                      >
+                      <div className="product-modal-qty-alert">
                         {qtyAlert}
                       </div>
                     )}
@@ -760,4 +839,5 @@ const ProductModal = ({ product, isOpen, onClose }) => {
     </>
   );
 };
+
 export default ProductModal;

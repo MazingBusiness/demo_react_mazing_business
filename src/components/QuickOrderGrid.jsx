@@ -475,7 +475,20 @@ const QuickOrderGrid = ({ filters, onPriceRangeUpdate }) => {
         )}
 
         {products.map((product) => (
-          <div key={product.id} className="product-box">
+          <div
+            key={product.id}
+            className="product-box"
+            role="button"
+            tabIndex={0}
+            style={{ cursor: "pointer" }}
+            onClick={() => openModal(product)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                openModal(product);
+              }
+            }}
+          >
             <div className="product-card">
               {renderProductImage(product, openModal)}
 
@@ -510,7 +523,10 @@ const QuickOrderGrid = ({ filters, onPriceRangeUpdate }) => {
                     <button
                       type="button"
                       className="before-reg-btn"
-                      onClick={() => navigate("/register")}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate("/register");
+                      }}
                     >
                       Register to check prices
                     </button>
