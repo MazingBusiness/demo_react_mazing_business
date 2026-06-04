@@ -744,7 +744,7 @@ const ProductDetails = () => {
     setUseMainBulkDiscount(false);
 
     try {
-      const cleanSlug = decodeURIComponent(String(slug || "").trim());
+      const cleanSlug = String(slug || "").trim();
       if (!cleanSlug) throw new Error("Slug missing in URL");
 
       const payload = await productDetails(cleanSlug);

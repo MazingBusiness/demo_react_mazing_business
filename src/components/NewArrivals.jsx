@@ -308,7 +308,7 @@ const NewArrivals = () => {
   const renderProductImage = (product, onCartClick = () => {}) => {
     return (
       <div className="product-img">
-        <Link to={`/product-details/${product.slug}`}>
+        <Link to={`/product-details/${encodeURIComponent(product.slug || "")}`}>
           {product.img ? (
             <img
               src={product.img}
@@ -417,7 +417,7 @@ const NewArrivals = () => {
                     <div className="product-info">
                       <h4 className="h4-font" title={product.name}>
                         <Link
-                          to={`/product-details/${product.slug}`}
+                          to={`/product-details/${encodeURIComponent(product.slug || "")}`}
                           style={{ textDecoration: "none", color: "inherit" }}
                         >
                           {product.name?.length > 70

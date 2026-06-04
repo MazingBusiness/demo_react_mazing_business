@@ -279,7 +279,7 @@ const OfferItems = () => {
   const renderProductImage = (product, onCartClick = () => {}) => {
     return (
       <div className="product-img">
-        <Link to={`/product-details/${product.slug}`}>
+        <Link to={`/product-details/${encodeURIComponent(product.slug || "")}`}>
           {product.img ? (
             <img
               src={product.img}
@@ -373,7 +373,7 @@ const OfferItems = () => {
                   {renderProductImage(product, openModal)}
 
                   <div className="product-info">
-                    <Link to={`/product-details/${product.slug}`}>
+                    <Link to={`/product-details/${encodeURIComponent(product.slug || "")}`}>
                       <h3 title={product.name}>
                         {product.name?.length > 80
                           ? product.name.substring(0, 80) + "..."

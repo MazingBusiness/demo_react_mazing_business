@@ -28,9 +28,9 @@ const productsPerPage = 16;
 // ✅ Change this if your product detail route differs
 const PRODUCT_DETAILS_PATH = (p) => {
   // If your API provides slug, prefer it:
-  if (p?.slug) return `/product-details/${p.slug}`;
+  if (p?.slug) return `/product-details/${encodeURIComponent(p.slug)}`;
   // fallback:
-  return `/product-details/${p.id}`;
+  return `/product-details/${encodeURIComponent(p.id || "")}`;
 };
 
 const SearchModal = ({
