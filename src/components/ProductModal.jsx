@@ -12,7 +12,7 @@ import CartbtnIcon from "../assets/icons/cartbtnIcon.svg";
 import CartIconPlus from "../assets/icons/cartIconplus.svg";
 import { GoDotFill } from "react-icons/go";
 
-import { getProductDetails, addToCart, updateProductQty } from "../api/apiRequest";
+import { getProductDetails, getGenericProducts, addToCart, updateProductQty } from "../api/apiRequest";
 
 
 const GenericProductsModal = ({ isOpen, onClose, genericLink }) => {
@@ -223,6 +223,8 @@ const ProductModal = ({ product, isOpen, onClose }) => {
 
   const [productDetails, setProductDetails] = useState(null);
   const [productImages, setProductImages] = useState([]);
+  const [genericMasters, setGenericMasters] = useState([]);
+  const [loadingGenericProducts, setLoadingGenericProducts] = useState(false);
 
   const [quantity, setQuantity] = useState("");
 
@@ -435,6 +437,8 @@ const ProductModal = ({ product, isOpen, onClose }) => {
     setLoadingProduct(true);
     setProductDetails(null);
     setProductImages([]);
+    setGenericMasters([]);
+    setLoadingGenericProducts(false);
     setQuantity("");
     setQtyAlert("");
     setCheckingPrice(false);
@@ -487,6 +491,46 @@ const ProductModal = ({ product, isOpen, onClose }) => {
 
     fetchDetails();
   }, [isOpen, productId]);
+
+  useEffect(() => {
+    if (!isOpen || !productDetails?.id) return;
+
+    let ignore = false;
+
+    const fetchGenericProducts = async () => {
+      setLoadingGenericProducts(true);
+      setGenericMasters([]);
+
+      try {
+        const response = await getGenericProducts(productDetails.id);
+
+        if (ignore) return;
+
+        const masters = Array.isArray(response?.generic_masters)
+          ? response.generic_masters
+          : Array.isArray(response?.data)
+            ? response.data
+            : [];
+
+        setGenericMasters(response?.res ? masters : []);
+      } catch (error) {
+        if (!ignore) {
+          console.error("Generic products fetch error:", error);
+          setGenericMasters([]);
+        }
+      } finally {
+        if (!ignore) {
+          setLoadingGenericProducts(false);
+        }
+      }
+    };
+
+    fetchGenericProducts();
+
+    return () => {
+      ignore = true;
+    };
+  }, [isOpen, productDetails?.id]);
 
   useEffect(() => {
     return () => {
@@ -544,10 +588,6 @@ const ProductModal = ({ product, isOpen, onClose }) => {
     (Number(unitPrice) || 0) *
     (Number(productDetails?.c_instock_m_coin) || 0) *
     (Number(quantity) || 0);
-
-  const genericMasters = Array.isArray(productDetails?.generic_masters)
-    ? productDetails.generic_masters
-    : [];
 
   const hasGenericMasters = genericMasters.some((master) =>
     Array.isArray(master?.generic_links) && master.generic_links.length > 0
@@ -674,7 +714,17 @@ const ProductModal = ({ product, isOpen, onClose }) => {
                       </span>
                     </div>
 
-                    {hasGenericMasters && (
+                    {loadingGenericProducts && (
+                      <div className="product-modal-generic-links">
+                        <div className="product-modal-generic-master">
+                          <p className="product-modal-generic-title">
+                            Loading generic products...
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                    {!loadingGenericProducts && hasGenericMasters && (
                       <div className="product-modal-generic-links">
                         {genericMasters.map((master) => {
                           const masterLinks = Array.isArray(master?.generic_links)

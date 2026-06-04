@@ -11,7 +11,7 @@ import no_image from "../assets/images/no-image.png";
 import CartIcon from "../assets/icons/CartIcon.svg";
 
 import { getLoggedInUser } from "../utils/authUtils";
-import { addToCart, productDetails } from "../api/apiRequest";
+import { addToCart, getGenericProducts, productDetails } from "../api/apiRequest";
 import ProductModal from "../components/ProductModal";
 
 /*
@@ -570,6 +570,8 @@ const ProductDetails = () => {
 
   const [product, setProduct] = useState(null);
   const [apiAttributes, setApiAttributes] = useState([]);
+  const [genericMasters, setGenericMasters] = useState([]);
+  const [loadingGenericProducts, setLoadingGenericProducts] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [useMainBulkDiscount, setUseMainBulkDiscount] = useState(false);
 
@@ -712,19 +714,9 @@ const ProductDetails = () => {
 
   const isNoCreditItem = Number(product?.cash_and_carry_item || 0) === 1;
 
-  const genericLinks =
-    product?.generic_master_id && Array.isArray(product?.generic_links)
-      ? product.generic_links
-      : [];
-
-  const mainProducts = Array.isArray(product?.generic_master_product)
-    ? product.generic_master_product
-    : product?.generic_master_product
-      ? [product.generic_master_product]
-      : [];
-
-  const hasMainProduct =
-    product?.generic_master_links_id && mainProducts.length > 0;
+  const hasGenericMasters = genericMasters.some((master) =>
+    Array.isArray(master?.generic_links) && master.generic_links.length > 0
+  );
 
   const openGenericProductsModal = (link) => {
     setSelectedGenericLink(link);
@@ -741,6 +733,8 @@ const ProductDetails = () => {
     setErr("");
     setProduct(null);
     setApiAttributes([]);
+    setGenericMasters([]);
+    setLoadingGenericProducts(false);
     setUseMainBulkDiscount(false);
 
     try {
@@ -769,6 +763,46 @@ const ProductDetails = () => {
   useEffect(() => {
     fetchProduct();
   }, [slug]);
+
+  useEffect(() => {
+    if (!product?.id) return;
+
+    let ignore = false;
+
+    const fetchGenericProducts = async () => {
+      setLoadingGenericProducts(true);
+      setGenericMasters([]);
+
+      try {
+        const response = await getGenericProducts(product.id);
+
+        if (ignore) return;
+
+        const masters = Array.isArray(response?.generic_masters)
+          ? response.generic_masters
+          : Array.isArray(response?.data)
+            ? response.data
+            : [];
+
+        setGenericMasters(response?.res ? masters : []);
+      } catch (e) {
+        if (!ignore) {
+          console.error("Generic products fetch error:", e);
+          setGenericMasters([]);
+        }
+      } finally {
+        if (!ignore) {
+          setLoadingGenericProducts(false);
+        }
+      }
+    };
+
+    fetchGenericProducts();
+
+    return () => {
+      ignore = true;
+    };
+  }, [product?.id]);
 
   const handleAddToCart = () => {
     if (!product?.id) return;
@@ -896,7 +930,7 @@ const ProductDetails = () => {
 
                   <span className="emcoinDetails">Earn MCoin : {earnMCoin} * X</span>
 
-                  {(genericLinks.length > 0 || hasMainProduct) && (
+                  {loadingGenericProducts && (
                     <div
                       style={{
                         marginTop: "12px",
@@ -907,74 +941,84 @@ const ProductDetails = () => {
                         background: "#fafafa",
                       }}
                     >
-                      <p
-                        style={{
-                          fontSize: "13px",
-                          fontWeight: 700,
-                          marginBottom: "8px",
-                        }}
-                      >
-                        {product?.generic_master?.name || "Generic Products"}
+                      <p style={{ fontSize: "13px", fontWeight: 700, margin: 0 }}>
+                        Loading generic products...
                       </p>
-
-                      <div
-                        style={{
-                          display: "flex",
-                          gap: "8px",
-                          flexWrap: "wrap",
-                        }}
-                      >
-                        {genericLinks.map((link) => (
-                          <button
-                            key={link.id}
-                            type="button"
-                            onClick={() => openGenericProductsModal(link)}
-                            style={{
-                              border: "1px solid #e11d48",
-                              color: "#e11d48",
-                              background: "#fff",
-                              padding: "6px 12px",
-                              borderRadius: "20px",
-                              fontSize: "13px",
-                              fontWeight: 700,
-                              cursor: "pointer",
-                            }}
-                          >
-                            {link.name}
-                            {Array.isArray(link.products) && (
-                              <span style={{ marginLeft: "5px" }}>
-                                ({link.products.length})
-                              </span>
-                            )}
-                          </button>
-                        ))}
-
-                        {hasMainProduct && (
-                          <button
-                            type="button"
-                            onClick={() =>
-                              openGenericProductsModal({
-                                id: "main-product",
-                                name: "Main Product",
-                                products: mainProducts,
-                              })
-                            }
-                            style={{
-                              border: "1px solid #2563eb",
-                              color: "#2563eb",
-                              background: "#fff",
-                              padding: "6px 12px",
-                              borderRadius: "20px",
-                              fontSize: "13px",
-                              fontWeight: 700,
-                              cursor: "pointer",
-                            }}
-                          >
-                            Main Product ({mainProducts.length})
-                          </button>
-                        )}
-                      </div>
                     </div>
+                  )}
+
+                  {!loadingGenericProducts && hasGenericMasters && (
+                    <>
+                      {genericMasters.map((master) => {
+                        const masterLinks = Array.isArray(master?.generic_links)
+                          ? master.generic_links
+                          : [];
+
+                        if (masterLinks.length === 0) return null;
+
+                        return (
+                          <div
+                            key={master.id || master.name}
+                            style={{
+                              marginTop: "12px",
+                              marginBottom: "12px",
+                              padding: "10px",
+                              border: "1px solid #eee",
+                              borderRadius: "10px",
+                              background: "#fafafa",
+                            }}
+                          >
+                            <p
+                              style={{
+                                fontSize: "13px",
+                                fontWeight: 700,
+                                marginBottom: "8px",
+                              }}
+                            >
+                              {master?.name || "Generic Products"}
+                            </p>
+
+                            <div
+                              style={{
+                                display: "flex",
+                                gap: "8px",
+                                flexWrap: "wrap",
+                              }}
+                            >
+                              {masterLinks.map((link) => {
+                                const products = Array.isArray(link?.products)
+                                  ? link.products
+                                  : [];
+                                const productCount = Number(link?.product_count ?? products.length);
+
+                                return (
+                                  <button
+                                    key={`${master.id || "master"}-${link.id}`}
+                                    type="button"
+                                    onClick={() => openGenericProductsModal(link)}
+                                    style={{
+                                      border: "1px solid #e11d48",
+                                      color: "#e11d48",
+                                      background: "#fff",
+                                      padding: "6px 12px",
+                                      borderRadius: "20px",
+                                      fontSize: "13px",
+                                      fontWeight: 700,
+                                      cursor: "pointer",
+                                    }}
+                                  >
+                                    {link.name}
+                                    <span style={{ marginLeft: "5px" }}>
+                                      ({productCount})
+                                    </span>
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </>
                   )}
 
                   {product?.is_warranty == 1 && (
