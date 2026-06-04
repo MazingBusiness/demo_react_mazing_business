@@ -545,19 +545,13 @@ const ProductModal = ({ product, isOpen, onClose }) => {
     (Number(productDetails?.c_instock_m_coin) || 0) *
     (Number(quantity) || 0);
 
-  const genericLinks =
-    productDetails?.generic_master_id && Array.isArray(productDetails?.generic_links)
-      ? productDetails.generic_links
-      : [];
+  const genericMasters = Array.isArray(productDetails?.generic_masters)
+    ? productDetails.generic_masters
+    : [];
 
-  const mainProducts = Array.isArray(productDetails?.generic_master_product)
-    ? productDetails.generic_master_product
-    : productDetails?.generic_master_product
-      ? [productDetails.generic_master_product]
-      : [];
-
-  const hasMainProduct =
-    productDetails?.generic_master_links_id && mainProducts.length > 0;
+  const hasGenericMasters = genericMasters.some((master) =>
+    Array.isArray(master?.generic_links) && master.generic_links.length > 0
+  );
 
   return (
     <>
@@ -680,45 +674,51 @@ const ProductModal = ({ product, isOpen, onClose }) => {
                       </span>
                     </div>
 
-                    {(genericLinks.length > 0 || hasMainProduct) && (
+                    {hasGenericMasters && (
                       <div className="product-modal-generic-links">
-                        <p className="product-modal-generic-title">
-                          {productDetails?.generic_master?.name || "Generic Products"}
-                        </p>
+                        {genericMasters.map((master) => {
+                          const masterLinks = Array.isArray(master?.generic_links)
+                            ? master.generic_links
+                            : [];
 
-                        <div className="product-modal-generic-list">
-                          {genericLinks.map((link) => (
-                            <button
-                              key={link.id}
-                              type="button"
-                              onClick={() => openGenericProductsModal(link)}
-                              className="product-modal-generic-chip product-modal-generic-chip-red"
-                            >
-                              {link.name}
-                              {Array.isArray(link.products) && (
-                                <span className="product-modal-generic-count">
-                                  ({link.products.length})
+                          if (masterLinks.length === 0) return null;
+
+                          return (
+                            <div key={master.id || master.name} className="product-modal-generic-master">
+                              <div className="product-modal-generic-master-head">
+                                <p className="product-modal-generic-title">
+                                  {master?.name || "Generic Products"}
+                                </p>
+                                <span className="product-modal-generic-master-count">
+                                  {masterLinks.length}
                                 </span>
-                              )}
-                            </button>
-                          ))}
+                              </div>
 
-                          {hasMainProduct && (
-                            <button
-                              type="button"
-                              onClick={() =>
-                                openGenericProductsModal({
-                                  id: "main-product",
-                                  name: "Main Product",
-                                  products: mainProducts,
-                                })
-                              }
-                              className="product-modal-generic-chip product-modal-generic-chip-blue"
-                            >
-                              Main Product ({mainProducts.length})
-                            </button>
-                          )}
-                        </div>
+                              <div className="product-modal-generic-list">
+                                {masterLinks.map((link) => {
+                                  const products = Array.isArray(link?.products)
+                                    ? link.products
+                                    : [];
+                                  const productCount = Number(link?.product_count ?? products.length);
+
+                                  return (
+                                    <button
+                                      key={`${master.id || "master"}-${link.id}`}
+                                      type="button"
+                                      onClick={() => openGenericProductsModal(link)}
+                                      className="product-modal-generic-chip product-modal-generic-chip-red"
+                                    >
+                                      {link.name}
+                                      <span className="product-modal-generic-count">
+                                        ({productCount})
+                                      </span>
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          );
+                        })}
                       </div>
                     )}
 

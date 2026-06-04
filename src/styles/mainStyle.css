@@ -3705,6 +3705,7 @@ a.all-link svg {
   display: flex;
   justify-content: center;
   align-items: center;
+  padding: 16px;
   opacity: 0;
   visibility: hidden;
   transition: all 0.3s ease;
@@ -3719,6 +3720,7 @@ a.all-link svg {
 .product-modal-box {
   width: 100%;
   max-width: 960px;
+  max-height: calc(100vh - 32px);
   background: #fff;
   border-radius: 10px;
   position: relative;
@@ -6168,14 +6170,100 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   display: flex;
   width: 100%;
   gap: 30px;
+  max-height: calc(100vh - 92px);
+  min-height: 0;
 }
 
 .product-modal-grid .product-modal-content .product-modal-carousel {
   width: 55%;
+  min-height: 0;
 }
 
 .product-modal-grid .product-modal-content .product-modal-info {
   width: 45%;
+  max-height: calc(100vh - 92px);
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 8px;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+
+.product-modal-grid .product-modal-content .product-modal-info::-webkit-scrollbar {
+  width: 6px;
+}
+
+.product-modal-grid .product-modal-content .product-modal-info::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 999px;
+}
+
+.product-modal-grid .product-modal-content .product-modal-info::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+@media (max-width: 991px) {
+  .product-modal-overlay {
+    align-items: flex-start;
+    padding: 12px;
+  }
+
+  .product-modal-box {
+    max-height: calc(100vh - 24px);
+    padding: 22px;
+    overflow-y: auto;
+  }
+
+  .product-modal-grid .product-modal-content {
+    flex-direction: column;
+    gap: 18px;
+    max-height: none;
+  }
+
+  .product-modal-grid .product-modal-content .product-modal-carousel,
+  .product-modal-grid .product-modal-content .product-modal-info {
+    width: 100%;
+    max-height: none;
+    overflow: visible;
+    padding-right: 0;
+  }
+
+  .product-modal-info-top {
+    padding-top: 10px;
+  }
+}
+
+@media (max-width: 576px) {
+  .product-modal-overlay {
+    padding: 8px;
+  }
+
+  .product-modal-box {
+    max-height: calc(100vh - 16px);
+    padding: 18px 14px;
+    border-radius: 8px;
+  }
+
+  .product-modal-close {
+    top: 6px;
+    right: 10px;
+    font-size: 24px;
+  }
+
+  .product-modal-info-top {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .product-modal-info-top-lft,
+  .product-modal-info-top .delivery {
+    width: 100%;
+    text-align: left;
+  }
+
+  .product-modal-info .product-price {
+    flex-wrap: wrap;
+  }
 }
 
 .product-modal-grid .product-modal-content .product-modal-carousel .breadcrumb {
@@ -6375,38 +6463,75 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 
 .product-modal-generic-links {
-  margin-top: 12px;
-  margin-bottom: 12px;
+  margin: 14px 0;
+  display: grid;
+  gap: 10px;
+}
+
+.product-modal-generic-master {
   padding: 10px;
-  border: 1px solid #eee;
-  border-radius: 10px;
-  background: #fafafa;
+  border: 1px solid #e5e7eb;
+  border-left: 3px solid #e11d48;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.06);
+}
+
+.product-modal-generic-master-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
 }
 
 .product-modal-generic-title {
+  margin: 0;
   font-size: 13px;
-  font-weight: 700;
-  margin-bottom: 8px;
+  font-weight: 800;
+  color: #1f2937;
+}
+
+.product-modal-generic-master-count {
+  min-width: 24px;
+  height: 24px;
+  padding: 0 7px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: #fef2f2;
+  color: #e11d48;
+  font-size: 12px;
+  font-weight: 800;
 }
 
 .product-modal-generic-list {
   display: flex;
-  gap: 8px;
+  gap: 7px;
   flex-wrap: wrap;
 }
 
 .product-modal-generic-chip {
   background: #fff;
-  padding: 6px 12px;
-  border-radius: 20px;
-  font-size: 13px;
+  padding: 7px 10px;
+  border-radius: 6px;
+  font-size: 12px;
   font-weight: 700;
   cursor: pointer;
+  transition: background-color 0.18s ease, color 0.18s ease, border-color 0.18s ease;
 }
 
 .product-modal-generic-chip-red {
-  border: 1px solid #e11d48;
-  color: #e11d48;
+  border: 1px solid #fecdd3;
+  color: #be123c;
+  background: #fff7f8;
+}
+
+.product-modal-generic-chip-red:hover {
+  border-color: #e11d48;
+  background: #e11d48;
+  color: #fff;
 }
 
 .product-modal-generic-chip-blue {
