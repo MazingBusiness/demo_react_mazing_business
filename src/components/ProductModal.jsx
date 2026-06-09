@@ -12,7 +12,7 @@ import CartbtnIcon from "../assets/icons/cartbtnIcon.svg";
 import CartIconPlus from "../assets/icons/cartIconplus.svg";
 import { GoDotFill } from "react-icons/go";
 
-import { getProductDetails, getGenericProducts, addToCart, updateProductQty } from "../api/apiRequest";
+import { getProductDetails, getGenericProducts, getMasterProducts, addToCart, updateProductQty } from "../api/apiRequest";
 
 
 const GenericProductsModal = ({ isOpen, onClose, genericLink }) => {
@@ -225,6 +225,9 @@ const ProductModal = ({ product, isOpen, onClose }) => {
   const [productImages, setProductImages] = useState([]);
   const [genericMasters, setGenericMasters] = useState([]);
   const [loadingGenericProducts, setLoadingGenericProducts] = useState(false);
+  const [genericFetchCompleted, setGenericFetchCompleted] = useState(false);
+  const [masterProducts, setMasterProducts] = useState([]);
+  const [loadingMasterProducts, setLoadingMasterProducts] = useState(false);
 
   const [quantity, setQuantity] = useState("");
 
@@ -439,6 +442,7 @@ const ProductModal = ({ product, isOpen, onClose }) => {
     setProductImages([]);
     setGenericMasters([]);
     setLoadingGenericProducts(false);
+    setGenericFetchCompleted(false);
     setQuantity("");
     setQtyAlert("");
     setCheckingPrice(false);
@@ -499,6 +503,7 @@ const ProductModal = ({ product, isOpen, onClose }) => {
 
     const fetchGenericProducts = async () => {
       setLoadingGenericProducts(true);
+      setGenericFetchCompleted(false);
       setGenericMasters([]);
 
       try {
@@ -521,6 +526,7 @@ const ProductModal = ({ product, isOpen, onClose }) => {
       } finally {
         if (!ignore) {
           setLoadingGenericProducts(false);
+          setGenericFetchCompleted(true);
         }
       }
     };
@@ -531,6 +537,54 @@ const ProductModal = ({ product, isOpen, onClose }) => {
       ignore = true;
     };
   }, [isOpen, productDetails?.id]);
+
+  useEffect(() => {
+    if (!isOpen || !productDetails?.id || !genericFetchCompleted) return;
+
+    const genericLinks = genericMasters.flatMap((master) =>
+      Array.isArray(master?.generic_links) ? master.generic_links : []
+    );
+
+    if (genericLinks.length > 0) {
+      setLoadingMasterProducts(false);
+      setMasterProducts([]);
+      return;
+    }
+
+    let ignore = false;
+
+    const fetchMasterProducts = async () => {
+      setLoadingMasterProducts(true);
+      setMasterProducts([]);
+
+      try {
+        const response = await getMasterProducts(productDetails.id);
+
+        if (ignore) return;
+
+        const masters = Array.isArray(response?.generic_masters)
+          ? response.generic_masters
+          : [];
+
+        setMasterProducts(response?.res ? masters : []);
+      } catch (error) {
+        if (!ignore) {
+          console.error("Master products fetch error:", error);
+          setMasterProducts([]);
+        }
+      } finally {
+        if (!ignore) {
+          setLoadingMasterProducts(false);
+        }
+      }
+    };
+
+    fetchMasterProducts();
+
+    return () => {
+      ignore = true;
+    };
+  }, [isOpen, productDetails?.id, genericFetchCompleted, genericMasters]);
 
   useEffect(() => {
     return () => {
@@ -589,9 +643,11 @@ const ProductModal = ({ product, isOpen, onClose }) => {
     (Number(productDetails?.c_instock_m_coin) || 0) *
     (Number(quantity) || 0);
 
-  const hasGenericMasters = genericMasters.some((master) =>
-    Array.isArray(master?.generic_links) && master.generic_links.length > 0
+  const genericLinks = genericMasters.flatMap((master) =>
+    Array.isArray(master?.generic_links) ? master.generic_links : []
   );
+  const hasGenericMasters = genericLinks.length > 0;
+  const shouldShowMasterProducts = !hasGenericMasters && masterProducts.length > 0;
 
   return (
     <>
@@ -725,50 +781,178 @@ const ProductModal = ({ product, isOpen, onClose }) => {
                     )}
 
                     {!loadingGenericProducts && hasGenericMasters && (
-                      <div className="product-modal-generic-links">
-                        {genericMasters.map((master) => {
-                          const masterLinks = Array.isArray(master?.generic_links)
-                            ? master.generic_links
-                            : [];
+                      <div
+                        style={{
+                          marginTop: "12px",
+                          marginBottom: "12px",
+                          padding: "10px",
+                          border: "1px solid #eee",
+                          borderRadius: "10px",
+                          background: "#fafafa",
+                        }}
+                      >
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            gap: "10px",
+                            marginBottom: "8px",
+                          }}
+                        >
+                          <p
+                            style={{
+                              margin: 0,
+                              fontSize: "13px",
+                              fontWeight: 700,
+                            }}
+                          >
+                            Related Products
+                          </p>
+                          <span
+                            style={{
+                              minWidth: "24px",
+                              height: "24px",
+                              padding: "0 7px",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              borderRadius: "999px",
+                              background: "#fef2f2",
+                              color: "#e11d48",
+                              fontSize: "12px",
+                              fontWeight: 800,
+                            }}
+                          >
+                            {genericLinks.length}
+                          </span>
+                        </div>
 
-                          if (masterLinks.length === 0) return null;
+                        <div
+                          style={{
+                            display: "flex",
+                            gap: "8px",
+                            flexWrap: "wrap",
+                          }}
+                        >
+                          {genericLinks.map((link) => {
+                            const products = Array.isArray(link?.products)
+                              ? link.products
+                              : [];
+                            const productCount = Number(link?.product_count ?? products.length);
 
-                          return (
-                            <div key={master.id || master.name} className="product-modal-generic-master">
-                              <div className="product-modal-generic-master-head">
-                                <p className="product-modal-generic-title">
-                                  {master?.name || "Generic Products"}
-                                </p>
-                                <span className="product-modal-generic-master-count">
-                                  {masterLinks.length}
+                            return (
+                              <button
+                                key={`generic-link-${link.id}`}
+                                type="button"
+                                onClick={() => openGenericProductsModal(link)}
+                                className="product-modal-generic-chip product-modal-generic-chip-red"
+                              >
+                                {link.name}
+                                <span className="product-modal-generic-count">
+                                  ({productCount})
                                 </span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    {loadingMasterProducts && !hasGenericMasters && (
+                      <div className="product-modal-master-loading">
+                        <p>Loading master product groups...</p>
+                      </div>
+                    )}
+
+                    {!loadingMasterProducts && shouldShowMasterProducts && (
+                      <div className="product-modal-master-products">
+                        {/* <div className="product-modal-master-heading">
+                          <p>Master product groups</p>
+                        </div> */}
+
+                        <div className="product-modal-master-list">
+                          {masterProducts.map((master) => (
+                            <div
+                              key={master.id}
+                              className="product-modal-master-card"
+                              style={{
+                                display: "flex",
+                                flexDirection: "column",
+                                gap: 8,
+                                padding: "12px 0",
+                                borderBottom: "1px solid #e5e7eb",
+                              }}
+                            >
+                              <div
+                                style={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "space-between",
+                                  gap: 12,
+                                }}
+                              >
+                                <div>
+                                  <div
+                                    className="product-modal-master-card-title"
+                                    style={{ fontWeight: 700, color: "#111827", marginBottom: 4 }}
+                                  >
+                                    {master.name}
+                                  </div>
+                                  <div
+                                    style={{
+                                      fontSize: "13px",
+                                      color: "#4b5563",
+                                      fontWeight: 600,
+                                    }}
+                                  >
+                                    {Array.isArray(master.master_products)
+                                      ? `${master.master_products.length} products`
+                                      : "0 products"}
+                                  </div>
+                                </div>
+
+                                <button
+                                  type="button"
+                                  className="product-modal-master-view-btn"
+                                  style={{
+                                    background: '#ef4444',
+                                    color: '#fff',
+                                    border: 0,
+                                    padding: '6px 10px',
+                                    borderRadius: 6,
+                                    cursor: 'pointer',
+                                    fontWeight: 700,
+                                  }}
+                                  onClick={() => {
+                                    const linkLike = {
+                                      id: master.id,
+                                      name: master.name,
+                                      products: Array.isArray(master.master_products) ? master.master_products : [],
+                                    };
+                                    setSelectedGenericLink(linkLike);
+                                    setGenericModalOpen(true);
+                                  }}
+                                >
+                                  View products
+                                </button>
                               </div>
 
-                              <div className="product-modal-generic-list">
-                                {masterLinks.map((link) => {
-                                  const products = Array.isArray(link?.products)
-                                    ? link.products
-                                    : [];
-                                  const productCount = Number(link?.product_count ?? products.length);
-
-                                  return (
-                                    <button
-                                      key={`${master.id || "master"}-${link.id}`}
-                                      type="button"
-                                      onClick={() => openGenericProductsModal(link)}
-                                      className="product-modal-generic-chip product-modal-generic-chip-red"
-                                    >
-                                      {link.name}
-                                      <span className="product-modal-generic-count">
-                                        ({productCount})
-                                      </span>
-                                    </button>
-                                  );
-                                })}
-                              </div>
+                              {master.description && (
+                                <div
+                                  className="product-modal-master-card-desc"
+                                  style={{
+                                    color: "#475569",
+                                    fontSize: "12px",
+                                    lineHeight: 1.4,
+                                  }}
+                                >
+                                  {master.description}
+                                </div>
+                              )}
                             </div>
-                          );
-                        })}
+                          ))}
+                        </div>
                       </div>
                     )}
 

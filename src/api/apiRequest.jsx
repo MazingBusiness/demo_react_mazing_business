@@ -309,6 +309,26 @@ export const getGenericProducts = async (productId) => {
   return response.json();
 };
 
+export const getMasterProducts = async (productId) => {
+  const user = getLoggedInUser();
+  const header = getHeader();
+  const queryParams = new URLSearchParams();
+
+  if (productId) queryParams.append("product_id", productId);
+  if (user?.id) queryParams.append("user_id", user.id);
+
+  const url = `${API_BASE_URL}product/master-product?${queryParams.toString()}`;
+  const response = await fetch(url, {
+    method: "GET",
+    headers: {
+      ...(header?.headers || {}),
+      "Content-Type": "application/json",
+    },
+  });
+
+  return response.json();
+};
+
 // Cart
 export const cart = async () => {
   const header = getHeader();
