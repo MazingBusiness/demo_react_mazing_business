@@ -278,6 +278,36 @@ const ProductModal = ({ product, isOpen, onClose }) => {
 
   const bulkQty = Number(productDetails?.piece_by_carton || 0);
 
+  const parsePrice = (value) => {
+    const numeric = String(value ?? "").replace(/[^\d.]/g, "");
+    return Number(numeric) || 0;
+  };
+
+  const hasProductDetailsPrices = (details) =>
+    parsePrice(details?.discount_price) > 0 || parsePrice(details?.bulk_discount_price) > 0;
+
+  const getProductPrices = (details) => {
+    const apiNormal = parsePrice(details?.discount_price);
+    const apiBulk = parsePrice(details?.bulk_discount_price);
+
+    if (apiNormal > 0 || apiBulk > 0) {
+      return {
+        normal: apiNormal > 0 ? apiNormal : apiBulk,
+        bulk: apiBulk > 0 ? apiBulk : apiNormal,
+      };
+    }
+
+    const mrp = parsePrice(details?.mrp);
+    const discount = Number(details?.discount || details?.discount_percent || 20);
+    const normal = mrp > 0 ? mrp * ((100 - discount) / 100) : 0;
+    const bulk = normal > 0 ? normal - ((normal * 2) / 100) : 0;
+
+    return {
+      normal: Number(normal.toFixed(2)),
+      bulk: Number(bulk.toFixed(2)),
+    };
+  };
+
   const { type, unitPrice, totalPrice } = useMemo(() => {
     const qtyNum = Math.max(0, Number(quantity) || 0);
 
@@ -315,18 +345,18 @@ const ProductModal = ({ product, isOpen, onClose }) => {
     ];
 
     const normal =
-      Number(normalCandidates.find((v) => v !== undefined && v !== null && v !== "")) ||
+      parsePrice(normalCandidates.find((v) => v !== undefined && v !== null && v !== "")) ||
       fallbackNormal;
 
     const bulk =
-      Number(bulkCandidates.find((v) => v !== undefined && v !== null && v !== "")) ||
+      parsePrice(bulkCandidates.find((v) => v !== undefined && v !== null && v !== "")) ||
       fallbackBulk ||
       normal;
 
     return { normal, bulk };
   };
 
-  const runUpdateProductQty = async (pid, qtyNum) => {
+  const runUpdateProductQty = async (pid, qtyNum, sourceDetails = productDetails) => {
     if (!pid || !qtyNum || qtyNum <= 0) return;
 
     if (lastCheckedQtyRef.current === `${pid}:${qtyNum}`) return;
@@ -345,6 +375,19 @@ const ProductModal = ({ product, isOpen, onClose }) => {
       setQtyAlert(msg || "");
 
       setPriceState((prev) => {
+        const productPrices = getProductPrices(sourceDetails);
+
+        if (hasProductDetailsPrices(sourceDetails)) {
+          if (
+            Number(productPrices.normal) === Number(prev.normal) &&
+            Number(productPrices.bulk) === Number(prev.bulk)
+          ) {
+            return prev;
+          }
+
+          return productPrices;
+        }
+
         const fallbackNormal = Number(prev.normal || 0);
         const fallbackBulk = Number(prev.bulk || prev.normal || 0);
 
@@ -470,8 +513,10 @@ const ProductModal = ({ product, isOpen, onClose }) => {
           setProductDetails(firstProduct);
           setProductImages(firstProduct?.images || []);
 
-          const initialNormal = Number(firstProduct?.discount_price || 0);
-          const initialBulk = Number(firstProduct?.bulk_discount_price || initialNormal);
+          const productPrices = getProductPrices(firstProduct);
+          const initialNormal = productPrices.normal || Number(firstProduct?.discount_price || 0);
+          const initialBulk =
+            productPrices.bulk || Number(firstProduct?.bulk_discount_price || initialNormal);
 
           setPriceState({
             normal: initialNormal,
@@ -482,7 +527,7 @@ const ProductModal = ({ product, isOpen, onClose }) => {
           setQuantity(String(minQty));
 
           lastCheckedQtyRef.current = null;
-          await runUpdateProductQty(firstProduct?.id, minQty);
+          await runUpdateProductQty(firstProduct?.id, minQty, firstProduct);
         }
       } catch (error) {
         console.error("Fetch error:", error);
@@ -748,7 +793,7 @@ const ProductModal = ({ product, isOpen, onClose }) => {
 
                     <div className="product-price">
                       <span className="old-price">
-                        ₹{Number(productDetails?.mrp || 0).toFixed(2)}
+                        ₹{parsePrice(productDetails?.mrp).toFixed(2)}
                       </span>
 
                       <span className="new-price">

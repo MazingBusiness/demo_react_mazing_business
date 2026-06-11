@@ -66,6 +66,11 @@ const CartSummary = ({
     return Math.floor(Number(coins || 0) / Number(mCoinRedeemPoint));
   };
 
+  const twoDecimal = (value) => {
+    const numeric = Number(String(value ?? 0).replace(/,/g, ""));
+    return Number.isFinite(numeric) ? numeric.toFixed(2) : "0.00";
+  };
+
   const appliedCoinValue = getCoinValueInRupees(appliedCoins);
   const savedAppliedCoinValue = getCoinValueInRupees(savedAppliedCoins);
 
@@ -532,26 +537,26 @@ const CartSummary = ({
             <h3>Summary</h3>
 
             <label>
-              No Credit Item Subtotal:<span>₹ {noCreditItemTotalAmount}</span>
+              No Credit Item Subtotal:<span>₹ {twoDecimal(noCreditItemTotalAmount)}</span>
             </label>
 
             <label>
-              Other Item Subtotal:<span>₹ {cartSubTotal}</span>
+              Other Item Subtotal:<span>₹ {twoDecimal(cartSubTotal)}</span>
             </label>
 
             {overDueAmount > 0 && (
               <label>
-                Overdue Amount:<span>₹ {overDueAmount}</span>
+                Overdue Amount:<span>₹ {twoDecimal(overDueAmount)}</span>
               </label>
             )}
 
             <div className="mcoin-balance">
               <div>
                 <span className="label">You Can Earn M Coins with this order</span>
-                <strong>{earnMCoinBalance}</strong>
+                <strong>{twoDecimal(earnMCoinBalance)}</strong>
               </div>
               <div className="value">
-                ₹{getCoinValueInRupees(earnMCoinBalance)}
+                ₹{twoDecimal(getCoinValueInRupees(earnMCoinBalance))}
               </div>
             </div>
 
@@ -579,10 +584,10 @@ const CartSummary = ({
                     <div className="mcoin-balance">
                       <div>
                         <span className="label">Available Coins</span>
-                        <strong>{availableMCoinBalance}</strong>
+                        <strong>{twoDecimal(availableMCoinBalance)}</strong>
                       </div>
                       <div className="value">
-                        ₹{getCoinValueInRupees(availableMCoinBalance)}
+                        ₹{twoDecimal(getCoinValueInRupees(availableMCoinBalance))}
                       </div>
                     </div>
 
@@ -590,8 +595,8 @@ const CartSummary = ({
                       <div className="mcoin-applied">
                         <div className="mcoin-applied-left">
                           <span className="label">Applied Coins</span>
-                          <strong className="coins">{savedAppliedCoins} Coins</strong>
-                          <div className="value">₹{savedAppliedCoinValue}</div>
+                          <strong className="coins">{twoDecimal(savedAppliedCoins)} Coins</strong>
+                          <div className="value">₹{twoDecimal(savedAppliedCoinValue)}</div>
                         </div>
 
                         <button
@@ -611,7 +616,7 @@ const CartSummary = ({
                       <div className="mcoin-apply">
                         <label htmlFor="mcoinInput" className="mcoin-label">
                           Apply Coins
-                          <span>₹{appliedCoinValue}</span>
+                          <span>₹{twoDecimal(appliedCoinValue)}</span>
                         </label>
 
                         <div className="mcoin-input-row">
@@ -642,7 +647,7 @@ const CartSummary = ({
                         </div>
 
                         <small>
-                          Max: {availableMCoinBalance} coins
+                          Max: {twoDecimal(availableMCoinBalance)} coins
                           {!hasValidRedeemPoint ? " | Redeem point loading..." : ""}
                         </small>
                       </div>
@@ -673,7 +678,7 @@ const CartSummary = ({
                     lineHeight: "18px",
                   }}
                 >
-                  M Coin Discount Applied: - ₹ {savedAppliedCoinValue}
+                  M Coin Discount Applied: - ₹ {twoDecimal(savedAppliedCoinValue)}
                 </div>
               )}
             </div>
@@ -681,7 +686,7 @@ const CartSummary = ({
 
           <div className="subtotal">
             <div className="subtotal-main">
-              Total Payable: <span>₹ {finalTotalPayable}</span>
+              Total Payable: <span>₹ {twoDecimal(finalTotalPayable)}</span>
             </div>
           </div>
 

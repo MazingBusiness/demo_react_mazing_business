@@ -114,6 +114,11 @@ const getProductImage = (product) => {
   return `${BACKEND}/${String(url).replace(/^\/+/, "")}`;
 };
 
+const twoDecimal = (value) => {
+  const numeric = Number(String(value ?? 0).replace(/,/g, ""));
+  return Number.isFinite(numeric) ? numeric.toFixed(2) : "0.00";
+};
+
 const CartSlide = ({ isCartVisible, toggleCart }) => {
   const [cartItems, setCartItems] = useState([]);
 
@@ -963,7 +968,7 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
                                             ? Number(item?.product?.c_instock_m_coin || 0) * lineAmount
                                             : Number(item?.product?.c_m_coin || 0) * lineAmount;
 
-                                        return itemMCoin;
+                                        return twoDecimal(itemMCoin);
                                       })()}
                                     </strong>
                                   </span>
@@ -1035,7 +1040,7 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
                                 </button>
                               </div>
                             ) : (
-                              <>₹ {item.price}</>
+                              <>₹ {twoDecimal(item.price)}</>
                             )}
                           </td>
 
@@ -1053,7 +1058,7 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
                           </td>
 
                           <td className="cartprice" data-label="Total">
-                            ₹ {Number(item.quantity || 1) * Number(item.price || 0)}
+                            ₹ {twoDecimal(Number(item.quantity || 1) * Number(item.price || 0))}
                           </td>
 
                           <td data-label="Action">
@@ -1086,7 +1091,7 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
 
                 <div className="cartSubtotal">
                   <label>
-                    Subtotal: <span>₹{subTotal}</span>
+                    Subtotal: <span>₹{twoDecimal(subTotal)}</span>
                   </label>
 
                   <div className="section-buttons">
@@ -1202,7 +1207,7 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
                             </td>
 
                             <td className="cartprice" data-label="Price">
-                              ₹ {item.price}
+                              ₹ {twoDecimal(item.price)}
                             </td>
 
                             <td className="narrow5" data-label="Added Quantity">
@@ -1270,26 +1275,26 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
               <h3>Summary</h3>
 
               <label>
-                No Credit Item Subtotal:<span>₹ {noCreditItemTotalAmount}</span>
+                No Credit Item Subtotal:<span>₹ {twoDecimal(noCreditItemTotalAmount)}</span>
               </label>
 
               <label>
-                Other Item Subtotal:<span>₹{cartSubTotal}</span>
+                Other Item Subtotal:<span>₹{twoDecimal(cartSubTotal)}</span>
               </label>
 
               {overDueAmount > 0 && (
                 <label>
-                  Overdue Amount:<span>₹ {overDueAmount}</span>
+                  Overdue Amount:<span>₹ {twoDecimal(overDueAmount)}</span>
                 </label>
               )}
 
               <div className="mcoin-balance">
                 <div>
                   <span className="label">You Can Earn M Coins with this order</span>
-                  <strong>{earnMCoinBalance}</strong>
+                  <strong>{twoDecimal(earnMCoinBalance)}</strong>
                 </div>
                 <div className="value">
-                  ₹{Math.floor(earnMCoinBalance / 250)}
+                  ₹{twoDecimal(Math.floor(earnMCoinBalance / 250))}
                 </div>
               </div>
 
@@ -1317,10 +1322,10 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
                       <div className="mcoin-balance">
                         <div>
                           <span className="label">Available Coins</span>
-                          <strong>{availableMCoinBalance}</strong>
+                          <strong>{twoDecimal(availableMCoinBalance)}</strong>
                         </div>
                         <div className="value">
-                          ₹{Math.floor(availableMCoinBalance / 250)}
+                          ₹{twoDecimal(Math.floor(availableMCoinBalance / 250))}
                         </div>
                       </div>
 
@@ -1328,8 +1333,8 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
                         <div className="mcoin-applied">
                           <div className="mcoin-applied-left">
                             <span className="label">Applied Coins</span>
-                            <strong className="coins">{savedAppliedCoins} Coins</strong>
-                            <div className="value">₹{savedAppliedCoinValue}</div>
+                            <strong className="coins">{twoDecimal(savedAppliedCoins)} Coins</strong>
+                            <div className="value">₹{twoDecimal(savedAppliedCoinValue)}</div>
                           </div>
 
                           <button
@@ -1349,7 +1354,7 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
                         <div className="mcoin-apply">
                           <label htmlFor="mcoinInput" className="mcoin-label">
                             Apply Coins
-                            <span>₹{appliedCoinValue}</span>
+                            <span>₹{twoDecimal(appliedCoinValue)}</span>
                           </label>
 
                           <div className="mcoin-input-row">
@@ -1379,7 +1384,7 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
                             </button>
                           </div>
 
-                          <small>Max: {availableMCoinBalance} coins</small>
+                          <small>Max: {twoDecimal(availableMCoinBalance)} coins</small>
                         </div>
                       )}
                     </div>
@@ -1408,14 +1413,14 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
                         lineHeight: "18px",
                       }}
                     >
-                      M Coin Discount Applied: - ₹ {savedAppliedCoinValue}
+                      M Coin Discount Applied: - ₹ {twoDecimal(savedAppliedCoinValue)}
                     </div>
                   )}
                 </div>
               </div>
               <div className="subtotal">
                 <div className="subtotal-main">
-                  Total Payable: <span>₹ {finalTotalPayable}</span>
+                  Total Payable: <span>₹ {twoDecimal(finalTotalPayable)}</span>
                 </div>
               </div>
               {offerApplied != 0 ? (

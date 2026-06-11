@@ -14,117 +14,6 @@ import { getLoggedInUser } from "../utils/authUtils";
 import { addToCart, getGenericProducts, getMasterProducts, productDetails } from "../api/apiRequest";
 import ProductModal from "../components/ProductModal";
 
-/*
-const GenericProductsModal = ({ isOpen, onClose, genericLink }) => {
-  if (!isOpen || !genericLink) return null;
-
-  const products = Array.isArray(genericLink?.products) ? genericLink.products : [];
-
-  return (
-    <div className="product-modal-overlay open" style={{ zIndex: 99999 }}>
-      <div
-        className="product-modal-box open"
-        style={{
-          maxWidth: "950px",
-          width: "95%",
-          maxHeight: "90vh",
-          overflowY: "auto",
-          padding: "20px",
-        }}
-      >
-        <button className="product-modal-close" onClick={onClose} type="button">
-          <FiX />
-        </button>
-
-        <h3 style={{ marginBottom: "15px" }}>{genericLink?.name}</h3>
-
-        {products.length === 0 ? (
-          <p>No products found.</p>
-        ) : (
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))",
-              gap: "15px",
-            }}
-          >
-            {products.map((item) => {
-              const imageUrl =
-                item?.thumb_img?.file_name || item?.images?.[0]?.file_name || "";
-
-              return (
-                <div
-                  key={item.id}
-                  style={{
-                    border: "1px solid #eee",
-                    borderRadius: "10px",
-                    padding: "10px",
-                    background: "#fff",
-                    boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
-                  }}
-                >
-                  <div
-                    style={{
-                      width: "100%",
-                      height: "130px",
-                      background: "#f7f7f7",
-                      borderRadius: "8px",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      overflow: "hidden",
-                      marginBottom: "10px",
-                    }}
-                  >
-                    {imageUrl ? (
-                      <img
-                        src={imageUrl}
-                        alt={item?.name}
-                        style={{
-                          width: "100%",
-                          height: "100%",
-                          objectFit: "contain",
-                        }}
-                        onError={(e) => {
-                          e.currentTarget.style.display = "none";
-                        }}
-                      />
-                    ) : (
-                      <span style={{ fontSize: "12px", color: "#999" }}>
-                        No Image
-                      </span>
-                    )}
-                  </div>
-
-                  <h4
-                    style={{
-                      fontSize: "13px",
-                      lineHeight: "18px",
-                      minHeight: "38px",
-                      marginBottom: "6px",
-                    }}
-                  >
-                    {item?.name}
-                  </h4>
-
-                  <p style={{ fontSize: "12px", marginBottom: "5px" }}>
-                    Part No: <b>{item?.part_no}</b>
-                  </p>
-
-                  <p style={{ fontSize: "13px", fontWeight: 700 }}>
-                    ₹{Number(item?.mrp || 0).toFixed(2)}
-                  </p>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-};
-*/
-
 const GenericProductsModal = ({ isOpen, onClose, genericLink }) => {
   const [quantities, setQuantities] = useState({});
   const [bulkDiscountApplied, setBulkDiscountApplied] = useState({});
@@ -167,86 +56,27 @@ const GenericProductsModal = ({ isOpen, onClose, genericLink }) => {
   };
 
   return (
-    <div
-      className="product-modal-overlay open"
-      style={{
-        zIndex: 99999,
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "18px",
-      }}
-    >
-      <div
-        className="product-modal-box open"
-        style={{
-          maxWidth: "1180px",
-          width: "95%",
-          maxHeight: "90vh",
-          overflow: "hidden",
-          padding: 0,
-          borderRadius: "10px",
-          background: "#fff",
-        }}
-      >
-        <div
-          style={{
-            position: "sticky",
-            top: 0,
-            zIndex: 3,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: "14px",
-            padding: "18px 34px",
-            background: "#f2f4f7",
-            borderBottom: "1px solid #e5e7eb",
-          }}
-        >
+    <div className="product-modal-overlay open generic-products-modal-overlay">
+      <div className="product-modal-box open generic-products-modal-box">
+        <div className="generic-products-modal-header">
           <div>
-            <h3 style={{ margin: 0, fontSize: "16px", fontWeight: 800, color: "#30343b" }}>
+            <h3 className="generic-products-modal-title">
               {genericLink?.name || "Generic Products"}
             </h3>
-            <p style={{ margin: "6px 0 0", fontSize: "13px", color: "#6b7280", fontWeight: 600 }}>
+            <p className="generic-products-modal-subtitle">
               Verified compatible products
             </p>
           </div>
 
-          <button
-            onClick={onClose}
-            type="button"
-            aria-label="Close"
-            style={{
-              width: "36px",
-              height: "36px",
-              border: 0,
-              background: "transparent",
-              color: "#606875",
-              cursor: "pointer",
-              display: "inline-flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: "24px",
-              flex: "0 0 auto",
-            }}
-          >
+          <button onClick={onClose} type="button" aria-label="Close" className="generic-products-modal-close">
             <FiX />
           </button>
         </div>
 
         {products.length === 0 ? (
-          <p style={{ padding: "24px 34px", margin: 0 }}>No products found.</p>
+          <p className="generic-products-empty">No products found.</p>
         ) : (
-          <div
-            style={{
-              maxHeight: "calc(90vh - 82px)",
-              overflowY: "auto",
-              padding: "28px 34px 34px",
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fill, minmax(235px, 1fr))",
-              gap: "22px",
-              background: "#fff",
-            }}
-          >
+          <div className="generic-products-grid">
             {products.map((item) => {
               const imageUrl =
                 item?.thumb_img?.file_name || item?.images?.[0]?.file_name || no_image;
@@ -265,68 +95,22 @@ const GenericProductsModal = ({ isOpen, onClose, genericLink }) => {
                 price * Number(item?.c_instock_m_coin || 0) * Number(qty || 1);
 
               return (
-                <div
-                  key={item.id}
-                  style={{
-                    position: "relative",
-                    display: "flex",
-                    flexDirection: "column",
-                    minHeight: "100%",
-                    border: "1px solid #f1f3f6",
-                    borderRadius: "8px",
-                    padding: "16px",
-                    background: "#fff",
-                    boxShadow: "0 6px 18px rgba(17,24,39,0.06)",
-                  }}
-                >
+                <div key={item.id} className="generic-product-card">
                   <button
                     type="button"
                     onClick={() => handleGenericAddToCart(item)}
                     disabled={addingId === item.id}
-                    style={{
-                      position: "absolute",
-                      top: "10px",
-                      right: "12px",
-                      zIndex: 2,
-                      height: "38px",
-                      padding: "0 16px",
-                      border: "1px solid #d9dee6",
-                      borderRadius: "999px",
-                      background: "#fff",
-                      color: "#111827",
-                      fontSize: "14px",
-                      fontWeight: 500,
-                      display: "inline-flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      gap: "8px",
-                      cursor: addingId === item.id ? "not-allowed" : "pointer",
-                      opacity: addingId === item.id ? 0.7 : 1,
-                      boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
-                    }}
+                    className="generic-product-add-btn"
                   >
-                    <img src={CartIcon} alt="" style={{ width: "15px", height: "15px" }} />
+                    <img src={CartIcon} alt="" className="generic-product-add-icon" />
                     {addingId === item.id ? "Adding..." : "Add to Cart"}
                   </button>
 
-                  <div
-                    style={{
-                      position: "relative",
-                      width: "100%",
-                      height: "190px",
-                      background: "#fbfcfe",
-                      borderRadius: "8px",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      overflow: "hidden",
-                      marginBottom: "16px",
-                    }}
-                  >
+                  <div className="generic-product-image-wrap">
                     <img
                       src={imageUrl}
                       alt={item?.name || "Product"}
-                      style={{ width: "100%", height: "100%", objectFit: "contain" }}
+                      className="generic-product-image"
                       onError={(e) => {
                         e.currentTarget.onerror = null;
                         e.currentTarget.src = no_image;
@@ -334,36 +118,13 @@ const GenericProductsModal = ({ isOpen, onClose, genericLink }) => {
                     />
 
                     {(hasFastDelivery || hasWarranty) && (
-                      <div
-                        style={{
-                          position: "absolute",
-                          left: 0,
-                          bottom: "12px",
-                          display: "flex",
-                          flexDirection: "column",
-                          alignItems: "flex-start",
-                          gap: "6px",
-                        }}
-                      >
+                      <div className="generic-product-tags">
                         {hasFastDelivery && (
-                          <span
-                            style={{
-                              display: "inline-flex",
-                              alignItems: "center",
-                              gap: "6px",
-                              minHeight: "32px",
-                              padding: "6px 12px",
-                              borderRadius: "0 16px 16px 0",
-                              background: "#00d52f",
-                              color: "#fff",
-                              fontSize: "13px",
-                              fontWeight: 800,
-                            }}
-                          >
+                          <span className="generic-product-tag">
                             <img
                               src={fastDeliveryIcon}
                               alt=""
-                              style={{ width: "16px", height: "16px", filter: "brightness(0) invert(1)" }}
+                              className="generic-product-tag-icon generic-product-tag-icon-invert"
                               onError={(e) => {
                                 e.currentTarget.style.display = "none";
                               }}
@@ -373,24 +134,11 @@ const GenericProductsModal = ({ isOpen, onClose, genericLink }) => {
                         )}
 
                         {hasWarranty && (
-                          <span
-                            style={{
-                              display: "inline-flex",
-                              alignItems: "center",
-                              gap: "6px",
-                              minHeight: "32px",
-                              padding: "6px 12px",
-                              borderRadius: "0 16px 16px 0",
-                              background: "#00d52f",
-                              color: "#fff",
-                              fontSize: "13px",
-                              fontWeight: 800,
-                            }}
-                          >
+                          <span className="generic-product-tag">
                             <img
                               src={warrantyIcon}
                               alt=""
-                              style={{ width: "16px", height: "16px", borderRadius: "50%" }}
+                              className="generic-product-tag-icon generic-product-tag-icon-round"
                               onError={(e) => {
                                 e.currentTarget.style.display = "none";
                               }}
@@ -402,73 +150,29 @@ const GenericProductsModal = ({ isOpen, onClose, genericLink }) => {
                     )}
                   </div>
 
-                  <h4
-                    style={{
-                      fontSize: "15px",
-                      lineHeight: "20px",
-                      minHeight: "42px",
-                      margin: "0 0 8px",
-                      color: "#111827",
-                      fontWeight: 800,
-                      textTransform: "uppercase",
-                    }}
-                  >
+                  <h4 className="generic-product-name">
                     {item?.name?.length > 70 ? `${item.name.substring(0, 70)}...` : item?.name}
                   </h4>
 
-                  <p style={{ margin: "0 0 8px", color: "#6b7280", fontSize: "12px", fontWeight: 700 }}>
+                  <p className="generic-product-part">
                     Part No: <b>{item?.part_no}</b>
                   </p>
 
-                  <div style={{ display: "flex", alignItems: "baseline", gap: "10px", marginBottom: "8px" }}>
-                    <span
-                      style={{
-                        color: "#b9b9b9",
-                        fontSize: "16px",
-                        fontWeight: 800,
-                        textDecoration: "line-through",
-                      }}
-                    >
-                      ₹{mrp.toFixed(2)}
-                    </span>
-                    <span style={{ color: "#008b12", fontSize: "18px", fontWeight: 900 }}>
-                      ₹{price.toFixed(2)}
-                    </span>
+                  <div className="generic-product-price">
+                    <span className="generic-product-mrp">₹{mrp.toFixed(2)}</span>
+                    <span className="generic-product-active-price">₹{price.toFixed(2)}</span>
                   </div>
 
-                  <p style={{ margin: "0 0 14px", color: "#004d84", fontSize: "13px", fontWeight: 800 }}>
-                    Earn MCoin : {earnedMCoin.toFixed(2)}
-                  </p>
+                  <p className="generic-product-mcoin">Earn MCoin : {earnedMCoin.toFixed(2)}</p>
 
-                  <p style={{ margin: "0 0 14px", color: "#111827", fontSize: "13px", fontWeight: 800 }}>
-                    Subtotal : ₹{subtotal.toFixed(2)}
-                  </p>
+                  <p className="generic-product-subtotal">Subtotal : ₹{subtotal.toFixed(2)}</p>
 
-                  <div style={{ marginTop: "auto" }}>
-                    <div
-                      style={{
-                        display: "grid",
-                        gridTemplateColumns: "42px 1fr 42px",
-                        alignItems: "center",
-                        height: "38px",
-                        overflow: "hidden",
-                        borderRadius: "5px",
-                        background: "#eef0f2",
-                        marginBottom: "12px",
-                      }}
-                    >
+                  <div className="generic-product-footer">
+                    <div className="generic-product-qty-cart">
                       <button
                         type="button"
                         onClick={() => updateGenericQty(item, qty - 1)}
-                        style={{
-                          height: "100%",
-                          border: 0,
-                          background: "transparent",
-                          color: "#6b7280",
-                          fontSize: "18px",
-                          fontWeight: 800,
-                          cursor: "pointer",
-                        }}
+                        className="generic-product-qty-btn"
                       >
                         -
                       </button>
@@ -478,47 +182,20 @@ const GenericProductsModal = ({ isOpen, onClose, genericLink }) => {
                         min="1"
                         value={qty}
                         onChange={(e) => updateGenericQty(item, e.target.value)}
-                        style={{
-                          width: "100%",
-                          height: "100%",
-                          border: 0,
-                          background: "transparent",
-                          color: "#111827",
-                          textAlign: "center",
-                          fontSize: "14px",
-                          fontWeight: 800,
-                          outline: "none",
-                        }}
+                        className="generic-product-qty-input"
                       />
 
                       <button
                         type="button"
                         onClick={() => updateGenericQty(item, qty + 1)}
-                        style={{
-                          height: "100%",
-                          border: 0,
-                          background: "transparent",
-                          color: "#6b7280",
-                          fontSize: "18px",
-                          fontWeight: 800,
-                          cursor: "pointer",
-                        }}
+                        className="generic-product-qty-btn"
                       >
                         +
                       </button>
                     </div>
 
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "10px" }}>
-                      <p
-                        style={{
-                          margin: 0,
-                          color: "#111827",
-                          fontSize: "11px",
-                          lineHeight: "15px",
-                          fontWeight: 800,
-                          textTransform: "uppercase",
-                        }}
-                      >
+                    <div className="generic-product-bulk-actions">
+                      <p className="generic-product-bulk-text">
                         Bulk Discount: Buy {bulkQty} pcs and get at ₹{bulkPrice.toFixed(2)}/-
                       </p>
 
@@ -530,18 +207,11 @@ const GenericProductsModal = ({ isOpen, onClose, genericLink }) => {
                             [item.id]: true,
                           }))
                         }
-                        style={{
-                          flex: "0 0 auto",
-                          minHeight: "32px",
-                          border: 0,
-                          borderRadius: "5px",
-                          padding: "7px 10px",
-                          background: useBulkDiscount ? "#008b12" : "#004d84",
-                          color: "#fff",
-                          fontSize: "12px",
-                          fontWeight: 800,
-                          cursor: "pointer",
-                        }}
+                        className={
+                          useBulkDiscount
+                            ? "generic-product-bulk-btn discount-applied"
+                            : "generic-product-bulk-btn"
+                        }
                       >
                         {useBulkDiscount ? "Discount Applied" : "Get Discount"}
                       </button>
@@ -889,17 +559,16 @@ const ProductDetails = () => {
               </div>
 
               {loading ? (
-                <div style={{ padding: 20 }}>Loading...</div>
+                <div className="product-details-loading">Loading...</div>
               ) : err ? (
-                <div style={{ padding: 20, color: "red" }}>{err}</div>
+                <div className="product-details-error">{err}</div>
               ) : (
                 <>
                   {mainImage ? (
                     <img
                       src={mainImage}
                       alt={productName}
-                      className="main-product-img"
-                      style={{ cursor: user_id != null ? "pointer" : "default" }}
+                      className={`main-product-img ${user_id != null ? "main-product-img-clickable" : ""}`}
                       onClick={() => {
                         if (user_id != null && product?.id) {
                           setIsModalOpen(true);
@@ -911,7 +580,7 @@ const ProductDetails = () => {
                       }}
                     />
                   ) : (
-                    <div style={{ padding: 20 }}>No Image</div>
+                    <div className="product-no-image">No Image</div>
                   )}
 
                   {hasActiveOffer && (
@@ -986,56 +655,23 @@ const ProductDetails = () => {
                   <span className="emcoinDetails">Earn MCoin : {earnMCoin} * X</span>
 
                   {loadingGenericProducts && (
-                    <div
-                      style={{
-                        marginTop: "12px",
-                        marginBottom: "12px",
-                        padding: "10px",
-                        border: "1px solid #eee",
-                        borderRadius: "10px",
-                        background: "#fafafa",
-                      }}
-                    >
-                      <p style={{ fontSize: "13px", fontWeight: 700, margin: 0 }}>
+                    <div className="product-details-info-panel">
+                      <p className="product-details-info-panel-title">
                         Loading generic products...
                       </p>
                     </div>
                   )}
 
                   {!loadingGenericProducts && hasGenericMasters && (
-                    <div
-                      style={{
-                        marginTop: "12px",
-                        marginBottom: "12px",
-                        padding: "10px",
-                        border: "1px solid #eee",
-                        borderRadius: "10px",
-                        background: "#fafafa",
-                      }}
-                    >
-                      <p
-                        style={{
-                          fontSize: "13px",
-                          fontWeight: 700,
-                          marginBottom: "8px",
-                        }}
-                      >
-                        Related Products   
-                        <span
-                          className="product-modal-generic-master-count"
-                          style={{ marginLeft: "10px" }}
-                        >
+                    <div className="product-details-info-panel">
+                      <p className="product-details-info-panel-title">
+                        Related Products
+                        <span className="product-modal-generic-master-count">
                           {genericLinks.length}
                         </span>
                       </p>
-                      
-                      <div
-                        style={{
-                          display: "flex",
-                          gap: "8px",
-                          flexWrap: "wrap",
-                        }}
-                      >
+
+                      <div className="product-detail-generic-links">
                         {genericLinks.map((link) => {
                           const products = Array.isArray(link?.products)
                             ? link.products
@@ -1047,19 +683,10 @@ const ProductDetails = () => {
                               key={`generic-link-${link.id}`}
                               type="button"
                               onClick={() => openGenericProductsModal(link)}
-                              style={{
-                                border: "1px solid #e11d48",
-                                color: "#e11d48",
-                                background: "#fff",
-                                padding: "6px 12px",
-                                borderRadius: "20px",
-                                fontSize: "13px",
-                                fontWeight: 700,
-                                cursor: "pointer",
-                              }}
+                              className="product-detail-generic-link-btn"
                             >
                               {link.name}
-                              <span style={{ marginLeft: "5px" }}>
+                              <span className="product-detail-generic-link-count">
                                 ({productCount})
                               </span>
                             </button>
@@ -1070,88 +697,45 @@ const ProductDetails = () => {
                   )}
 
                   {loadingMasterProducts && !hasGenericMasters && (
-                    <div
-                      style={{
-                        marginTop: "12px",
-                        marginBottom: "12px",
-                        padding: "10px",
-                        border: "1px solid #eee",
-                        borderRadius: "10px",
-                        background: "#fafafa",
-                      }}
-                    >
-                      <p style={{ fontSize: "13px", fontWeight: 700, margin: 0 }}>
+                    <div className="product-details-info-panel">
+                      <p className="product-details-info-panel-title">
                         Loading master products...
                       </p>
                     </div>
                   )}
 
                   {!loadingMasterProducts && shouldShowMasterProducts && (
-                    <div
-                      style={{
-                        marginTop: "12px",
-                        marginBottom: "12px",
-                        padding: "10px",
-                        border: "1px solid #eee",
-                        borderRadius: "10px",
-                        background: "#fafafa",
-                      }}
-                    >
-                      {/* <p
-                        style={{
-                          fontSize: "13px",
-                          fontWeight: 700,
-                          marginBottom: "8px",
-                        }}
-                      >
-                        Master product groups
-                      </p> */}
-                      <div style={{ display: "grid", gap: "12px" }}>
+                    <div className="product-details-info-panel">
+                      <div className="master-products-grid">
                         {masterProducts.map((master) => (
-                            <div
-                              key={master.id}
-                              style={{
-                                padding: "12px",
-                                border: "1px solid #e5e7eb",
-                                borderRadius: "10px",
-                                background: "#fff",
-                              }}
-                            >
-                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <p style={{ margin: 0, fontWeight: 700 }}>{master.name}</p>
+                          <div key={master.id} className="master-product-card">
+                            <div className="master-product-card-header">
+                              <p className="master-product-card-title">{master.name}</p>
 
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    const linkLike = {
-                                      id: master.id,
-                                      name: master.name,
-                                      products: Array.isArray(master.master_products) ? master.master_products : [],
-                                    };
-                                    setSelectedGenericLink(linkLike);
-                                    setGenericModalOpen(true);
-                                  }}
-                                  style={{
-                                    background: '#ef4444',
-                                    color: '#fff',
-                                    border: 0,
-                                    padding: '6px 10px',
-                                    borderRadius: 6,
-                                    cursor: 'pointer',
-                                    fontWeight: 700,
-                                  }}
-                                >
-                                  View products
-                                </button>
-                              </div>
-
-                              <p style={{ margin: "6px 0 0", fontSize: "13px", color: "#4b5563" }}>
-                                {Array.isArray(master.master_products)
-                                  ? `${master.master_products.length} products available`
-                                  : "No master products available"}
-                              </p>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const linkLike = {
+                                    id: master.id,
+                                    name: master.name,
+                                    products: Array.isArray(master.master_products) ? master.master_products : [],
+                                  };
+                                  setSelectedGenericLink(linkLike);
+                                  setGenericModalOpen(true);
+                                }}
+                                className="master-product-view-btn"
+                              >
+                                View products
+                              </button>
                             </div>
-                          ))}
+
+                            <p className="master-product-card-count">
+                              {Array.isArray(master.master_products)
+                                ? `${master.master_products.length} products available`
+                                : "No master products available"}
+                            </p>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   )}
@@ -1206,24 +790,14 @@ const ProductDetails = () => {
                 <button
                   type="button"
                   onClick={handleRegisterToCheckPrices}
-                  className="before-reg-btn"
-                  style={{ margin: "10px" }}
+                  className="before-reg-btn before-reg-btn--spaced"
                 >
                   Register to check prices
                 </button>
               )}
 
-              <div
-                className="tabs-row"
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  gap: 12,
-                  marginTop: 10,
-                }}
-              >
-                <div className="tabs" style={{ margin: 0 }}>
+              <div className="tabs-row">
+                <div className="tabs">
                   <button
                     className={activeTab === "specs" ? "tab active" : "tab"}
                     onClick={() => setActiveTab("specs")}
@@ -1246,7 +820,7 @@ const ProductDetails = () => {
                 <div className="specs-table">
                   <div className="specs-grid">
                     {loading ? (
-                      <div style={{ padding: 12 }}>Loading...</div>
+                      <div className="product-details-loading-sm">Loading...</div>
                     ) : (
                       <>
                         {specs.map((row, idx) => (
@@ -1281,9 +855,9 @@ const ProductDetails = () => {
               ) : (
                 <div className="desc-section">
                   {loading ? (
-                    <div style={{ padding: 12 }}>Loading...</div>
+                    <div className="product-details-loading-sm">Loading...</div>
                   ) : (
-                    <p style={{ margin: 0 }}>
+                    <p>
                       {descriptionText || "No description available."}
                     </p>
                   )}

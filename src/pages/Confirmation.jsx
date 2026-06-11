@@ -22,6 +22,11 @@ const Confirmation = () => {
   const [subTotal, setSubTotal] = useState(0);
   const [totalPayable, setTotalPayable] = useState(0);
 
+  const twoDecimal = (value) => {
+    const numeric = Number(String(value ?? 0).replace(/,/g, ""));
+    return Number.isFinite(numeric) ? numeric.toFixed(2) : "0.00";
+  };
+
   const cartPageData = async () => {
     setCartLoading(true);
     try {
@@ -98,7 +103,7 @@ const Confirmation = () => {
                           <td>
                             {" "}
                             {item.product.name}{" "}
-                            <span className="quantity">( ₹ {item.price} x {item.quantity} )</span><br/>
+                            <span className="quantity">( ₹ {twoDecimal(item.price)} x {item.quantity} )</span><br/>
                             <span className="m-coin">
                               Earn M Coin :{" "}
                               <strong>
@@ -111,12 +116,12 @@ const Confirmation = () => {
                                       ? Number(item?.product?.c_instock_m_coin || 0) * lineAmount
                                       : Number(item?.product?.c_m_coin || 0) * lineAmount;
 
-                                  return itemMCoin;
+                                  return twoDecimal(itemMCoin);
                                 })()}
                               </strong>
                             </span>
                           </td>
-                          <td>₹ {item.quantity * item.price}</td>
+                          <td>₹ {twoDecimal(Number(item.quantity || 0) * Number(item.price || 0))}</td>
                         </tr>
                         ))}
                       </tbody>
@@ -134,7 +139,7 @@ const Confirmation = () => {
                               & privacy policy
                             </label>
                           </td>
-                          <td>₹ {cartSubTotal}</td>
+                          <td>₹ {twoDecimal(cartSubTotal)}</td>
                         </tr>
                       </tfoot>
                     </table>
