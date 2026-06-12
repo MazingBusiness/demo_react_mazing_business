@@ -6543,6 +6543,130 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   margin-left: 5px;
 }
 
+.product-modal-related-products {
+  margin: 12px 0;
+  padding: 10px;
+  border: 1px solid #eeeeee;
+  border-radius: 8px;
+  background: #fafafa;
+}
+
+.product-modal-related-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.product-modal-related-header p {
+  margin: 0;
+  color: #111827;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.product-modal-related-header span {
+  min-width: 24px;
+  height: 24px;
+  padding: 0 7px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: #fef2f2;
+  color: #e11d48;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.product-modal-related-list {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.product-modal-master-products {
+  margin: 12px 0;
+  padding: 0 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.product-modal-master-loading {
+  margin: 12px 0;
+  padding: 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #f8fafc;
+}
+
+.product-modal-master-loading p {
+  margin: 0;
+  color: #475569;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.product-modal-master-list {
+  display: grid;
+}
+
+.product-modal-master-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 0;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.product-modal-master-card:last-child {
+  border-bottom: 0;
+}
+
+.product-modal-master-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.product-modal-master-card-copy {
+  min-width: 0;
+}
+
+.product-modal-master-card-title {
+  margin-bottom: 4px;
+  color: #111827;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.product-modal-master-card-count {
+  color: #4b5563;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.product-modal-master-view-btn {
+  flex: 0 0 auto;
+  padding: 6px 10px;
+  border: 0;
+  border-radius: 6px;
+  background: #ef4444;
+  color: #fff;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.product-modal-master-card-desc {
+  color: #475569;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
 .product-modal-qty-alert {
   margin-top: 8px;
   padding: 6px 8px;

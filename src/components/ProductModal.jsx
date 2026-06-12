@@ -143,10 +143,10 @@ const GenericProductsModal = ({ isOpen, onClose, genericLink }) => {
 
                   <div className="generic-product-price">
                     <span className="generic-product-mrp">
-                      ₹{mrp.toFixed(2)}
+                      &#8377;{mrp.toFixed(2)}
                     </span>
                     <span className="generic-product-active-price">
-                      ₹{activePrice.toFixed(2)}
+                      &#8377;{activePrice.toFixed(2)}
                     </span>
                   </div>
 
@@ -196,7 +196,7 @@ const GenericProductsModal = ({ isOpen, onClose, genericLink }) => {
 
                     <div className="generic-product-discount-row">
                       <p className="generic-product-discount-text">
-                        Bulk Discount: Buy {bulkQty} pcs and get at ₹{bulkPrice.toFixed(2)}/-
+                        Bulk Discount: Buy {bulkQty} pcs and get at &#8377;{bulkPrice.toFixed(2)}/-
                       </p>
 
                       <button
@@ -793,11 +793,11 @@ const ProductModal = ({ product, isOpen, onClose }) => {
 
                     <div className="product-price">
                       <span className="old-price">
-                        ₹{parsePrice(productDetails?.mrp).toFixed(2)}
+                        &#8377;{parsePrice(productDetails?.mrp).toFixed(2)}
                       </span>
 
                       <span className="new-price">
-                        ₹{Number(unitPrice || 0).toFixed(2)}
+                        &#8377;{Number(unitPrice || 0).toFixed(2)}
                       </span>
 
                       <span className="unit">/Pc</span>
@@ -826,60 +826,13 @@ const ProductModal = ({ product, isOpen, onClose }) => {
                     )}
 
                     {!loadingGenericProducts && hasGenericMasters && (
-                      <div
-                        style={{
-                          marginTop: "12px",
-                          marginBottom: "12px",
-                          padding: "10px",
-                          border: "1px solid #eee",
-                          borderRadius: "10px",
-                          background: "#fafafa",
-                        }}
-                      >
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "space-between",
-                            gap: "10px",
-                            marginBottom: "8px",
-                          }}
-                        >
-                          <p
-                            style={{
-                              margin: 0,
-                              fontSize: "13px",
-                              fontWeight: 700,
-                            }}
-                          >
-                            Related Products
-                          </p>
-                          <span
-                            style={{
-                              minWidth: "24px",
-                              height: "24px",
-                              padding: "0 7px",
-                              display: "inline-flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              borderRadius: "999px",
-                              background: "#fef2f2",
-                              color: "#e11d48",
-                              fontSize: "12px",
-                              fontWeight: 800,
-                            }}
-                          >
-                            {genericLinks.length}
-                          </span>
+                      <div className="product-modal-related-products">
+                        <div className="product-modal-related-header">
+                          <p>Related Products</p>
+                          <span>{genericLinks.length}</span>
                         </div>
 
-                        <div
-                          style={{
-                            display: "flex",
-                            gap: "8px",
-                            flexWrap: "wrap",
-                          }}
-                        >
+                        <div className="product-modal-related-list">
                           {genericLinks.map((link) => {
                             const products = Array.isArray(link?.products)
                               ? link.products
@@ -912,45 +865,18 @@ const ProductModal = ({ product, isOpen, onClose }) => {
 
                     {!loadingMasterProducts && shouldShowMasterProducts && (
                       <div className="product-modal-master-products">
-                        {/* <div className="product-modal-master-heading">
-                          <p>Master product groups</p>
-                        </div> */}
-
                         <div className="product-modal-master-list">
                           {masterProducts.map((master) => (
                             <div
                               key={master.id}
                               className="product-modal-master-card"
-                              style={{
-                                display: "flex",
-                                flexDirection: "column",
-                                gap: 8,
-                                padding: "12px 0",
-                                borderBottom: "1px solid #e5e7eb",
-                              }}
                             >
-                              <div
-                                style={{
-                                  display: "flex",
-                                  alignItems: "center",
-                                  justifyContent: "space-between",
-                                  gap: 12,
-                                }}
-                              >
-                                <div>
-                                  <div
-                                    className="product-modal-master-card-title"
-                                    style={{ fontWeight: 700, color: "#111827", marginBottom: 4 }}
-                                  >
+                              <div className="product-modal-master-card-head">
+                                <div className="product-modal-master-card-copy">
+                                  <div className="product-modal-master-card-title">
                                     {master.name}
                                   </div>
-                                  <div
-                                    style={{
-                                      fontSize: "13px",
-                                      color: "#4b5563",
-                                      fontWeight: 600,
-                                    }}
-                                  >
+                                  <div className="product-modal-master-card-count">
                                     {Array.isArray(master.master_products)
                                       ? `${master.master_products.length} products`
                                       : "0 products"}
@@ -960,15 +886,6 @@ const ProductModal = ({ product, isOpen, onClose }) => {
                                 <button
                                   type="button"
                                   className="product-modal-master-view-btn"
-                                  style={{
-                                    background: '#ef4444',
-                                    color: '#fff',
-                                    border: 0,
-                                    padding: '6px 10px',
-                                    borderRadius: 6,
-                                    cursor: 'pointer',
-                                    fontWeight: 700,
-                                  }}
                                   onClick={() => {
                                     const linkLike = {
                                       id: master.id,
@@ -984,14 +901,7 @@ const ProductModal = ({ product, isOpen, onClose }) => {
                               </div>
 
                               {master.description && (
-                                <div
-                                  className="product-modal-master-card-desc"
-                                  style={{
-                                    color: "#475569",
-                                    fontSize: "12px",
-                                    lineHeight: 1.4,
-                                  }}
-                                >
+                                <div className="product-modal-master-card-desc">
                                   {master.description}
                                 </div>
                               )}
@@ -1039,11 +949,11 @@ const ProductModal = ({ product, isOpen, onClose }) => {
                         <span className="red">Bulk Quantity Discount:</span> Purchase{" "}
                         {productDetails?.piece_by_carton} or more and get each for{" "}
                         <span className="highlight">
-                          ₹{Number(priceState.bulk || 0).toFixed(2)}
+                          &#8377;{Number(priceState.bulk || 0).toFixed(2)}
                         </span>{" "}
                         instead of{" "}
                         <span className="highlight">
-                          ₹{Number(priceState.normal || 0).toFixed(2)}
+                          &#8377;{Number(priceState.normal || 0).toFixed(2)}
                         </span>
                       </p>
 
