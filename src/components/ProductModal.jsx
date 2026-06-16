@@ -7,7 +7,7 @@ import fastDeliveryIcon from "../assets/icons/fast-delivery.svg";
 import warrantyIcon from "../assets/icons/warranty.jpeg";
 import no_image from "../assets/images/no-image.png";
 
-import { FiX } from "react-icons/fi";
+import { FiSettings, FiX } from "react-icons/fi";
 import CartbtnIcon from "../assets/icons/cartbtnIcon.svg";
 import CartIconPlus from "../assets/icons/cartIconplus.svg";
 import { GoDotFill } from "react-icons/go";
@@ -18,10 +18,40 @@ import { getProductDetails, getGenericProducts, getMasterProducts, addToCart, up
 const GenericProductsModal = ({ isOpen, onClose, genericLink }) => {
   const [quantities, setQuantities] = useState({});
   const [addingId, setAddingId] = useState(null);
+  const [activeCategoryId, setActiveCategoryId] = useState(null);
+
+  const categories = useMemo(() => {
+    if (Array.isArray(genericLink?.categories) && genericLink.categories.length > 0) {
+      return genericLink.categories.map((category, index) => ({
+        id: category?.id ?? `category-${index}`,
+        name: category?.name || "Products",
+        products: Array.isArray(category?.products) ? category.products : [],
+        product_count: category?.product_count,
+      }));
+    }
+
+    if (!genericLink) return [];
+
+    return [
+      {
+        id: genericLink?.id ?? "products",
+        name: genericLink?.name || "Products",
+        products: Array.isArray(genericLink?.products) ? genericLink.products : [],
+        product_count: genericLink?.product_count,
+      },
+    ];
+  }, [genericLink]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    setActiveCategoryId(categories[0]?.id ?? null);
+  }, [isOpen, categories]);
 
   if (!isOpen || !genericLink) return null;
 
-  const products = genericLink?.products || [];
+  const activeCategory =
+    categories.find((category) => category.id === activeCategoryId) || categories[0];
+  const products = activeCategory?.products || [];
   const getProductQty = (item) => Number(quantities[item?.id] || item?.min_qty || 1);
   const getItemPrice = (item) => Number(item?.discount_price || item?.price || item?.mrp || 0);
   const getItemBulkQty = (item) => Number(item?.piece_by_carton || 10);
@@ -59,7 +89,7 @@ const GenericProductsModal = ({ isOpen, onClose, genericLink }) => {
               {genericLink?.name || "Compatible Spare Parts"}
             </h3>
             <p className="generic-products-modal-subtitle">
-              Verified components for this product
+              {genericLink?.subtitle || "Verified components for this product"}
             </p>
           </div>
 
@@ -73,11 +103,41 @@ const GenericProductsModal = ({ isOpen, onClose, genericLink }) => {
           </button>
         </div>
 
-        {products.length === 0 ? (
-          <p className="generic-products-empty">No products found.</p>
-        ) : (
-          <div className="generic-products-grid">
-            {products.map((item) => {
+        <div className="generic-products-modal-body">
+          <aside className="generic-products-sidebar">
+            <h4 className="generic-products-sidebar-title">Categories</h4>
+
+            <div className="generic-products-category-list">
+              {categories.map((category) => {
+                const productCount = Number(
+                  category?.product_count ?? category?.products?.length ?? 0
+                );
+
+                return (
+                  <button
+                    key={category.id}
+                    type="button"
+                    onClick={() => setActiveCategoryId(category.id)}
+                    className={
+                      category.id === activeCategory?.id
+                        ? "generic-products-category active"
+                        : "generic-products-category"
+                    }
+                  >
+                    <span>{category.name}</span>
+                    <strong>{productCount}</strong>
+                  </button>
+                );
+              })}
+            </div>
+          </aside>
+
+          <section className="generic-products-content">
+            {products.length === 0 ? (
+              <p className="generic-products-empty">No products found.</p>
+            ) : (
+              <div className="generic-products-grid">
+                {products.map((item) => {
               const imageUrl =
                 item?.thumb_img?.file_name || item?.images?.[0]?.file_name || no_image;
               const qty = getProductQty(item);
@@ -210,9 +270,11 @@ const GenericProductsModal = ({ isOpen, onClose, genericLink }) => {
                   </div>
                 </div>
               );
-            })}
-          </div>
-        )}
+                })}
+              </div>
+            )}
+          </section>
+        </div>
       </div>
     </div>
   );
@@ -693,6 +755,34 @@ const ProductModal = ({ product, isOpen, onClose }) => {
   );
   const hasGenericMasters = genericLinks.length > 0;
   const shouldShowMasterProducts = !hasGenericMasters && masterProducts.length > 0;
+  const compatibleCategories = hasGenericMasters
+    ? genericLinks.map((link) => ({
+        id: `generic-link-${link.id}`,
+        name: link?.name || "Products",
+        product_count: Number(
+          link?.product_count ?? (Array.isArray(link?.products) ? link.products.length : 0)
+        ),
+        products: Array.isArray(link?.products) ? link.products : [],
+      }))
+    : masterProducts.map((master) => ({
+        id: `master-${master.id}`,
+        name: master?.name || "Products",
+        product_count: Array.isArray(master?.master_products)
+          ? master.master_products.length
+          : 0,
+        products: Array.isArray(master?.master_products) ? master.master_products : [],
+      }));
+  const hasCompatibleCategories = compatibleCategories.length > 0;
+  const openCompatibleProductsModal = () => {
+    openGenericProductsModal({
+      id: "compatible-products",
+      name: "Compatible Spare Parts",
+      subtitle: productDetails?.name
+        ? `Verified components for ${productDetails.name}`
+        : "Verified components for this product",
+      categories: compatibleCategories,
+    });
+  };
 
   return (
     <>
@@ -825,36 +915,15 @@ const ProductModal = ({ product, isOpen, onClose }) => {
                       </div>
                     )}
 
-                    {!loadingGenericProducts && hasGenericMasters && (
-                      <div className="product-modal-related-products">
-                        <div className="product-modal-related-header">
-                          <p>Related Products</p>
-                          <span>{genericLinks.length}</span>
-                        </div>
-
-                        <div className="product-modal-related-list">
-                          {genericLinks.map((link) => {
-                            const products = Array.isArray(link?.products)
-                              ? link.products
-                              : [];
-                            const productCount = Number(link?.product_count ?? products.length);
-
-                            return (
-                              <button
-                                key={`generic-link-${link.id}`}
-                                type="button"
-                                onClick={() => openGenericProductsModal(link)}
-                                className="product-modal-generic-chip product-modal-generic-chip-red"
-                              >
-                                {link.name}
-                                <span className="product-modal-generic-count">
-                                  ({productCount})
-                                </span>
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
+                    {!loadingGenericProducts && hasCompatibleCategories && (
+                      <button
+                        type="button"
+                        onClick={openCompatibleProductsModal}
+                        className="product-modal-compatible-btn"
+                      >
+                        <FiSettings />
+                        <span>View Compatible Spare Parts</span>
+                      </button>
                     )}
 
                     {loadingMasterProducts && !hasGenericMasters && (
@@ -863,7 +932,7 @@ const ProductModal = ({ product, isOpen, onClose }) => {
                       </div>
                     )}
 
-                    {!loadingMasterProducts && shouldShowMasterProducts && (
+                    {!loadingMasterProducts && shouldShowMasterProducts && !hasCompatibleCategories && (
                       <div className="product-modal-master-products">
                         <div className="product-modal-master-list">
                           {masterProducts.map((master) => (
@@ -882,22 +951,6 @@ const ProductModal = ({ product, isOpen, onClose }) => {
                                       : "0 products"}
                                   </div>
                                 </div>
-
-                                <button
-                                  type="button"
-                                  className="product-modal-master-view-btn"
-                                  onClick={() => {
-                                    const linkLike = {
-                                      id: master.id,
-                                      name: master.name,
-                                      products: Array.isArray(master.master_products) ? master.master_products : [],
-                                    };
-                                    setSelectedGenericLink(linkLike);
-                                    setGenericModalOpen(true);
-                                  }}
-                                >
-                                  View products
-                                </button>
                               </div>
 
                               {master.description && (
