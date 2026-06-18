@@ -15,7 +15,7 @@ import { GoDotFill } from "react-icons/go";
 import { getProductDetails, getGenericProducts, getMasterProducts, addToCart, updateProductQty } from "../api/apiRequest";
 
 
-const GenericProductsModal = ({ isOpen, onClose, genericLink }) => {
+export const GenericProductsModal = ({ isOpen, onClose, genericLink }) => {
   const [quantities, setQuantities] = useState({});
   const [addingId, setAddingId] = useState(null);
   const [activeCategoryId, setActiveCategoryId] = useState(null);

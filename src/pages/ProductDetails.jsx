@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { FaStar, FaStarHalfAlt, FaRegStar } from "react-icons/fa";
 import { GoDotFill } from "react-icons/go";
-import { FiX } from "react-icons/fi";
+import { FiSettings, FiX } from "react-icons/fi";
 import { useParams, useNavigate } from "react-router-dom";
 
 import MainLayout from "../layouts/MainLayout";
@@ -12,7 +12,7 @@ import CartIcon from "../assets/icons/CartIcon.svg";
 
 import { getLoggedInUser } from "../utils/authUtils";
 import { addToCart, getGenericProducts, getMasterProducts, productDetails } from "../api/apiRequest";
-import ProductModal from "../components/ProductModal";
+import ProductModal, { GenericProductsModal as ProductCompatibleProductsModal } from "../components/ProductModal";
 
 const GenericProductsModal = ({ isOpen, onClose, genericLink }) => {
   const [quantities, setQuantities] = useState({});
@@ -391,10 +391,34 @@ const ProductDetails = () => {
     Array.isArray(master?.generic_links) ? master.generic_links : []
   );
   const hasGenericMasters = genericLinks.length > 0;
-  const shouldShowMasterProducts = !hasGenericMasters && masterProducts.length > 0;
+  const compatibleCategories = hasGenericMasters
+    ? genericLinks.map((link) => ({
+        id: `generic-link-${link.id}`,
+        name: link?.name || "Products",
+        product_count: Number(
+          link?.product_count ?? (Array.isArray(link?.products) ? link.products.length : 0)
+        ),
+        products: Array.isArray(link?.products) ? link.products : [],
+      }))
+    : masterProducts.map((master) => ({
+        id: `master-${master.id}`,
+        name: master?.name || "Products",
+        product_count: Array.isArray(master?.master_products)
+          ? master.master_products.length
+          : 0,
+        products: Array.isArray(master?.master_products) ? master.master_products : [],
+      }));
+  const hasCompatibleCategories = compatibleCategories.length > 0;
 
-  const openGenericProductsModal = (link) => {
-    setSelectedGenericLink(link);
+  const openCompatibleProductsModal = () => {
+    setSelectedGenericLink({
+      id: "compatible-products",
+      name: "Compatible Spare Parts",
+      subtitle: product?.name
+        ? `Verified components for ${product.name}`
+        : "Verified components for this product",
+      categories: compatibleCategories,
+    });
     setGenericModalOpen(true);
   };
 
@@ -662,38 +686,15 @@ const ProductDetails = () => {
                     </div>
                   )}
 
-                  {!loadingGenericProducts && hasGenericMasters && (
-                    <div className="product-details-info-panel">
-                      <p className="product-details-info-panel-title">
-                        Related Products
-                        <span className="product-modal-generic-master-count">
-                          {genericLinks.length}
-                        </span>
-                      </p>
-
-                      <div className="product-detail-generic-links">
-                        {genericLinks.map((link) => {
-                          const products = Array.isArray(link?.products)
-                            ? link.products
-                            : [];
-                          const productCount = Number(link?.product_count ?? products.length);
-
-                          return (
-                            <button
-                              key={`generic-link-${link.id}`}
-                              type="button"
-                              onClick={() => openGenericProductsModal(link)}
-                              className="product-detail-generic-link-btn"
-                            >
-                              {link.name}
-                              <span className="product-detail-generic-link-count">
-                                ({productCount})
-                              </span>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
+                  {!loadingGenericProducts && hasCompatibleCategories && (
+                    <button
+                      type="button"
+                      onClick={openCompatibleProductsModal}
+                      className="product-modal-compatible-btn"
+                    >
+                      <FiSettings />
+                      <span>View Compatible Spare Parts</span>
+                    </button>
                   )}
 
                   {loadingMasterProducts && !hasGenericMasters && (
@@ -701,42 +702,6 @@ const ProductDetails = () => {
                       <p className="product-details-info-panel-title">
                         Loading master products...
                       </p>
-                    </div>
-                  )}
-
-                  {!loadingMasterProducts && shouldShowMasterProducts && (
-                    <div className="product-details-info-panel">
-                      <div className="master-products-grid">
-                        {masterProducts.map((master) => (
-                          <div key={master.id} className="master-product-card">
-                            <div className="master-product-card-header">
-                              <p className="master-product-card-title">{master.name}</p>
-
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  const linkLike = {
-                                    id: master.id,
-                                    name: master.name,
-                                    products: Array.isArray(master.master_products) ? master.master_products : [],
-                                  };
-                                  setSelectedGenericLink(linkLike);
-                                  setGenericModalOpen(true);
-                                }}
-                                className="master-product-view-btn"
-                              >
-                                View products
-                              </button>
-                            </div>
-
-                            <p className="master-product-card-count">
-                              {Array.isArray(master.master_products)
-                                ? `${master.master_products.length} products available`
-                                : "No master products available"}
-                            </p>
-                          </div>
-                        ))}
-                      </div>
                     </div>
                   )}
 
@@ -887,7 +852,7 @@ const ProductDetails = () => {
         />
       )}
 
-      <GenericProductsModal
+      <ProductCompatibleProductsModal
         isOpen={genericModalOpen}
         onClose={closeGenericProductsModal}
         genericLink={selectedGenericLink}
