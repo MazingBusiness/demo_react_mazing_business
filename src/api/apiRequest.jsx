@@ -1033,6 +1033,53 @@ export const updateProductQty = async (product_id, quantity) => {
   return res.json(); 
 };
 
+const normalizeProductListForQuickOrder = (products = [], mainProduct = null) => {
+  return products.map((item) => {
+    const discountPrice = Number(
+      String(item?.discount_price ?? item?.unit_price ?? 0).replace(/[^0-9.]/g, "")
+    );
+    const cInstockMCoin = Number(
+      item?.c_instock_m_coin ?? mainProduct?.c_instock_m_coin ?? 0
+    );
+
+    return {
+      ...item,
+      cash_and_carry_item:
+        item?.cash_and_carry_item ?? mainProduct?.cash_and_carry_item ?? 0,
+      category_group: item?.category_group ?? mainProduct?.category_group ?? null,
+      category: item?.category ?? mainProduct?.category ?? null,
+      fast_delivery_tag:
+        item?.fast_delivery_tag ?? mainProduct?.fast_delivery_tag ?? 0,
+      inhouse_product: item?.inhouse_product ?? mainProduct?.inhouse_product ?? 0,
+      is_warranty: item?.is_warranty ?? mainProduct?.is_warranty ?? 0,
+      warranty_duration:
+        item?.warranty_duration ?? mainProduct?.warranty_duration ?? null,
+      offer: Array.isArray(item?.offer) ? item.offer : [],
+      stocks: Array.isArray(item?.stocks) ? item.stocks : [],
+      reviews: Array.isArray(item?.reviews) ? item.reviews : [],
+      thumb_img: item?.thumb_img ?? null,
+      images: Array.isArray(item?.images) ? item.images : [],
+      c_instock_m_coin: cInstockMCoin,
+      earnMCoin: discountPrice * cInstockMCoin,
+    };
+  });
+};
+
+const normalizeProductDetailsVariantProducts = (payload) => {
+  const mainProduct = Array.isArray(payload?.data) ? payload.data[0] : null;
+  const variants = Array.isArray(payload?.all_varient_products)
+    ? payload.all_varient_products
+    : [];
+
+  const normalizedVariants = normalizeProductListForQuickOrder(variants, mainProduct);
+
+  return {
+    ...payload,
+    all_varient_products: normalizedVariants,
+    all_variant_products: normalizedVariants,
+  };
+};
+
 export const productDetails = async (slug) => {
   const user = getLoggedInUser();
   const header = getHeader();
@@ -1050,7 +1097,60 @@ export const productDetails = async (slug) => {
     },
   });
   const data = await response.json();
-  return data;
+  return normalizeProductDetailsVariantProducts(data);
+};
+
+export const getVariationProductBySelectedValues = async ({
+  selected_values,
+  variation_parent_part_no,
+  user_id,
+} = {}) => {
+  const user = getLoggedInUser();
+  const header = getHeader();
+  const selectedValues = Array.isArray(selected_values)
+    ? selected_values.filter(Boolean).join(",")
+    : String(selected_values || "").trim();
+
+  const body = new URLSearchParams();
+  body.append("selected_values", selectedValues);
+  body.append("variation_parent_part_no", variation_parent_part_no || "");
+
+  if (user_id || user?.id) {
+    body.append("user_id", user_id || user.id);
+  }
+
+  const response = await fetch(`${API_BASE_URL}product/variarion_product_id`, {
+    method: "POST",
+    headers: {
+      ...(header?.headers || {}),
+      Accept: "application/json",
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    body,
+  });
+
+  const data = await response.json();
+
+  if (!response.ok || data?.res === false) {
+    throw new Error(data?.msg || data?.message || "Variation product API failed");
+  }
+
+  const mainProduct = Array.isArray(data?.data) ? data.data[0] : null;
+  const productDetailsList = Array.isArray(data?.product_details)
+    ? data.product_details
+    : [];
+  const normalizedProducts = normalizeProductListForQuickOrder(
+    productDetailsList,
+    mainProduct
+  );
+
+  return {
+    ...data,
+    product_details: normalizedProducts,
+    data: Array.isArray(data?.data)
+      ? normalizeProductListForQuickOrder(data.data, mainProduct)
+      : data?.data,
+  };
 };
 
 /**

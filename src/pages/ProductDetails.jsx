@@ -14,6 +14,8 @@ import { getLoggedInUser } from "../utils/authUtils";
 import { addToCart, getGenericProducts, getMasterProducts, productDetails } from "../api/apiRequest";
 import ProductModal, { GenericProductsModal as ProductCompatibleProductsModal } from "../components/ProductModal";
 
+import ProductDetailsBottom from "../components/ProductDetailsBottom";
+
 const GenericProductsModal = ({ isOpen, onClose, genericLink }) => {
   const [quantities, setQuantities] = useState({});
   const [bulkDiscountApplied, setBulkDiscountApplied] = useState({});
@@ -240,6 +242,9 @@ const ProductDetails = () => {
 
   const [product, setProduct] = useState(null);
   const [apiAttributes, setApiAttributes] = useState([]);
+  const [productVariations, setProductVariations] = useState([]);
+  const [selectedVariationValues, setSelectedVariationValues] = useState({});
+  const [allVarientProducts, setAllVarientProducts] = useState([]);
   const [genericMasters, setGenericMasters] = useState([]);
   const [loadingGenericProducts, setLoadingGenericProducts] = useState(false);
   const [genericFetchCompleted, setGenericFetchCompleted] = useState(false);
@@ -432,6 +437,9 @@ const ProductDetails = () => {
     setErr("");
     setProduct(null);
     setApiAttributes([]);
+    setProductVariations([]);
+    setSelectedVariationValues({});
+    setAllVarientProducts([]);
     setGenericMasters([]);
     setLoadingGenericProducts(false);
     setUseMainBulkDiscount(false);
@@ -452,6 +460,17 @@ const ProductDetails = () => {
 
       setProduct(p);
       setApiAttributes(Array.isArray(payload?.attributes) ? payload.attributes : []);
+      setProductVariations(
+        Array.isArray(payload?.product_variations) ? payload.product_variations : []
+      );
+      setSelectedVariationValues(payload?.selected_values || {});
+      setAllVarientProducts(
+        Array.isArray(payload?.all_varient_products)
+          ? payload.all_varient_products
+          : Array.isArray(payload?.all_variant_products)
+            ? payload.all_variant_products
+            : []
+      );
     } catch (e) {
       setErr(e?.message || "Failed to load product");
     } finally {
@@ -829,6 +848,14 @@ const ProductDetails = () => {
                 </div>
               )}
             </div>
+          </div>
+          <div className="product-details-bottom">
+            <ProductDetailsBottom
+              product={product}
+              productVariations={productVariations}
+              selectedVariationValues={selectedVariationValues}
+              allVarientProducts={allVarientProducts}
+            />
           </div>
         </div>
       </div>
