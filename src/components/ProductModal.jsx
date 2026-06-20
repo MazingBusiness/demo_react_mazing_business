@@ -7,18 +7,20 @@ import fastDeliveryIcon from "../assets/icons/fast-delivery.svg";
 import warrantyIcon from "../assets/icons/warranty.jpeg";
 import no_image from "../assets/images/no-image.png";
 
-import { FiSettings, FiX } from "react-icons/fi";
+import { FiDownload, FiSettings, FiX } from "react-icons/fi";
 import CartbtnIcon from "../assets/icons/cartbtnIcon.svg";
 import CartIconPlus from "../assets/icons/cartIconplus.svg";
 import { GoDotFill } from "react-icons/go";
 
-import { getProductDetails, getGenericProducts, getMasterProducts, addToCart, updateProductQty } from "../api/apiRequest";
+import { getProductDetails, getGenericProducts, getMasterProducts, addToCart, updateProductQty, downloadGenericProductList } from "../api/apiRequest";
+import { getLoggedInUser } from "../utils/authUtils";
 
 
 export const GenericProductsModal = ({ isOpen, onClose, genericLink }) => {
   const [quantities, setQuantities] = useState({});
   const [addingId, setAddingId] = useState(null);
   const [activeCategoryId, setActiveCategoryId] = useState(null);
+  const [downloadingCategoryId, setDownloadingCategoryId] = useState(null);
 
   const categories = useMemo(() => {
     if (Array.isArray(genericLink?.categories) && genericLink.categories.length > 0) {
@@ -27,6 +29,9 @@ export const GenericProductsModal = ({ isOpen, onClose, genericLink }) => {
         name: category?.name || "Products",
         products: Array.isArray(category?.products) ? category.products : [],
         product_count: category?.product_count,
+        master_product_id: category?.master_product_id ?? genericLink?.master_product_id,
+        generic_masters_id: category?.generic_masters_id,
+        generic_links_id: category?.generic_links_id,
       }));
     }
 
@@ -38,6 +43,9 @@ export const GenericProductsModal = ({ isOpen, onClose, genericLink }) => {
         name: genericLink?.name || "Products",
         products: Array.isArray(genericLink?.products) ? genericLink.products : [],
         product_count: genericLink?.product_count,
+        master_product_id: genericLink?.master_product_id,
+        generic_masters_id: genericLink?.generic_masters_id,
+        generic_links_id: genericLink?.generic_links_id ?? genericLink?.id,
       },
     ];
   }, [genericLink]);
@@ -52,6 +60,12 @@ export const GenericProductsModal = ({ isOpen, onClose, genericLink }) => {
   const activeCategory =
     categories.find((category) => category.id === activeCategoryId) || categories[0];
   const products = activeCategory?.products || [];
+  const isDownloadingActiveCategory = downloadingCategoryId === activeCategory?.id;
+  const canDownloadActiveCategory = Boolean(
+    activeCategory?.master_product_id &&
+      activeCategory?.generic_masters_id &&
+      activeCategory?.generic_links_id
+  );
   const getProductQty = (item) => Number(quantities[item?.id] || item?.min_qty || 1);
   const getItemPrice = (item) => Number(item?.discount_price || item?.price || item?.mrp || 0);
   const getItemBulkQty = (item) => Number(item?.piece_by_carton || 10);
@@ -77,6 +91,40 @@ export const GenericProductsModal = ({ isOpen, onClose, genericLink }) => {
       alert(err?.message || "Failed to add to cart");
     } finally {
       setAddingId(null);
+    }
+  };
+
+  const handleDownloadGenericPdf = async () => {
+    if (!activeCategory || !canDownloadActiveCategory || isDownloadingActiveCategory) return;
+
+    try {
+      const user = getLoggedInUser();
+      setDownloadingCategoryId(activeCategory.id);
+
+      const response = await downloadGenericProductList({
+        product_id: activeCategory.master_product_id,
+        generic_masters_id: activeCategory.generic_masters_id,
+        generic_links_id: activeCategory.generic_links_id,
+        user_id: user?.id,
+      });
+
+      if (!response?.pdf_link) {
+        throw new Error("PDF link not found");
+      }
+
+      const link = document.createElement("a");
+      link.href = response.pdf_link;
+      link.download = response.pdf_link.split("/").pop() || "generic-products.pdf";
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (err) {
+      console.error(err);
+      alert(err?.message || "Failed to download PDF");
+    } finally {
+      setDownloadingCategoryId(null);
     }
   };
 
@@ -133,6 +181,25 @@ export const GenericProductsModal = ({ isOpen, onClose, genericLink }) => {
           </aside>
 
           <section className="generic-products-content">
+            <div className="generic-products-section-head">
+              <div>
+                <h4>{activeCategory?.name || "Products"}</h4>
+                <p>{products.length} products</p>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleDownloadGenericPdf}
+                disabled={!canDownloadActiveCategory || isDownloadingActiveCategory}
+                className="generic-products-download-btn"
+              >
+                <FiDownload />
+                <span>
+                  {isDownloadingActiveCategory ? "Preparing PDF..." : "Download PDF"}
+                </span>
+              </button>
+            </div>
+
             {products.length === 0 ? (
               <p className="generic-products-empty">No products found.</p>
             ) : (
@@ -756,14 +823,19 @@ const ProductModal = ({ product, isOpen, onClose }) => {
   const hasGenericMasters = genericLinks.length > 0;
   const shouldShowMasterProducts = !hasGenericMasters && masterProducts.length > 0;
   const compatibleCategories = hasGenericMasters
-    ? genericLinks.map((link) => ({
+    ? genericMasters.flatMap((master) =>
+        (Array.isArray(master?.generic_links) ? master.generic_links : []).map((link) => ({
         id: `generic-link-${link.id}`,
         name: link?.name || "Products",
         product_count: Number(
           link?.product_count ?? (Array.isArray(link?.products) ? link.products.length : 0)
         ),
         products: Array.isArray(link?.products) ? link.products : [],
+        master_product_id: productDetails?.id,
+        generic_masters_id: master?.id,
+        generic_links_id: link?.id,
       }))
+    )
     : masterProducts.map((master) => ({
         id: `master-${master.id}`,
         name: master?.name || "Products",

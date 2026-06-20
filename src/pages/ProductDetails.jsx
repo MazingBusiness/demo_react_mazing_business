@@ -397,14 +397,19 @@ const ProductDetails = () => {
   );
   const hasGenericMasters = genericLinks.length > 0;
   const compatibleCategories = hasGenericMasters
-    ? genericLinks.map((link) => ({
+    ? genericMasters.flatMap((master) =>
+        (Array.isArray(master?.generic_links) ? master.generic_links : []).map((link) => ({
         id: `generic-link-${link.id}`,
         name: link?.name || "Products",
         product_count: Number(
           link?.product_count ?? (Array.isArray(link?.products) ? link.products.length : 0)
         ),
         products: Array.isArray(link?.products) ? link.products : [],
+        master_product_id: product?.id,
+        generic_masters_id: master?.id,
+        generic_links_id: link?.id,
       }))
+    )
     : masterProducts.map((master) => ({
         id: `master-${master.id}`,
         name: master?.name || "Products",

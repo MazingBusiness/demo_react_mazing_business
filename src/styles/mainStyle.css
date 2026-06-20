@@ -6855,6 +6855,56 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   scrollbar-gutter: stable;
 }
 
+.generic-products-section-head {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  min-height: 68px;
+  padding: 16px 34px;
+  background: #fff;
+  border-bottom: 1px solid #eef0f3;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.generic-products-section-head h4 {
+  margin: 0;
+  color: #30343b;
+  font-size: 16px;
+  font-weight: 900;
+}
+
+.generic-products-section-head p {
+  margin: 4px 0 0;
+  color: #6b7280;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.generic-products-download-btn {
+  min-height: 40px;
+  border: 0;
+  border-radius: 8px;
+  padding: 0 15px;
+  background: #064f9d;
+  color: #fff;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.generic-products-download-btn:disabled {
+  cursor: not-allowed;
+  background: #9aa8ba;
+}
+
 .generic-products-content::-webkit-scrollbar,
 .generic-products-sidebar::-webkit-scrollbar {
   width: 8px;

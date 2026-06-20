@@ -309,6 +309,38 @@ export const getGenericProducts = async (productId) => {
   return response.json();
 };
 
+export const downloadGenericProductList = async ({
+  product_id,
+  generic_masters_id,
+  generic_links_id,
+  user_id,
+} = {}) => {
+  const user = getLoggedInUser();
+  const header = getHeader();
+  const queryParams = new URLSearchParams();
+
+  if (product_id) queryParams.append("product_id", product_id);
+  if (generic_masters_id) queryParams.append("generic_masters_id", generic_masters_id);
+  if (generic_links_id) queryParams.append("generic_links_id", generic_links_id);
+  if (user_id || user?.id) queryParams.append("user_id", user_id || user.id);
+
+  const response = await fetch(`${API_BASE_URL}product/download-generic-products?${queryParams.toString()}`, {
+    method: "GET",
+    headers: {
+      ...(header?.headers || {}),
+      Accept: "application/json",
+    },
+  });
+
+  const data = await response.json();
+
+  if (!response.ok || data?.res === false) {
+    throw new Error(data?.msg || data?.message || "Generic product PDF download failed");
+  }
+
+  return data;
+};
+
 export const getMasterProducts = async (productId) => {
   const user = getLoggedInUser();
   const header = getHeader();
