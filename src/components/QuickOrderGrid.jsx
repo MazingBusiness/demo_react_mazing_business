@@ -34,6 +34,21 @@ const QuickOrderGrid = ({ filters, onPriceRangeUpdate }) => {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const openModal = (product) => setSelectedProduct(product);
   const closeModal = () => setSelectedProduct(null);
+  const isVariantProduct = (product) =>
+    Number(product?.variant_product ?? product?.varient_product ?? 0) === 1;
+
+  const handleProductClick = (product) => {
+    openModal(product);
+  };
+
+  const handleProductNameClick = (product) => {
+    if (isVariantProduct(product) && product?.slug) {
+      navigate(`/product-details/${encodeURIComponent(product.slug)}`);
+      return;
+    }
+
+    openModal(product);
+  };
 
   const [pdfDownloading, setPdfDownloading] = useState(false);
   const [excelDownloading, setExcelDownloading] = useState(false);
@@ -159,6 +174,8 @@ const QuickOrderGrid = ({ filters, onPriceRangeUpdate }) => {
             category_group: item.category_group?.name || "",
             category: item.category?.name || "",
             fast_delivery_tag: item.fast_delivery_tag,
+            variant_product: Number(item.variant_product ?? item.varient_product ?? 0),
+            varient_product: Number(item.varient_product ?? item.variant_product ?? 0),
             stocks: item.stocks || [],
             reviews: item.reviews || [],
             earnMCoin: earnMCoin || 0,
@@ -481,11 +498,11 @@ const QuickOrderGrid = ({ filters, onPriceRangeUpdate }) => {
             role="button"
             tabIndex={0}
             style={{ cursor: "pointer" }}
-            onClick={() => openModal(product)}
+            onClick={() => handleProductClick(product)}
             onKeyDown={(e) => {
               if (e.key === "Enter" || e.key === " ") {
                 e.preventDefault();
-                openModal(product);
+                handleProductClick(product);
               }
             }}
           >
@@ -493,7 +510,13 @@ const QuickOrderGrid = ({ filters, onPriceRangeUpdate }) => {
               {renderProductImage(product, openModal)}
 
               <div className="product-info">
-                <h3 title={product.name}>
+                <h3
+                  title={product.name}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleProductNameClick(product);
+                  }}
+                >
                   {product.name?.length > 85
                     ? product.name.substring(0, 85) + "..."
                     : product.name}
