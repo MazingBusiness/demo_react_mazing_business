@@ -653,6 +653,53 @@ a.right-link {
   font-weight: 700;
 }
 
+.search-modal .results-wrapper > h2 {
+  display: none;
+}
+
+.suggestion-section {
+  position: relative;
+  padding: 30px 0 8px;
+  background: #ffffff;
+}
+
+.suggestion-section + .suggestion-section {
+  border-top: 1px solid #eeeeee;
+}
+
+.suggestion-heading {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: inline-block;
+  padding: 2px 4px;
+  background: #d5d5d5;
+  color: #333333;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 18px;
+  text-transform: uppercase;
+}
+
+.suggestion-item {
+  display: block;
+  width: 100%;
+  padding: 6px 8px;
+  border: 0;
+  background: transparent;
+  color: #666666;
+  font-size: 15px;
+  font-weight: 400;
+  line-height: 1.35;
+  text-align: left;
+  cursor: pointer;
+}
+
+.suggestion-item:hover {
+  color: #004d84;
+  background: #f5f8fb;
+}
+
 .results-container {
   margin-top: 10px;
   display: flex;

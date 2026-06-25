@@ -229,6 +229,103 @@ export const getQuickOrderProduct = async (
   return response;
 };
 
+export const getBetaQuickOrderProduct = async (
+  cat_groups,
+  categories,
+  brands,
+  m_coin_rates,
+  search_text,
+  min_price,
+  max_price,
+  location_id,
+  inhouse_product,
+  price_sort,
+  delivery,
+  page = 1,
+  pagination = 16
+) => {
+  const user = getLoggedInUser();
+  const header = getHeader();
+
+  const queryParams = new URLSearchParams();
+
+  if (cat_groups && String(cat_groups).trim() !== "") {
+    queryParams.append("cat_groups", Array.isArray(cat_groups) ? cat_groups.join(",") : cat_groups);
+  }
+
+  if (categories && String(categories).trim() !== "") {
+    queryParams.append("categories", Array.isArray(categories) ? categories.join(",") : categories);
+  }
+
+  if (brands && String(brands).trim() !== "") {
+    queryParams.append("brands", Array.isArray(brands) ? brands.join(",") : brands);
+  }
+
+  if (m_coin_rates && String(m_coin_rates).trim() !== "") {
+    queryParams.append(
+      "m_coin_rates",
+      Array.isArray(m_coin_rates) ? m_coin_rates.join(",") : m_coin_rates
+    );
+  }
+
+  if (search_text) {
+    queryParams.append("search_text", search_text);
+  }
+
+  if (min_price !== null && min_price !== undefined && min_price !== "") {
+    queryParams.append("min_price", min_price);
+  }
+
+  if (max_price !== null && max_price !== undefined && max_price !== "") {
+    queryParams.append("max_price", max_price);
+  }
+
+  if (location_id !== null && location_id !== undefined && location_id !== "") {
+    queryParams.append("location_id", location_id);
+  }
+
+  if (
+    inhouse_product !== null &&
+    inhouse_product !== undefined &&
+    inhouse_product !== ""
+  ) {
+    queryParams.append("inhouse_product", inhouse_product);
+  }
+
+  if (delivery !== null && delivery !== undefined && delivery !== "") {
+    queryParams.append("delivery", delivery);
+  }
+
+  if (page) {
+    queryParams.append("page", page);
+  }
+
+  if (price_sort) {
+    queryParams.append("price_sort", price_sort);
+  }
+
+  if (pagination) {
+    queryParams.append("pagination", pagination);
+  }
+
+  if (user?.id) {
+    queryParams.append("user_id", user.id);
+  }
+
+  const url = `${API_BASE_URL}product/beta-version-quick-order?${queryParams.toString()}`;
+
+  const response = await fetch(url, {
+    method: "GET",
+    headers: {
+      ...(header?.headers || {}),
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    },
+  });
+
+  return response;
+};
+
 export const getRewardProducts = async ({
   search_text = "",
   price_sort = "",

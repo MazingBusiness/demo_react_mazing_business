@@ -3,7 +3,8 @@ import { FiX, FiChevronRight } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 
 import no_image from "../assets/images/no-image.png";
-import { getQuickOrderProduct } from "../api/apiRequest";
+// import { getQuickOrderProduct } from "../api/apiRequest";
+import { getBetaQuickOrderProduct } from "../api/apiRequest";
 import { getLoggedInUser } from "../utils/authUtils";
 
 /**
@@ -45,11 +46,14 @@ const SearchModal = ({
    * If not passed, it will still work with only searchText.
    */
   filters = {},
+  anchorRect = null,
 }) => {
   const navigate = useNavigate();
   const user = getLoggedInUser();
 
   const [items, setItems] = useState([]);
+  const [categorySuggestions, setCategorySuggestions] = useState([]);
+  const [brandSuggestions, setBrandSuggestions] = useState([]);
   const [totalRecord, setTotalRecord] = useState(0);
   const [page, setPage] = useState(1);
 
@@ -67,6 +71,26 @@ const SearchModal = ({
   const debounceRef = useRef(null);
 
   const price_sort = useMemo(() => "popularity", []); // keep consistent
+  const modalStyle = useMemo(() => {
+    if (!anchorRect) return undefined;
+
+    const gap = 0;
+    const viewportWidth = window.innerWidth || document.documentElement.clientWidth;
+    const sidePadding = 12;
+    const width = Math.min(anchorRect.width, viewportWidth - sidePadding * 2);
+    const left = Math.min(
+      Math.max(anchorRect.left, sidePadding),
+      Math.max(sidePadding, viewportWidth - width - sidePadding)
+    );
+
+    return {
+      position: "fixed",
+      top: `${anchorRect.top + gap}px`,
+      left: `${left}px`,
+      width: `${width}px`,
+      maxWidth: "none",
+    };
+  }, [anchorRect]);
 
   const buildTransformed = (productList = []) => {
     return productList.map((item) => {
@@ -99,6 +123,8 @@ const SearchModal = ({
     const q = String(search || "").trim();
     if (!q) {
       setItems([]);
+      setCategorySuggestions([]);
+      setBrandSuggestions([]);
       setTotalRecord(0);
       setPage(1);
       setHasMore(false);
@@ -112,7 +138,7 @@ const SearchModal = ({
 
       const q = String(searchText || "").trim();
 
-      const apiRes = await getQuickOrderProduct(
+      const apiRes = await getBetaQuickOrderProduct(
         filters.cat_groups,
         filters.categories,
         filters.brands,
@@ -136,8 +162,21 @@ const SearchModal = ({
 
       const productList = responseData.data?.data || [];
       const total = responseData.data?.total || 0;
+      const nextCategorySuggestions =
+        responseData.catehory_suggestion ||
+        responseData.category_suggestion ||
+        [];
+      const nextBrandSuggestions = responseData.brand_suggestion || [];
 
       setTotalRecord(total);
+      if (reqPage === 1) {
+        setCategorySuggestions(
+          Array.isArray(nextCategorySuggestions) ? nextCategorySuggestions : []
+        );
+        setBrandSuggestions(
+          Array.isArray(nextBrandSuggestions) ? nextBrandSuggestions : []
+        );
+      }
 
       const transformed = buildTransformed(productList);
 
@@ -246,6 +285,28 @@ const SearchModal = ({
     navigate(PRODUCT_DETAILS_PATH(p));
   };
 
+  const onCategorySuggestionClick = (category) => {
+    onClose?.();
+    navigate("/quick-order", {
+      state: {
+        cat_g_id:
+          category?.category_group_id ||
+          category?.group_id ||
+          category?.category_group?.id,
+        cat_id: category?.id,
+      },
+    });
+  };
+
+  const onBrandSuggestionClick = (brand) => {
+    onClose?.();
+    navigate("/quick-order", {
+      state: {
+        brand_id: brand?.id,
+      },
+    });
+  };
+
   return (
     <div
       className="search-modal-backdrop"
@@ -257,8 +318,31 @@ const SearchModal = ({
     >
       <div
         className="search-modal"
+        style={modalStyle}
         onClick={(e) => e.stopPropagation()} // prevent backdrop close when clicking inside
       >
+        {/* Search Input */}
+        <div className="search-input-wrapper">
+          <input
+            type="text"
+            placeholder="Search for products"
+            value={searchText}
+            onChange={onChange}
+            autoFocus
+          />
+          <button
+            className="close-btn"
+            onClick={() => {
+              onClear?.();
+              onClose?.();
+            }}
+            aria-label="Close search"
+            type="button"
+          >
+            <FiX />
+          </button>
+        </div>
+
         {/* Results */}
         {String(searchText || "").trim() !== "" && (
           <div className="results-wrapper">
@@ -273,6 +357,38 @@ const SearchModal = ({
                 </h2>
 
                 <div className="results-container" ref={listRef}>
+                  {categorySuggestions.length > 0 && (
+                    <div className="suggestion-section">
+                      <div className="suggestion-heading">CATEGORY SUGGESTIONS</div>
+                      {categorySuggestions.map((category) => (
+                        <button
+                          key={`category-${category.id}`}
+                          type="button"
+                          className="suggestion-item"
+                          onClick={() => onCategorySuggestionClick(category)}
+                        >
+                          {highlightText(category.name)}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {brandSuggestions.length > 0 && (
+                    <div className="suggestion-section">
+                      <div className="suggestion-heading">BRAND SUGGESTIONS</div>
+                      {brandSuggestions.map((brand) => (
+                        <button
+                          key={`brand-${brand.id}`}
+                          type="button"
+                          className="suggestion-item"
+                          onClick={() => onBrandSuggestionClick(brand)}
+                        >
+                          {highlightText(brand.name)}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
                   {items.length > 0 ? (
                     <>
                       {items.map((product) => (
@@ -352,28 +468,6 @@ const SearchModal = ({
             )}
           </div>
         )}
-
-        {/* Search Input */}
-        <div className="search-input-wrapper">
-          <input
-            type="text"
-            placeholder="Search for products"
-            value={searchText}
-            onChange={onChange}
-            autoFocus
-          />
-          <button
-            className="close-btn"
-            onClick={() => {
-              onClear?.();
-              onClose?.();
-            }}
-            aria-label="Close search"
-            type="button"
-          >
-            <FiX />
-          </button>
-        </div>
       </div>
     </div>
   );

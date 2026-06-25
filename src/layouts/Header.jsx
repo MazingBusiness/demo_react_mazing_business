@@ -40,6 +40,7 @@ function getStoredStaffId() {
 const Header = () => {
   const [searchText, setSearchText] = useState("");
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [searchAnchor, setSearchAnchor] = useState(null);
   const [showMegaMenu, setShowMegaMenu] = useState(false);
   const [isLangOpen, setIsLangOpen] = useState(false);
   const [cartItems, setCartItems] = useState([]);
@@ -60,6 +61,7 @@ const Header = () => {
 
   const megaMenuRef = useRef(null);
   const langDropdownRef = useRef(null);
+  const searchContainerRef = useRef(null);
   const navigate = useNavigate();
 
   const languages = [
@@ -69,6 +71,21 @@ const Header = () => {
 
   const handleSearchChange = (e) => setSearchText(e.target.value);
   const handleClear = () => setSearchText("");
+  const updateSearchAnchor = () => {
+    if (!searchContainerRef.current) return;
+
+    const rect = searchContainerRef.current.getBoundingClientRect();
+    setSearchAnchor({
+      top: rect.top,
+      left: rect.left,
+      width: rect.width,
+    });
+  };
+
+  const openSearch = () => {
+    updateSearchAnchor();
+    setIsSearchOpen(true);
+  };
 
   // ✅ Switch Back link logic (staff_id from localStorage)
   const staffId = useMemo(() => getStoredStaffId(), []);
@@ -129,6 +146,19 @@ const Header = () => {
   }, []);
 
   useEffect(() => {
+    if (!isSearchOpen) return;
+
+    const handleReposition = () => updateSearchAnchor();
+    window.addEventListener("resize", handleReposition);
+    window.addEventListener("scroll", handleReposition, true);
+
+    return () => {
+      window.removeEventListener("resize", handleReposition);
+      window.removeEventListener("scroll", handleReposition, true);
+    };
+  }, [isSearchOpen]);
+
+  useEffect(() => {
     const handleClickOutside = (event) => {
       if (
         langDropdownRef.current &&
@@ -185,8 +215,9 @@ const Header = () => {
           <div className="top-headerMid">
             {!isSearchOpen && (
               <div
+                ref={searchContainerRef}
                 className="search-container"
-                onClick={() => setIsSearchOpen(true)}
+                onClick={openSearch}
               >
                 <input
                   type="text"
@@ -349,6 +380,7 @@ const Header = () => {
           onChange={handleSearchChange}
           onClear={handleClear}
           onClose={() => setIsSearchOpen(false)}
+          anchorRect={searchAnchor}
         />
       )}
 
