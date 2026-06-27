@@ -8,6 +8,7 @@ import MainLayout from "../layouts/MainLayout";
 import fastDeliveryIcon from "../assets/icons/fast-delivery.svg";
 import warrantyIcon from "../assets/icons/warranty.jpeg";
 import no_image from "../assets/images/no-image.png";
+import mazingLogoSort from "../assets/images/MazingLogoSort.jpg";
 import CartIcon from "../assets/icons/CartIcon.svg";
 
 import { getLoggedInUser } from "../utils/authUtils";
@@ -296,6 +297,51 @@ const ProductDetails = () => {
     const reviews = Array.isArray(product?.reviews) ? product.reviews : [];
     return reviews.length;
   }, [product]);
+
+  const reviewItems = useMemo(() => {
+    const reviews = Array.isArray(product?.reviews) ? product.reviews : [];
+
+    return reviews.map((review, index) => {
+      const companyName = String(review?.company_name ?? "").trim();
+      const rawDate =
+        review?.created_at || review?.date || review?.reviewed_at || "";
+      const parsedDate = rawDate ? new Date(rawDate) : null;
+
+      return {
+        id: review?.id || `review-${index}`,
+        companyName,
+        rating: Math.min(5, Math.max(0, Number(review?.rating || 0))),
+        comment:
+          review?.comment ||
+          review?.review ||
+          review?.description ||
+          review?.message ||
+          "",
+        date:
+          parsedDate && !Number.isNaN(parsedDate.getTime())
+            ? parsedDate.toLocaleDateString("en-US", {
+                year: "numeric",
+                month: "short",
+                day: "numeric",
+              })
+            : rawDate,
+      };
+    });
+  }, [product]);
+
+  const ratingDistribution = useMemo(() => {
+    return [5, 4, 3, 2, 1].map((stars) => {
+      const count = reviewItems.filter(
+        (review) => Math.round(review.rating) === stars
+      ).length;
+
+      return {
+        stars,
+        count,
+        percentage: totalRatings ? Math.round((count / totalRatings) * 100) : 0,
+      };
+    });
+  }, [reviewItems, totalRatings]);
 
   const specs = useMemo(() => {
     if (!product) return [];
@@ -786,7 +832,7 @@ const ProductDetails = () => {
               )}
 
               <div className="tabs-row">
-                <div className="tabs">
+                <div className="tabs product-detail-tabs">
                   <button
                     className={activeTab === "specs" ? "tab active" : "tab"}
                     onClick={() => setActiveTab("specs")}
@@ -801,6 +847,14 @@ const ProductDetails = () => {
                     type="button"
                   >
                     Descriptions
+                  </button>
+
+                  <button
+                    className={activeTab === "reviews" ? "tab active" : "tab"}
+                    onClick={() => setActiveTab("reviews")}
+                    type="button"
+                  >
+                    Reviews
                   </button>
                 </div>
               </div>
@@ -841,7 +895,7 @@ const ProductDetails = () => {
                     )}
                   </div>
                 </div>
-              ) : (
+              ) : activeTab === "desc" ? (
                 <div className="desc-section">
                   {loading ? (
                     <div className="product-details-loading-sm">Loading...</div>
@@ -850,6 +904,89 @@ const ProductDetails = () => {
                       {descriptionText || "No description available."}
                     </p>
                   )}
+                </div>
+              ) : (
+                <div className="tab-reviews-section product-reviews-tab">
+                  <div className="average-rating">
+                    <h4>Average Rating</h4>
+
+                    <div className="average-rating-inner">
+                      <div className="avg-rating-score">
+                        <div className="avg-rating-score-inner">
+                          <span className="score">
+                            {computedRating.toFixed(1)}
+                          </span>
+
+                          <span className="score-lft">
+                            <span className="stars">
+                              {renderRating(computedRating)}
+                            </span>
+                            <span className="total-reviews">
+                              {totalRatings} Reviews
+                            </span>
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="rating-bars">
+                        {ratingDistribution.map((rating) => (
+                          <div key={rating.stars} className="bar-row">
+                            <span className="bar-label">{rating.stars}.0</span>
+                            <div className="bar-container">
+                              <div className="bar-bg">
+                                <div
+                                  className="bar-fill"
+                                  style={{ width: `${rating.percentage}%` }}
+                                />
+                              </div>
+                              <span className="percentage">
+                                {rating.percentage}%
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="reviews-section">
+                    <h4>Customer Feedback</h4>
+
+                    {reviewItems.length > 0 ? (
+                      reviewItems.map((review) => (
+                        <div key={review.id} className="review-card">
+                          <div className="review-content">
+                            <div className="review-content-top">
+                              <span className="review-content-top-lft">
+                                <img
+                                  src={mazingLogoSort}
+                                  alt="Mazing Business"
+                                  className="avatar review-company-logo"
+                                />
+
+                                <span>
+                                  <h5>{review.companyName || "Customer"}</h5>
+                                  {review.date && (
+                                    <span className="date">{review.date}</span>
+                                  )}
+                                </span>
+                              </span>
+
+                              <span className="review-stars">
+                                {renderRating(review.rating)}
+                              </span>
+                            </div>
+
+                            <p>{review.comment || "No review comment provided."}</p>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="product-reviews-empty">
+                        No reviews available for this product.
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
