@@ -58,6 +58,7 @@ const SearchModal = ({
   const [page, setPage] = useState(1);
 
   const [loading, setLoading] = useState(false);
+  const [debouncing, setDebouncing] = useState(false);
   const [hasMore, setHasMore] = useState(true);
 
   const [apiError, setApiError] = useState("");
@@ -197,10 +198,12 @@ const SearchModal = ({
     // reset pagination for new query
     setPage(1);
     setHasMore(true);
+    setDebouncing(String(searchText || "").trim() !== "");
 
     if (debounceRef.current) clearTimeout(debounceRef.current);
 
     debounceRef.current = setTimeout(() => {
+      setDebouncing(false);
       fetchProducts(searchText, 1);
     }, 350);
 
@@ -348,6 +351,11 @@ const SearchModal = ({
           <div className="results-wrapper">
             {apiError ? (
               <div className="no-results">{apiError}</div>
+            ) : (debouncing || loading) && page === 1 ? (
+              <div className="search-loading" role="status" aria-live="polite">
+                <span className="search-loading-spinner" aria-hidden="true" />
+                <span>Searching...</span>
+              </div>
             ) : (
               <>
                 <h2>

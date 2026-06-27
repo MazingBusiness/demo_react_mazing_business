@@ -657,6 +657,33 @@ a.right-link {
   display: none;
 }
 
+.search-loading {
+  min-height: 110px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: #ffffff;
+  color: #004d84;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.search-loading-spinner {
+  width: 24px;
+  height: 24px;
+  border: 3px solid #d9e8f2;
+  border-top-color: #004d84;
+  border-radius: 50%;
+  animation: search-loading-spin 0.75s linear infinite;
+}
+
+@keyframes search-loading-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .suggestion-section {
   position: relative;
   padding: 30px 0 8px;
