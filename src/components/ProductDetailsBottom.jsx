@@ -9,7 +9,10 @@ const ProductDetailsBottom = ({
   selectedVariationValues = {},
   allVarientProducts = [],
 }) => {
-  const hasVariations = productVariations.length > 0;
+  const hasVariations =
+    Array.isArray(productVariations) && productVariations.length > 0;
+  const hasVariantProducts =
+    Array.isArray(allVarientProducts) && allVarientProducts.length > 0;
   const [filteredProducts, setFilteredProducts] = useState(allVarientProducts);
   const [loadingVariationProducts, setLoadingVariationProducts] = useState(false);
   const [variationProductError, setVariationProductError] = useState("");
@@ -54,6 +57,10 @@ const ProductDetailsBottom = ({
       setLoadingVariationProducts(false);
     }
   };
+
+  if (!hasVariantProducts) {
+    return null;
+  }
 
   return (
     <div className={`ProductDetailsBottomwrapper ${!hasVariations ? "without-sidebar" : ""}`}>

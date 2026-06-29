@@ -12,10 +12,16 @@ import mazingLogoSort from "../assets/images/MazingLogoSort.jpg";
 import CartIcon from "../assets/icons/CartIcon.svg";
 
 import { getLoggedInUser } from "../utils/authUtils";
-import { addToCart, getGenericProducts, getMasterProducts, productDetails } from "../api/apiRequest";
+import {
+  addToCart,
+  getGenericProducts,
+  getMasterProducts,
+  productDetails,
+} from "../api/apiRequest";
 import ProductModal, { GenericProductsModal as ProductCompatibleProductsModal } from "../components/ProductModal";
 
 import ProductDetailsBottom from "../components/ProductDetailsBottom";
+import TopSellingProducts from "../components/TopSellingProducts";
 
 const GenericProductsModal = ({ isOpen, onClose, genericLink }) => {
   const [quantities, setQuantities] = useState({});
@@ -451,6 +457,8 @@ const ProductDetails = () => {
           link?.product_count ?? (Array.isArray(link?.products) ? link.products.length : 0)
         ),
         products: Array.isArray(link?.products) ? link.products : [],
+        downloadable: true,
+        download_type: "generic",
         master_product_id: product?.id,
         generic_masters_id: master?.id,
         generic_links_id: link?.id,
@@ -463,6 +471,18 @@ const ProductDetails = () => {
           ? master.master_products.length
           : 0,
         products: Array.isArray(master?.master_products) ? master.master_products : [],
+        downloadable: true,
+        download_type: "master",
+        master_product_id: product?.id,
+        generic_masters_id:
+          master?.generic_masters_id ??
+          master?.generic_master_id ??
+          master?.id,
+        generic_links_id:
+          master?.generic_links_id ??
+          master?.generic_link_id ??
+          master?.generic_master_link_id ??
+          master?.generic_links?.[0]?.id,
       }));
   const hasCompatibleCategories = compatibleCategories.length > 0;
 
@@ -763,7 +783,11 @@ const ProductDetails = () => {
                       className="product-modal-compatible-btn"
                     >
                       <FiSettings />
-                      <span>View Compatible Spare Parts</span>
+                      <span>
+                        {hasGenericMasters
+                          ? "View Compatible Spare Parts"
+                          : "View Compatible Master Products"}
+                      </span>
                     </button>
                   )}
 
@@ -830,7 +854,13 @@ const ProductDetails = () => {
                   Register to check prices
                 </button>
               )}
+            </div>
+          </div>
 
+          <div className="product-details-page product-details-live-bottom">
+            <TopSellingProducts />
+
+            <section className="product-main product-details-tab-panel">
               <div className="tabs-row">
                 <div className="tabs product-detail-tabs">
                   <button
@@ -838,16 +868,18 @@ const ProductDetails = () => {
                     onClick={() => setActiveTab("specs")}
                     type="button"
                   >
-                    Specifications
+                    Specification
                   </button>
-
+                  
                   <button
                     className={activeTab === "desc" ? "tab active" : "tab"}
                     onClick={() => setActiveTab("desc")}
                     type="button"
                   >
-                    Descriptions
+                    Description
                   </button>
+
+                  
 
                   <button
                     className={activeTab === "reviews" ? "tab active" : "tab"}
@@ -989,16 +1021,20 @@ const ProductDetails = () => {
                   </div>
                 </div>
               )}
+            </section>
+          </div>
+
+          {Array.isArray(allVarientProducts) && allVarientProducts.length > 0 && (
+            <div className="product-details-bottom">
+              <ProductDetailsBottom
+                product={product}
+                productVariations={productVariations}
+                selectedVariationValues={selectedVariationValues}
+                allVarientProducts={allVarientProducts}
+              />
             </div>
-          </div>
-          <div className="product-details-bottom">
-            <ProductDetailsBottom
-              product={product}
-              productVariations={productVariations}
-              selectedVariationValues={selectedVariationValues}
-              allVarientProducts={allVarientProducts}
-            />
-          </div>
+          )}
+
         </div>
       </div>
 
@@ -1026,6 +1062,7 @@ const ProductDetails = () => {
         onClose={closeGenericProductsModal}
         genericLink={selectedGenericLink}
       />
+
     </MainLayout>
   );
 };

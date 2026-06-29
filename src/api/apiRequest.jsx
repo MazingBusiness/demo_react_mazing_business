@@ -411,6 +411,7 @@ export const downloadGenericProductList = async ({
   generic_masters_id,
   generic_links_id,
   user_id,
+  download_type,
 } = {}) => {
   const user = getLoggedInUser();
   const header = getHeader();
@@ -420,6 +421,7 @@ export const downloadGenericProductList = async ({
   if (generic_masters_id) queryParams.append("generic_masters_id", generic_masters_id);
   if (generic_links_id) queryParams.append("generic_links_id", generic_links_id);
   if (user_id || user?.id) queryParams.append("user_id", user_id || user.id);
+  if (download_type) queryParams.append("download_type", download_type);
 
   const response = await fetch(`${API_BASE_URL}product/download-generic-products?${queryParams.toString()}`, {
     method: "GET",

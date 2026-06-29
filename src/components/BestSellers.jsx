@@ -283,7 +283,7 @@ const BestSellers = () => {
             </button> */}
 
             <button
-              className="cart-btn"
+              className="cart-btn best-seller-add-cart"
               aria-label="Add to cart"
               type="button"
               onClick={(e) => {
@@ -293,6 +293,7 @@ const BestSellers = () => {
               }}
             >
               <img src={CartIcon} alt="CartIcon" />
+              <span>Add to Cart</span>
             </button>
           </div>
         )}

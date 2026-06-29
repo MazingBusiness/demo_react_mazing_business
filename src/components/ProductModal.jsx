@@ -15,6 +15,13 @@ import { GoDotFill } from "react-icons/go";
 import { getProductDetails, getGenericProducts, getMasterProducts, addToCart, updateProductQty, downloadGenericProductList } from "../api/apiRequest";
 import { getLoggedInUser } from "../utils/authUtils";
 
+const firstValidId = (...values) =>
+  values.find((value) => value !== undefined && value !== null && String(value).trim() !== "");
+
+const idFromPrefixedValue = (value, prefix) => {
+  const text = String(value ?? "");
+  return text.startsWith(prefix) ? text.slice(prefix.length) : undefined;
+};
 
 export const GenericProductsModal = ({ isOpen, onClose, genericLink }) => {
   const [quantities, setQuantities] = useState({});
@@ -24,15 +31,45 @@ export const GenericProductsModal = ({ isOpen, onClose, genericLink }) => {
 
   const categories = useMemo(() => {
     if (Array.isArray(genericLink?.categories) && genericLink.categories.length > 0) {
-      return genericLink.categories.map((category, index) => ({
-        id: category?.id ?? `category-${index}`,
-        name: category?.name || "Products",
-        products: Array.isArray(category?.products) ? category.products : [],
-        product_count: category?.product_count,
-        master_product_id: category?.master_product_id ?? genericLink?.master_product_id,
-        generic_masters_id: category?.generic_masters_id,
-        generic_links_id: category?.generic_links_id,
-      }));
+      return genericLink.categories.map((category, index) => {
+        const categoryId = category?.id ?? `category-${index}`;
+
+        return {
+          id: categoryId,
+          name: category?.name || "Products",
+          products: Array.isArray(category?.products) ? category.products : [],
+          product_count: category?.product_count,
+          downloadable: category?.downloadable ?? genericLink?.downloadable ?? true,
+          download_type:
+            category?.download_type ?? genericLink?.download_type ?? "generic",
+          master_product_id: firstValidId(
+            category?.master_product_id,
+            category?.product_id,
+            category?.master_product?.id,
+            genericLink?.master_product_id,
+            genericLink?.product_id
+          ),
+          generic_masters_id: firstValidId(
+            category?.generic_masters_id,
+            category?.generic_master_id,
+            category?.generic_master?.id,
+            genericLink?.generic_masters_id,
+            genericLink?.generic_master_id,
+            genericLink?.generic_master?.id
+          ),
+          generic_links_id: firstValidId(
+            category?.generic_links_id,
+            category?.generic_link_id,
+            category?.generic_master_link_id,
+            category?.generic_link?.id,
+            idFromPrefixedValue(categoryId, "generic-link-"),
+            genericLink?.generic_links_id,
+            genericLink?.generic_link_id,
+            genericLink?.generic_master_link_id,
+            genericLink?.generic_link?.id
+          ),
+        };
+      });
     }
 
     if (!genericLink) return [];
@@ -43,9 +80,25 @@ export const GenericProductsModal = ({ isOpen, onClose, genericLink }) => {
         name: genericLink?.name || "Products",
         products: Array.isArray(genericLink?.products) ? genericLink.products : [],
         product_count: genericLink?.product_count,
-        master_product_id: genericLink?.master_product_id,
-        generic_masters_id: genericLink?.generic_masters_id,
-        generic_links_id: genericLink?.generic_links_id ?? genericLink?.id,
+        downloadable: genericLink?.downloadable ?? true,
+        download_type: genericLink?.download_type ?? "generic",
+        master_product_id: firstValidId(
+          genericLink?.master_product_id,
+          genericLink?.product_id,
+          genericLink?.master_product?.id
+        ),
+        generic_masters_id: firstValidId(
+          genericLink?.generic_masters_id,
+          genericLink?.generic_master_id,
+          genericLink?.generic_master?.id
+        ),
+        generic_links_id: firstValidId(
+          genericLink?.generic_links_id,
+          genericLink?.generic_link_id,
+          genericLink?.generic_master_link_id,
+          genericLink?.generic_link?.id,
+          genericLink?.id
+        ),
       },
     ];
   }, [genericLink]);
@@ -62,9 +115,7 @@ export const GenericProductsModal = ({ isOpen, onClose, genericLink }) => {
   const products = activeCategory?.products || [];
   const isDownloadingActiveCategory = downloadingCategoryId === activeCategory?.id;
   const canDownloadActiveCategory = Boolean(
-    activeCategory?.master_product_id &&
-      activeCategory?.generic_masters_id &&
-      activeCategory?.generic_links_id
+    products.length > 0 && activeCategory?.downloadable
   );
   const getProductQty = (item) => Number(quantities[item?.id] || item?.min_qty || 1);
   const getItemPrice = (item) => Number(item?.discount_price || item?.price || item?.mrp || 0);
@@ -106,6 +157,7 @@ export const GenericProductsModal = ({ isOpen, onClose, genericLink }) => {
         generic_masters_id: activeCategory.generic_masters_id,
         generic_links_id: activeCategory.generic_links_id,
         user_id: user?.id,
+        download_type: activeCategory.download_type,
       });
 
       if (!response?.pdf_link) {
@@ -831,9 +883,20 @@ const ProductModal = ({ product, isOpen, onClose }) => {
           link?.product_count ?? (Array.isArray(link?.products) ? link.products.length : 0)
         ),
         products: Array.isArray(link?.products) ? link.products : [],
+        downloadable: true,
+        download_type: "generic",
         master_product_id: productDetails?.id,
-        generic_masters_id: master?.id,
-        generic_links_id: link?.id,
+        generic_masters_id: firstValidId(
+          link?.generic_masters_id,
+          link?.generic_master_id,
+          master?.id
+        ),
+        generic_links_id: firstValidId(
+          link?.generic_links_id,
+          link?.generic_link_id,
+          link?.generic_master_link_id,
+          link?.id
+        ),
       }))
     )
     : masterProducts.map((master) => ({
@@ -843,6 +906,20 @@ const ProductModal = ({ product, isOpen, onClose }) => {
           ? master.master_products.length
           : 0,
         products: Array.isArray(master?.master_products) ? master.master_products : [],
+        downloadable: true,
+        download_type: "master",
+        master_product_id: productDetails?.id,
+        generic_masters_id: firstValidId(
+          master?.generic_masters_id,
+          master?.generic_master_id,
+          master?.id
+        ),
+        generic_links_id: firstValidId(
+          master?.generic_links_id,
+          master?.generic_link_id,
+          master?.generic_master_link_id,
+          master?.generic_links?.[0]?.id
+        ),
       }));
   const hasCompatibleCategories = compatibleCategories.length > 0;
   const openCompatibleProductsModal = () => {
