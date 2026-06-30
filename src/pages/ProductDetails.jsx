@@ -10,6 +10,7 @@ import warrantyIcon from "../assets/icons/warranty.jpeg";
 import no_image from "../assets/images/no-image.png";
 import mazingLogoSort from "../assets/images/MazingLogoSort.jpg";
 import CartIcon from "../assets/icons/CartIcon.svg";
+import promo3 from "../assets/images/promo3.jpg";
 
 import { getLoggedInUser } from "../utils/authUtils";
 import {
@@ -22,6 +23,8 @@ import ProductModal, { GenericProductsModal as ProductCompatibleProductsModal } 
 
 import ProductDetailsBottom from "../components/ProductDetailsBottom";
 import TopSellingProducts from "../components/TopSellingProducts";
+import RelatedProductsSlider from "../components/RelatedProductsSlider";
+import RecentlyViewedSlider from "../components/RecentlyViewedSlider";
 
 const GenericProductsModal = ({ isOpen, onClose, genericLink }) => {
   const [quantities, setQuantities] = useState({});
@@ -485,6 +488,25 @@ const ProductDetails = () => {
           master?.generic_links?.[0]?.id,
       }));
   const hasCompatibleCategories = compatibleCategories.length > 0;
+  const relatedProducts = useMemo(() => {
+    const links = genericMasters.flatMap((master) =>
+      Array.isArray(master?.generic_links) ? master.generic_links : []
+    );
+    const items =
+      links.length > 0
+        ? links.flatMap((link) => (Array.isArray(link?.products) ? link.products : []))
+        : masterProducts.flatMap((master) =>
+            Array.isArray(master?.master_products) ? master.master_products : []
+          );
+
+    return Array.from(
+      new Map(
+        items
+          .filter((item) => item?.id)
+          .map((item) => [String(item.id), item])
+      ).values()
+    );
+  }, [genericMasters, masterProducts]);
 
   const openCompatibleProductsModal = () => {
     setSelectedGenericLink({
@@ -785,8 +807,8 @@ const ProductDetails = () => {
                       <FiSettings />
                       <span>
                         {hasGenericMasters
-                          ? "View Compatible Spare Parts"
-                          : "View Compatible Master Products"}
+                          ? "Buy Related Products"
+                          : "Buy Related Products"}
                       </span>
                     </button>
                   )}
@@ -858,8 +880,25 @@ const ProductDetails = () => {
           </div>
 
           <div className="product-details-page product-details-live-bottom">
-            <TopSellingProducts />
+            <div className="product-details-sidebar-column">
+              <TopSellingProducts />
 
+              <div className="promo-card style3">
+                <img src={promo3} alt="Promo 3" />
+                <div className="promo-content">
+                  <h3>
+                    Power Meets Precision Get the Job Done with HiKOKI
+                  </h3>
+                  <p>
+                    Take control of your projects with the HiKOKI DV13VSS
+                    Impact Drill – your reliable partner for drilling
+                    through wood, steel, and concrete with ease.
+                  </p>
+                  <button type="button">Shop Now</button>
+                </div>
+              </div>
+            </div>
+            
             <section className="product-main product-details-tab-panel">
               <div className="tabs-row">
                 <div className="tabs product-detail-tabs">
@@ -1020,6 +1059,20 @@ const ProductDetails = () => {
                     )}
                   </div>
                 </div>
+              )}
+
+              {relatedProducts.length > 0 && (
+                <div className="detalisSliderPart product-related-products">
+                  <RelatedProductsSlider
+                    products={relatedProducts}
+                    title="Related Products"
+                    enableAddToCart
+                  />
+                </div>
+              )}
+
+              {user_id != null && (
+                <RecentlyViewedSlider />
               )}
             </section>
           </div>

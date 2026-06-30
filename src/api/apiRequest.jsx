@@ -1231,6 +1231,22 @@ export const productDetails = async (slug) => {
   return normalizeProductDetailsVariantProducts(data);
 };
 
+export const getRecentlyViewedProducts = async () => {
+  const header = getHeader();
+  const response = await fetch(
+    `${API_BASE_URL}product/recently-viewed-products`,
+    {
+      method: "GET",
+      headers: {
+        ...(header?.headers || {}),
+        "Content-Type": "application/json",
+      },
+    }
+  );
+
+  return response;
+};
+
 export const getVariationProductBySelectedValues = async ({
   selected_values,
   variation_parent_part_no,

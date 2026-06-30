@@ -14,12 +14,17 @@ import product7 from "../assets/images/product.jpg";
 import fastDeliveryIcon from "../assets/icons/fast-delivery.svg";
 import HeartIcon from "../assets/icons/HeartIcon.svg";
 import CartIcon from "../assets/icons/CartIcon.svg";
+import no_image from "../assets/images/no-image.png";
+import ProductModal from "./ProductModal.jsx";
+import RelatedProductsSlider from "./RelatedProductsSlider.jsx";
+import { getRecentlyViewedProducts } from "../api/apiRequest";
+import { getLoggedInUser } from "../utils/authUtils";
 
 import { FaStar, FaRegStar, FaStarHalfAlt } from "react-icons/fa";
 import { FiChevronRight } from "react-icons/fi";
 import { Link } from "react-router-dom";
 
-const products = [
+const demoProducts = [
   {
     id: 1,
     name: "Drill Machine",
@@ -181,12 +186,45 @@ const renderRating = (rating) => {
 };
 
 const RecentlyViewedSlider = () => {
+  const [products, setProducts] = useState([]);
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [loading, setLoading] = useState(true);
   const sliderRef = useRef(null); // Properly define the ref at the component level
   const [sliderState, setSliderState] = useState({
     currentSlide: 0,
-    slideCount: products.length,
+    slideCount: 0,
     isMobile: false,
   });
+
+  useEffect(() => {
+    let ignore = false;
+
+    const loadRecentlyViewedProducts = async () => {
+      if (!getLoggedInUser()?.id) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const response = await getRecentlyViewedProducts();
+        const payload = await response.json();
+        const items = Array.isArray(payload?.data) ? payload.data : [];
+
+        if (!ignore) setProducts(items);
+      } catch (error) {
+        console.error("Recently viewed products fetch error:", error);
+        if (!ignore) setProducts([]);
+      } finally {
+        if (!ignore) setLoading(false);
+      }
+    };
+
+    loadRecentlyViewedProducts();
+
+    return () => {
+      ignore = true;
+    };
+  }, []);
 
   useEffect(() => {
     const handleResize = () => {
@@ -200,6 +238,21 @@ const RecentlyViewedSlider = () => {
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
+
+  useEffect(() => {
+    setSliderState((prev) => ({
+      ...prev,
+      currentSlide: 0,
+      slideCount: products.length,
+    }));
+    sliderRef.current?.slickGoTo(0);
+  }, [products.length]);
+
+  const openProductModal = (product) => {
+    setSelectedProduct(product?.rawProduct || product);
+  };
+
+  const closeProductModal = () => setSelectedProduct(null);
 
   const settings = {
     dots: false,
@@ -257,8 +310,9 @@ const RecentlyViewedSlider = () => {
             loading="lazy"
             onError={(e) => {
               e.target.onerror = null;
-              e.target.src = "/placeholder-product.jpg";
+              e.target.src = no_image;
             }}
+            onClick={() => openProductModal(product)}
           />
         ) : (
           <div className="image-placeholder">
@@ -269,7 +323,12 @@ const RecentlyViewedSlider = () => {
           <button className="wishlist-btn" aria-label="Add to wishlist">
             <img src={HeartIcon} alt="HeartIcon" />
           </button>
-          <button className="cart-btn" aria-label="Add to cart">
+          <button
+            className="cart-btn"
+            aria-label="Add to cart"
+            type="button"
+            onClick={() => openProductModal(product)}
+          >
             <img src={CartIcon} alt="HeartIcon" />
           </button>
         </div>
@@ -277,88 +336,17 @@ const RecentlyViewedSlider = () => {
     );
   };
 
+  if (loading || products.length === 0) {
+    return null;
+  }
+
   return (
-    <div className="power-tools-section">
-      <div className="power-tools-section-inner">
-        <div className="section-header">
-          <div className="section-headerLft">
-            <h2>Recently Viewed</h2>
-          </div>
-
-          <div className="section-headerRgt">
-            <div className="arrow-controls">
-              <button
-                className={`custom-arrow prev-arrow ${
-                  isPrevDisabled ? "disabled" : ""
-                }`}
-                onClick={() => !isPrevDisabled && sliderRef.current.slickPrev()}
-                disabled={isPrevDisabled}
-                aria-label="Previous"
-              >
-                ❮
-              </button>
-              <button
-                className={`custom-arrow next-arrow ${
-                  isNextDisabled ? "disabled" : ""
-                }`}
-                onClick={() => !isNextDisabled && sliderRef.current.slickNext()}
-                disabled={isNextDisabled}
-                aria-label="Next"
-              >
-                ❯
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <Slider ref={sliderRef} {...settings}>
-          {products.map((product) => (
-            <div key={product.id} className="product-slide">
-              <div className="product-card">
-                {renderProductImage(product)}
-                <div className="product-info">
-                  <h3>{product.name}</h3>
-                  <div className="prices">
-                    <span className="old">{product.oldPrice}</span>
-                    <span className="new">{product.newPrice}</span>
-                  </div>
-
-                  <div className="ratingGrp">
-                    <div className="ratingGrpLft">
-                      <div className="discount">OFF {product.discount}</div>
-                      <div className="rating">
-                        {renderRating(product.rating)}
-                        <span className="rating-count">
-                          ({product.totalRatings})
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="delivery">
-                      <img
-                        src={fastDeliveryIcon}
-                        alt="Fast Delivery"
-                        loading="lazy"
-                        onError={(e) => {
-                          e.target.style.display = "none";
-                        }}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="progress-bar">
-                    <div
-                      className="progress"
-                      style={{ width: `${Math.random() * 100}%` }}
-                    ></div>
-                  </div>
-                  <div className="sold">Sold: {product.sold}</div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </Slider>
-      </div>
+    <div className="detalisSliderPart product-recently-viewed-products">
+      <RelatedProductsSlider
+        products={products}
+        title="Recently Viewed"
+        enableAddToCart
+      />
     </div>
   );
 };
