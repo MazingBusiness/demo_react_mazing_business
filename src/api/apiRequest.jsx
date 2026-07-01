@@ -1247,6 +1247,25 @@ export const getRecentlyViewedProducts = async () => {
   return response;
 };
 
+export const getMostOrderCategoryProducts = async (categoryId) => {
+  const header = getHeader();
+  const queryParams = new URLSearchParams({
+    category_id: String(categoryId),
+  });
+  const response = await fetch(
+    `${API_BASE_URL}product/most-order-category-products?${queryParams.toString()}`,
+    {
+      method: "GET",
+      headers: {
+        ...(header?.headers || {}),
+        "Content-Type": "application/json",
+      },
+    }
+  );
+
+  return response;
+};
+
 export const getVariationProductBySelectedValues = async ({
   selected_values,
   variation_parent_part_no,

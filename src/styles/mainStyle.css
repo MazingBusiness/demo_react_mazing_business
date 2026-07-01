@@ -9197,7 +9197,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 .product-details-page {
   display: flex;
   gap: 40px;
-  padding: 0 0px 80px;
+  padding: 0 0px 10px;
   width: 100%;
 }
 
@@ -9781,7 +9781,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 
 .detalisSliderPart .power-tools-section {
-  padding: 35px 0px 0;
+  padding: 10px 0px 0;
 }
 
 .top-products .promo-card {

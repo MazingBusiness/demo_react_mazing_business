@@ -25,6 +25,7 @@ import ProductDetailsBottom from "../components/ProductDetailsBottom";
 import TopSellingProducts from "../components/TopSellingProducts";
 import RelatedProductsSlider from "../components/RelatedProductsSlider";
 import RecentlyViewedSlider from "../components/RecentlyViewedSlider";
+import SimilerCategoryProducts from "../components/SimilerCategoryProducts";
 
 const GenericProductsModal = ({ isOpen, onClose, genericLink }) => {
   const [quantities, setQuantities] = useState({});
@@ -894,7 +895,12 @@ const ProductDetails = () => {
                     Impact Drill – your reliable partner for drilling
                     through wood, steel, and concrete with ease.
                   </p>
-                  <button type="button">Shop Now</button>
+                  <button
+                    type="button"
+                    onClick={() => navigate("/quick-order")}
+                  >
+                    Shop Now
+                  </button>
                 </div>
               </div>
             </div>
@@ -1072,7 +1078,12 @@ const ProductDetails = () => {
               )}
 
               {user_id != null && (
-                <RecentlyViewedSlider />
+                <>
+                  <RecentlyViewedSlider />
+                  <SimilerCategoryProducts
+                    categoryId={product?.category_id || product?.category?.id}
+                  />
+                </>
               )}
             </section>
           </div>
