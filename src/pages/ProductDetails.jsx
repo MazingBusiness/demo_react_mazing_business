@@ -879,8 +879,18 @@ const ProductDetails = () => {
               )}
             </div>
           </div>
-
+          {Array.isArray(allVarientProducts) && allVarientProducts.length > 0 && (
+              <div className="product-details-bottom">
+                <ProductDetailsBottom
+                  product={product}
+                  productVariations={productVariations}
+                  selectedVariationValues={selectedVariationValues}
+                  allVarientProducts={allVarientProducts}
+                />
+              </div>
+            )}
           <div className="product-details-page product-details-live-bottom">
+            
             <div className="product-details-sidebar-column">
               <TopSellingProducts />
 
@@ -1087,18 +1097,6 @@ const ProductDetails = () => {
               )}
             </section>
           </div>
-
-          {Array.isArray(allVarientProducts) && allVarientProducts.length > 0 && (
-            <div className="product-details-bottom">
-              <ProductDetailsBottom
-                product={product}
-                productVariations={productVariations}
-                selectedVariationValues={selectedVariationValues}
-                allVarientProducts={allVarientProducts}
-              />
-            </div>
-          )}
-
         </div>
       </div>
 

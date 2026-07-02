@@ -25,6 +25,7 @@ import { getLoggedInUser } from "../utils/authUtils";
  */
 
 const productsPerPage = 16;
+const minimumSearchLength = 3;
 
 // ✅ Change this if your product detail route differs
 const PRODUCT_DETAILS_PATH = (p) => {
@@ -70,6 +71,7 @@ const SearchModal = ({
 
   // debounce timer
   const debounceRef = useRef(null);
+  const requestSequenceRef = useRef(0);
 
   const price_sort = useMemo(() => "popularity", []); // keep consistent
   const modalStyle = useMemo(() => {
@@ -120,9 +122,9 @@ const SearchModal = ({
   };
 
   const fetchProducts = async (search, reqPage = 1) => {
-    // prevent empty search spam
+    // Prevent API calls until the user has typed at least 4 characters.
     const q = String(search || "").trim();
-    if (!q) {
+    if (q.length < minimumSearchLength) {
       setItems([]);
       setCategorySuggestions([]);
       setBrandSuggestions([]);
@@ -133,11 +135,11 @@ const SearchModal = ({
       return;
     }
 
+    const requestId = ++requestSequenceRef.current;
+
     try {
       setApiError("");
       setLoading(true);
-
-      const q = String(searchText || "").trim();
 
       const apiRes = await getBetaQuickOrderProduct(
         filters.cat_groups,
@@ -155,6 +157,10 @@ const SearchModal = ({
       );
 
       const responseData = await apiRes.json();
+
+      if (requestId !== requestSequenceRef.current) {
+        return;
+      }
 
       if (!responseData?.res) {
         setApiError(responseData?.message || "Something went wrong.");
@@ -186,25 +192,47 @@ const SearchModal = ({
       const computedTotalPages = Math.ceil(total / productsPerPage) || 1;
       setHasMore(reqPage < computedTotalPages);
     } catch (e) {
+      if (requestId !== requestSequenceRef.current) {
+        return;
+      }
+
       console.error(e);
       setApiError("Failed to load products. Please try again.");
     } finally {
-      setLoading(false);
+      if (requestId === requestSequenceRef.current) {
+        setLoading(false);
+      }
     }
   };
 
   // ✅ Debounced API call on typing
   useEffect(() => {
+    const q = String(searchText || "").trim();
+    requestSequenceRef.current += 1;
+
     // reset pagination for new query
     setPage(1);
     setHasMore(true);
-    setDebouncing(String(searchText || "").trim() !== "");
 
     if (debounceRef.current) clearTimeout(debounceRef.current);
 
+    if (q.length < minimumSearchLength) {
+      setItems([]);
+      setCategorySuggestions([]);
+      setBrandSuggestions([]);
+      setTotalRecord(0);
+      setHasMore(false);
+      setApiError("");
+      setDebouncing(false);
+      setLoading(false);
+      return;
+    }
+
+    setDebouncing(true);
+
     debounceRef.current = setTimeout(() => {
       setDebouncing(false);
-      fetchProducts(searchText, 1);
+      fetchProducts(q, 1);
     }, 350);
 
     return () => {
@@ -225,7 +253,13 @@ const SearchModal = ({
 
   // ✅ Load next page when `page` increments (but not for page=1 which is handled above)
   useEffect(() => {
-    if (page <= 1) return;
+    if (
+      page <= 1 ||
+      String(searchText || "").trim().length < minimumSearchLength
+    ) {
+      return;
+    }
+
     fetchProducts(searchText, page);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page]);
@@ -349,7 +383,11 @@ const SearchModal = ({
         {/* Results */}
         {String(searchText || "").trim() !== "" && (
           <div className="results-wrapper">
-            {apiError ? (
+            {String(searchText || "").trim().length < minimumSearchLength ? (
+              <div className="no-results">
+                Type at least {minimumSearchLength} characters to search
+              </div>
+            ) : apiError ? (
               <div className="no-results">{apiError}</div>
             ) : (debouncing || loading) && page === 1 ? (
               <div className="search-loading" role="status" aria-live="polite">
