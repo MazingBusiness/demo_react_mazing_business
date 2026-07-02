@@ -560,6 +560,9 @@
   .ba-modal-wpap {
     flex-direction: column;
   }
+  .product-review-modal {
+    min-height: 100%;
+  }
   .ba-modal-Lft {
     width: 100%;
     background: #fff;

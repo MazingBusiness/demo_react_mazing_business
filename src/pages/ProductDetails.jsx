@@ -2,7 +2,8 @@ import React, { useEffect, useMemo, useState } from "react";
 import { FaStar, FaStarHalfAlt, FaRegStar } from "react-icons/fa";
 import { GoDotFill } from "react-icons/go";
 import { FiSettings, FiX } from "react-icons/fi";
-import { useParams, useNavigate } from "react-router-dom";
+import { Link, useParams, useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 
 import MainLayout from "../layouts/MainLayout";
 import fastDeliveryIcon from "../assets/icons/fast-delivery.svg";
@@ -10,11 +11,14 @@ import warrantyIcon from "../assets/icons/warranty.jpeg";
 import no_image from "../assets/images/no-image.png";
 import mazingLogoSort from "../assets/images/MazingLogoSort.jpg";
 import CartIcon from "../assets/icons/CartIcon.svg";
-import promo3 from "../assets/images/promo3.jpg";
+// import promo3 from "../assets/images/promo3.jpg";
+import promo3 from "../assets/images/PromoImage.jpeg";
+import reviewSuccessImage from "../assets/images/BigImage.svg";
 
 import { getLoggedInUser } from "../utils/authUtils";
 import {
   addToCart,
+  addProductReview,
   getGenericProducts,
   getMasterProducts,
   productDetails,
@@ -26,6 +30,7 @@ import TopSellingProducts from "../components/TopSellingProducts";
 import RelatedProductsSlider from "../components/RelatedProductsSlider";
 import RecentlyViewedSlider from "../components/RecentlyViewedSlider";
 import SimilerCategoryProducts from "../components/SimilerCategoryProducts";
+import Modal from "../components/Modal";
 
 const GenericProductsModal = ({ isOpen, onClose, genericLink }) => {
   const [quantities, setQuantities] = useState({});
@@ -263,6 +268,12 @@ const ProductDetails = () => {
   const [loadingMasterProducts, setLoadingMasterProducts] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [useMainBulkDiscount, setUseMainBulkDiscount] = useState(false);
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [reviewForm, setReviewForm] = useState({
+    rating: 0,
+    comment: "",
+  });
+  const [reviewSubmitting, setReviewSubmitting] = useState(false);
 
   const [genericModalOpen, setGenericModalOpen] = useState(false);
   const [selectedGenericLink, setSelectedGenericLink] = useState(null);
@@ -524,6 +535,98 @@ const ProductDetails = () => {
   const closeGenericProductsModal = () => {
     setSelectedGenericLink(null);
     setGenericModalOpen(false);
+  };
+
+  const openReviewModal = () => {
+    if (!user_id) {
+      navigate("/login");
+      return;
+    }
+
+    setShowReviewModal(true);
+  };
+
+  const closeReviewModal = () => {
+    if (reviewSubmitting) return;
+    setShowReviewModal(false);
+  };
+
+  const refreshProductReviews = async () => {
+    try {
+      const cleanSlug = String(slug || "").trim();
+      if (!cleanSlug) return false;
+
+      const payload = await productDetails(cleanSlug);
+      const refreshedProduct = Array.isArray(payload?.data)
+        ? payload.data[0]
+        : null;
+
+      if (!refreshedProduct || !Array.isArray(refreshedProduct.reviews)) {
+        return false;
+      }
+
+      setProduct((currentProduct) => ({
+        ...currentProduct,
+        reviews: refreshedProduct.reviews,
+      }));
+
+      return true;
+    } catch (error) {
+      console.error("Unable to refresh product reviews:", error);
+      return false;
+    }
+  };
+
+  const handleReviewSubmit = async (event) => {
+    event.preventDefault();
+
+    const comment = reviewForm.comment.trim();
+
+    if (!product?.id || reviewForm.rating < 1 || !comment) {
+      toast.error("Please select a rating and enter your review.");
+      return;
+    }
+
+    setReviewSubmitting(true);
+
+    try {
+      const response = await addProductReview({
+        product_id: product.id,
+        rating: reviewForm.rating,
+        comment,
+      });
+      const submittedReview = {
+        ...(response?.data || {}),
+        id: response?.data?.id || `review-${Date.now()}`,
+        rating: reviewForm.rating,
+        comment,
+        company_name:
+          response?.data?.company_name || user?.company_name || "Customer",
+        created_at: response?.data?.created_at || new Date().toISOString(),
+      };
+
+      setReviewForm({ rating: 0, comment: "" });
+      setShowReviewModal(false);
+      toast.success(response?.msg || "Review submitted successfully.");
+
+      const reviewsRefreshed = await refreshProductReviews();
+
+      if (!reviewsRefreshed) {
+        setProduct((currentProduct) => ({
+          ...currentProduct,
+          reviews: [
+            submittedReview,
+            ...(Array.isArray(currentProduct?.reviews)
+              ? currentProduct.reviews
+              : []),
+          ],
+        }));
+      }
+    } catch (error) {
+      toast.error(error?.message || "Unable to submit your review.");
+    } finally {
+      setReviewSubmitting(false);
+    }
   };
 
   const fetchProduct = async () => {
@@ -895,8 +998,17 @@ const ProductDetails = () => {
               <TopSellingProducts />
 
               <div className="promo-card style3">
-                <img src={promo3} alt="Promo 3" />
-                <div className="promo-content">
+                <Link
+                  to="/product-details/opel-select-5235---1050nm-cordless-impact-wrench--21v-"
+                  className="promo-card-link"
+                  aria-label="View Opel Select cordless impact wrench"
+                >
+                  <img
+                    src={promo3}
+                    alt="Opel Select cordless impact wrench"
+                  />
+                </Link>
+                {/* <div className="promo-content">
                   <h3>
                     Power Meets Precision Get the Job Done with HiKOKI
                   </h3>
@@ -911,7 +1023,7 @@ const ProductDetails = () => {
                   >
                     Shop Now
                   </button>
-                </div>
+                </div> */}
               </div>
             </div>
             
@@ -1033,6 +1145,20 @@ const ProductDetails = () => {
                           </div>
                         ))}
                       </div>
+
+                      <h5>Write your Review</h5>
+                      <p>
+                        Share your feedback and help create a better shopping
+                        experience for everyone.
+                      </p>
+
+                      <button
+                        type="button"
+                        className="review-btn"
+                        onClick={openReviewModal}
+                      >
+                        Add a Review
+                      </button>
                     </div>
                   </div>
 
@@ -1124,6 +1250,92 @@ const ProductDetails = () => {
         onClose={closeGenericProductsModal}
         genericLink={selectedGenericLink}
       />
+
+      <Modal
+        isOpen={showReviewModal}
+        onClose={closeReviewModal}
+        showFooter={false}
+        size="xlg"
+      >
+        <div className="ba-modal-wpap product-review-modal">
+          <div className="ba-modal-Lft">
+            <form className="ba-modal-form" onSubmit={handleReviewSubmit}>
+              <h3 className="modal-title">Submit Your Review</h3>
+
+              <div className="manageProfileFrmBoxInner">
+                <div className="manage-profile-form">
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label>
+                        Your Review <span>*</span>
+                      </label>
+                      <textarea
+                        name="comment"
+                        value={reviewForm.comment}
+                        onChange={(event) => {
+                          setReviewForm((current) => ({
+                            ...current,
+                            comment: event.target.value,
+                          }));
+                        }}
+                        placeholder="Write your review"
+                        maxLength={1000}
+                        required
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label>
+                        Add Your Rating <span>*</span>
+                      </label>
+                      <div className="rating-input">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <button
+                            key={star}
+                            type="button"
+                            className="review-star-button"
+                            onClick={() => {
+                              setReviewForm((current) => ({
+                                ...current,
+                                rating: star,
+                              }));
+                            }}
+                            aria-label={`Rate ${star} out of 5`}
+                          >
+                            <FaStar
+                              size={24}
+                              color={
+                                star <= reviewForm.rating ? "#FFD700" : "#ccc"
+                              }
+                            />
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="form-row">
+                    <button
+                      type="submit"
+                      className="form-submit"
+                      disabled={reviewSubmitting}
+                    >
+                      {reviewSubmitting ? "Submitting..." : "Submit Review"}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </form>
+          </div>
+
+          <div className="ba-modal-Rgt">
+            <h5>
+              Thank you for taking the time to share your valuable review.
+            </h5>
+            <img src={reviewSuccessImage} alt="" aria-hidden="true" />
+          </div>
+        </div>
+      </Modal>
 
     </MainLayout>
   );

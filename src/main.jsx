@@ -24,7 +24,10 @@ import "./styles/responsive.css";
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
   <React.StrictMode>
-      <Toaster position="top-right" />
+      <Toaster
+        position="top-right"
+        containerStyle={{ zIndex: 1000000 }}
+      />
       <AppRoutes />
   </React.StrictMode>
 );

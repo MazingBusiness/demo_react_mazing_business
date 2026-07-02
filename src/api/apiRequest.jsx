@@ -553,6 +553,33 @@ export const addToCart = async ({ product_id, quantity, type }) => {
   return data;
 };
 
+export const addProductReview = async ({ product_id, rating, comment }) => {
+  const header = getHeader();
+  if (!header) throw new Error("Authorization token missing");
+
+  const response = await fetch(`${API_BASE_URL}product/add-review`, {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+      ...(header.headers || {}),
+    },
+    body: JSON.stringify({
+      product_id,
+      rating,
+      comment,
+    }),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok || data?.res === false) {
+    throw new Error(data?.msg || "Review submission failed");
+  }
+
+  return data;
+};
+
 // Get All Category Group
 export const getAllCategoryGroups = async () => {
   const url = `${API_BASE_URL}product/cetrgory-groups`;
