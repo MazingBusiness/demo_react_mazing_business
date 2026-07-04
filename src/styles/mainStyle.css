@@ -4319,6 +4319,38 @@ a.all-link svg {
   color: #004d84;
 }
 
+.statement-breadcrumb-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.statement-breadcrumb-row .breadcrumb {
+  margin-bottom: 0;
+}
+
+.average-payment-days {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 14px;
+  border-radius: 22px;
+  font-family: "Poppins", sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.average-payment-days.within-credit-days {
+  background-color: #ddffdd;
+  color: #009000;
+}
+
+.average-payment-days.outside-credit-days {
+  background-color: #f5bfbf;
+  color: #d70000;
+}
+
 .invoice-btn {
   border: none;
   outline: none;
@@ -8754,6 +8786,17 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   font-weight: 500;
   font-family: "Poppins", sans-serif;
   margin-bottom: 15px;
+}
+
+.desc-section .description-content {
+  color: #000000;
+  font-family: "Poppins", sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.desc-section .description-content > :last-child {
+  margin-bottom: 0;
 }
 
 .ProductDetailsBottomwrapper {

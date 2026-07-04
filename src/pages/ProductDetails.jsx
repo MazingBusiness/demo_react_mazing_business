@@ -32,6 +32,43 @@ import RecentlyViewedSlider from "../components/RecentlyViewedSlider";
 import SimilerCategoryProducts from "../components/SimilerCategoryProducts";
 import Modal from "../components/Modal";
 
+const allowedDescriptionTags = new Set([
+  "P",
+  "BR",
+  "STRONG",
+  "B",
+  "EM",
+  "I",
+  "U",
+  "UL",
+  "OL",
+  "LI",
+  "BLOCKQUOTE",
+]);
+
+const sanitizeDescriptionHtml = (html) => {
+  if (!html || typeof DOMParser === "undefined") return "";
+
+  const document = new DOMParser().parseFromString(String(html), "text/html");
+
+  document.body
+    .querySelectorAll("script, style, iframe, object, embed, svg, math")
+    .forEach((element) => element.remove());
+
+  document.body.querySelectorAll("*").forEach((element) => {
+    if (!allowedDescriptionTags.has(element.tagName)) {
+      element.replaceWith(...element.childNodes);
+      return;
+    }
+
+    Array.from(element.attributes).forEach((attribute) => {
+      element.removeAttribute(attribute.name);
+    });
+  });
+
+  return document.body.innerHTML;
+};
+
 const GenericProductsModal = ({ isOpen, onClose, genericLink }) => {
   const [quantities, setQuantities] = useState({});
   const [bulkDiscountApplied, setBulkDiscountApplied] = useState({});
@@ -401,6 +438,10 @@ const ProductDetails = () => {
 
   const productName = product?.name || "Product";
   const descriptionText = product?.description || "";
+  const descriptionHtml = useMemo(
+    () => sanitizeDescriptionHtml(descriptionText),
+    [descriptionText]
+  );
 
   const mainImage =
     product?.thumb_img?.file_name || product?.images?.[0]?.file_name || "";
@@ -1098,10 +1139,13 @@ const ProductDetails = () => {
                 <div className="desc-section">
                   {loading ? (
                     <div className="product-details-loading-sm">Loading...</div>
+                  ) : descriptionHtml ? (
+                    <div
+                      className="description-content"
+                      dangerouslySetInnerHTML={{ __html: descriptionHtml }}
+                    />
                   ) : (
-                    <p>
-                      {descriptionText || "No description available."}
-                    </p>
+                    <p>No description available.</p>
                   )}
                 </div>
               ) : (

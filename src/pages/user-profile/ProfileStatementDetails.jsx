@@ -46,6 +46,8 @@ const ProfileStatementDetails = () => {
     clossingCrBalance: 0,
     grandTotalDrBalance: 0,
     grandTotalCrBalance: 0,
+    avgPaymentDays: null,
+    creditDays: null,
   });
 
   const fromInputRef = useRef(null);
@@ -85,6 +87,8 @@ const ProfileStatementDetails = () => {
         clossingCrBalance: json.clossingCrBalance ?? 0,
         grandTotalDrBalance: json.grandTotalDrBalance ?? 0,
         grandTotalCrBalance: json.grandTotalCrBalance ?? 0,
+        avgPaymentDays: json.avgPaymentDays ?? null,
+        creditDays: json.userDetails?.credit_days ?? null,
       });
     } catch (e) {
       setError(e?.message || "Something went wrong.");
@@ -125,6 +129,8 @@ const ProfileStatementDetails = () => {
         clossingCrBalance: json.clossingCrBalance ?? 0,
         grandTotalDrBalance: json.grandTotalDrBalance ?? 0,
         grandTotalCrBalance: json.grandTotalCrBalance ?? 0,
+        avgPaymentDays: json.avgPaymentDays ?? null,
+        creditDays: json.userDetails?.credit_days ?? null,
       });
     } catch (e) {
       setError(e?.message || "Something went wrong.");
@@ -278,17 +284,37 @@ const ProfileStatementDetails = () => {
     return { totalDr, totalCr };
   }, [rows]);
 
+  const averagePaymentDays = Number(summary.avgPaymentDays);
+  const creditDays = Number(summary.creditDays);
+  const showAveragePaymentDays =
+    summary.avgPaymentDays !== null &&
+    summary.creditDays !== null &&
+    Number.isFinite(averagePaymentDays) &&
+    Number.isFinite(creditDays);
+  const isWithinCreditDays = creditDays > averagePaymentDays;
+
   return (
     <UserProfileLayout>
       <div className="order-details">
         <div className="orderdetailsHr">
           <div className="orderdetailsHrLft">
-            <div className="breadcrumb">
-              <Link to="/statement">
-                <IoIosArrowBack />
-                My Statement
-              </Link>
-              / Party Code: <span>{partyCode || "-"}</span>
+            <div className="statement-breadcrumb-row">
+              <div className="breadcrumb">
+                <Link to="/statement">
+                  <IoIosArrowBack />
+                  My Statement
+                </Link>
+                / Party Code: <span>{partyCode || "-"}</span>
+              </div>
+              {showAveragePaymentDays && (
+                <span
+                  className={`average-payment-days ${
+                    isWithinCreditDays ? "within-credit-days" : "outside-credit-days"
+                  }`}
+                >
+                  Average Payment Clearance Time: {summary.avgPaymentDays} Days
+                </span>
+              )}
             </div>
           </div>
           <div className="orderdetailsHrRgt">
