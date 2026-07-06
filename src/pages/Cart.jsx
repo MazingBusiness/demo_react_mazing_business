@@ -435,8 +435,6 @@ const Cart = ({ isCartVisible, toggleCart }) => {
    */
   const cartItemsRef = useRef([]);
   const qtyTimersRef = useRef({}); // { [cartId]: timeoutId }
-  const lastCheckedQtyRef = useRef({}); // { [cartId]: qty }
-  const checkingAllRef = useRef(false);
 
   useEffect(() => {
     cartItemsRef.current = cartItems;
@@ -449,32 +447,6 @@ const Cart = ({ isCartVisible, toggleCart }) => {
       qtyTimersRef.current = {};
     };
   }, []);
-
-  // ✅ auto check qty alerts on initial load + whenever cart changes
-  useEffect(() => {
-    if (!cartItems?.length) return;
-    if (checkingAllRef.current) return;
-
-    checkingAllRef.current = true;
-
-    (async () => {
-      try {
-        for (const it of cartItems) {
-          const qty = Number(it?.quantity || 1);
-          const lastQty = lastCheckedQtyRef.current[it.id];
-
-          if (lastQty === qty) continue;
-
-          await checkQtyAlert(it);
-          lastCheckedQtyRef.current[it.id] = qty;
-
-          await new Promise((r) => setTimeout(r, 300));
-        }
-      } finally {
-        checkingAllRef.current = false;
-      }
-    })();
-  }, [cartItems]);
 
   const cartPageData = async () => {
     setCartLoading(true);
@@ -656,8 +628,6 @@ const Cart = ({ isCartVisible, toggleCart }) => {
       } finally {
         setUpdatingQty((p) => ({ ...p, [itemId]: false }));
       }
-    } else {
-      await checkQtyAlert(item);
     }
   };
 

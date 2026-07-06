@@ -382,8 +382,6 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
   /** ✅ debounce + avoid stale */
   const cartItemsRef = useRef([]);
   const qtyTimersRef = useRef({}); // { [cartId]: timeoutId }
-  const lastCheckedQtyRef = useRef({}); // { [cartId]: qty }
-  const checkingAllRef = useRef(false);
 
   useEffect(() => {
     cartItemsRef.current = cartItems;
@@ -524,34 +522,6 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
     return () => window.removeEventListener("cart-updated", handler);
   }, []);
 
-  /** ✅ check qty alerts on page load / cart refresh (rate-limit safe) */
-  useEffect(() => {
-    if (!cartItems?.length) return;
-    if (checkingAllRef.current) return;
-
-    checkingAllRef.current = true;
-
-    (async () => {
-      try {
-        for (const it of cartItems) {
-          const qty = Number(it?.quantity || 1);
-          const lastQty = lastCheckedQtyRef.current[it.id];
-
-          // ✅ skip if same qty already checked
-          if (lastQty === qty) continue;
-
-          await checkQtyAlert(it);
-          lastCheckedQtyRef.current[it.id] = qty;
-
-          // ✅ small delay to avoid 429
-          await new Promise((r) => setTimeout(r, 250));
-        }
-      } finally {
-        checkingAllRef.current = false;
-      }
-    })();
-  }, [cartItems]);
-
   /** ✅ compute totals locally for UI */
   useEffect(() => {
     let other = 0;
@@ -612,7 +582,6 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
         const currentItem = (cartItemsRef.current || []).find((x) => x.id === itemId);
         if (currentItem) {
           await checkQtyAlert({ ...currentItem, quantity: newQty });
-          lastCheckedQtyRef.current[itemId] = newQty;
         }
 
         await cartData();
@@ -634,18 +603,17 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
     const itemId = item?.id;
     if (!itemId) return;
 
-    // flush pending debounce
-    if (qtyTimersRef.current[itemId]) {
-      clearTimeout(qtyTimersRef.current[itemId]);
-      delete qtyTimersRef.current[itemId];
-    }
+    // Blurring an unchanged field must not call either quantity API.
+    if (!qtyTimersRef.current[itemId]) return;
+
+    clearTimeout(qtyTimersRef.current[itemId]);
+    delete qtyTimersRef.current[itemId];
 
     setUpdatingQty((p) => ({ ...p, [itemId]: true }));
     try {
       await updateQuantity({ cart_id: itemId, quantity: Number(item.quantity || 1) });
 
       await checkQtyAlert(item);
-      lastCheckedQtyRef.current[itemId] = Number(item.quantity || 1);
 
       await cartData();
     } catch (err) {
