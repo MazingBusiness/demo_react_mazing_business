@@ -9718,12 +9718,47 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   min-width: 0;
 }
 
+.top-selling-product-viewport {
+  height: 914px;
+  max-height: 914px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  cursor: grab;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: #004d84 #f1f1f1;
+  touch-action: pan-y;
+}
+
+.top-selling-product-viewport:active {
+  cursor: grabbing;
+}
+
+.top-selling-product-viewport::-webkit-scrollbar {
+  width: 6px;
+}
+
+.top-selling-product-viewport::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.top-selling-product-viewport::-webkit-scrollbar-thumb {
+  background: #004d84;
+  border-radius: 10px;
+}
+
 .top-selling-product-grid {
   display: block;
+  user-select: none;
 }
 
 .top-products .top-selling-product-box {
   margin-bottom: 16px;
+}
+
+.top-products .top-selling-product-box:last-child {
+  margin-bottom: 0;
 }
 
 .top-products .top-selling-product-box .product-card {
@@ -9840,6 +9875,11 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 @media (max-width: 1024px) {
   .product-details-live-bottom {
     grid-template-columns: 1fr;
+  }
+
+  .top-selling-product-viewport {
+    height: auto;
+    max-height: 760px;
   }
 
   .top-selling-product-grid {
