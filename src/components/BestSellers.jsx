@@ -358,8 +358,8 @@ const BestSellers = () => {
                         to={`/product-details/${encodeURIComponent(product.slug || "")}`}
                         style={{ textDecoration: "none", color: "inherit" }}
                       >
-                        {product.name?.length > 80
-                          ? product.name.substring(0, 80) + "..."
+                        {product.name?.length > 50
+                          ? product.name.substring(0, 50) + "..."
                           : product.name}
                       </Link>
                     </h4>
