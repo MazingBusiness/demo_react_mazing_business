@@ -11,6 +11,8 @@ import {
   getQuickOrderProduct,
   generatePdfFileName,
   getPdfQuickOrderProduct,
+  getPdfCreateCompleteStatus,
+  deletePdfFile,
   generateExcelFileName,
   getExcelQuickOrderProduct,
 } from "../api/apiRequest.jsx";
@@ -73,6 +75,22 @@ const QuickOrderGrid = ({ filters, onPriceRangeUpdate }) => {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  };
+
+  const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+  const waitForPdfReady = async (fileName) => {
+    for (let attempt = 1; attempt <= 20; attempt += 1) {
+      const statusRes = await getPdfCreateCompleteStatus(fileName);
+
+      if (statusRes?.res && statusRes?.file_path) {
+        return statusRes.file_path;
+      }
+
+      await wait(1500);
+    }
+
+    throw new Error("PDF is not ready yet. Please try again.");
   };
 
   const getQuickOrderProductRecord = async (page = 1) => {
@@ -246,11 +264,21 @@ const QuickOrderGrid = ({ filters, onPriceRangeUpdate }) => {
         return;
       }
 
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
       const finalFileName = pdfJson.file_name;
-      const downloadUrl = `${window.location.origin}/mazing_business_react/public/pdfs/${finalFileName}`;
+      const completedPdfPath = await waitForPdfReady(finalFileName);
+      const downloadUrl = /^https?:\/\//i.test(completedPdfPath)
+        ? completedPdfPath
+        : `${window.location.origin}/mazing_business_react/public/pdfs/${finalFileName}`;
+
       triggerBrowserDownload(downloadUrl, finalFileName);
+
+      window.setTimeout(async () => {
+        try {
+          await deletePdfFile(finalFileName);
+        } catch (deleteError) {
+          console.error("PDF delete failed:", deleteError);
+        }
+      }, 30000);
     } catch (error) {
       console.error("PDF download failed:", error);
       alert("Something went wrong while downloading PDF.");

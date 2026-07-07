@@ -1382,6 +1382,7 @@ export const getPdfQuickOrderProduct = async (
   cat_groups,
   categories,
   brands,
+  m_coin_rates,
   search_text,
   min_price,
   max_price,
@@ -1401,6 +1402,7 @@ export const getPdfQuickOrderProduct = async (
   if (cat_groups) queryParams.append("cat_groups", cat_groups);
   if (categories) queryParams.append("categories", categories);
   if (brands) queryParams.append("brands", brands);
+  if (m_coin_rates) queryParams.append("m_coin_rates", m_coin_rates);
   if (search_text) queryParams.append("search_text", search_text);
   if (min_price) queryParams.append("min_price", min_price);
   if (max_price) queryParams.append("max_price", max_price);
@@ -1430,6 +1432,46 @@ export const getPdfQuickOrderProduct = async (
   });
 
   return response;
+};
+
+export const getPdfCreateCompleteStatus = async (file_name) => {
+  const header = getHeader();
+  const queryParams = new URLSearchParams();
+
+  if (file_name) queryParams.append("file_name", file_name);
+
+  const url = `${API_BASE_URL}download_document/pdf-create-complete-status?${queryParams.toString()}`;
+
+  const response = await fetch(url, {
+    method: "GET",
+    headers: {
+      ...(header?.headers || {}),
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    },
+  });
+
+  return response.json();
+};
+
+export const deletePdfFile = async (file_name) => {
+  const header = getHeader();
+  const queryParams = new URLSearchParams();
+
+  if (file_name) queryParams.append("file_name", file_name);
+
+  const url = `${API_BASE_URL}download_document/delete-file?${queryParams.toString()}`;
+
+  const response = await fetch(url, {
+    method: "GET",
+    headers: {
+      ...(header?.headers || {}),
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    },
+  });
+
+  return response.json();
 };
 
 export const generateExcelFileName = async () => {

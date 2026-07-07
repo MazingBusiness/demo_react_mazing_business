@@ -928,7 +928,6 @@ a.right-link {
   gap: 10px;
   font-size: 14px;
   font-weight: 600;
-  margin-left: 295px;
 }
 
 .download-excel-btn {
@@ -3309,6 +3308,7 @@ a.all-link svg {
   gap: 10px;
   flex-wrap: nowrap;
   flex-shrink: 1;
+  margin-left: auto;
 }
 
 .download-actions button {
