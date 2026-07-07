@@ -45,6 +45,17 @@ const TopSellingProducts = () => {
   const [loading, setLoading] = useState(true);
   const [selectedProduct, setSelectedProduct] = useState(null);
 
+  const openProductModal = (product) => {
+    if (!product?.id) return;
+    pausedRef.current = true;
+    setSelectedProduct(product);
+  };
+
+  const closeProductModal = () => {
+    setSelectedProduct(null);
+    pausedRef.current = false;
+  };
+
   useEffect(() => {
     let ignore = false;
 
@@ -159,6 +170,7 @@ const TopSellingProducts = () => {
     if (hasDraggedRef.current) {
       event.preventDefault();
       event.stopPropagation();
+      hasDraggedRef.current = false;
     }
   };
 
@@ -213,13 +225,18 @@ const TopSellingProducts = () => {
                   <article
                     key={product.id}
                     className="product-box top-selling-product-box"
+                    onClick={() => openProductModal(product)}
                   >
                     <div className="product-card">
                       <div className="top-selling-image-wrap">
                         <button
                           type="button"
                           className="top-selling-image-button"
-                          onClick={() => setSelectedProduct(product)}
+                          onPointerDown={(event) => event.stopPropagation()}
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            openProductModal(product);
+                          }}
                           aria-label={`View ${product.name}`}
                         >
                           <img
@@ -240,7 +257,11 @@ const TopSellingProducts = () => {
                               aria-label={`Add ${product.name} to cart`}
                               title="Add to cart"
                               type="button"
-                              onClick={() => setSelectedProduct(product)}
+                              onPointerDown={(event) => event.stopPropagation()}
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                openProductModal(product);
+                              }}
                             >
                               <img src={CartIcon} alt="" />
                               <span>Add to Cart</span>
@@ -253,13 +274,11 @@ const TopSellingProducts = () => {
                         <button
                           type="button"
                           className="top-selling-product-name"
-                          onClick={() =>
-                            navigate(
-                              `/product-details/${encodeURIComponent(
-                                product?.slug || product?.id || ""
-                              )}`
-                            )
-                          }
+                          onPointerDown={(event) => event.stopPropagation()}
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            openProductModal(product);
+                          }}
                         >
                           {product?.name || "Product"}
                         </button>
@@ -279,7 +298,11 @@ const TopSellingProducts = () => {
                           <button
                             type="button"
                             className="top-selling-register"
-                            onClick={() => navigate("/login")}
+                            onPointerDown={(event) => event.stopPropagation()}
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              navigate("/login");
+                            }}
                           >
                             Register to check prices
                           </button>
@@ -316,8 +339,8 @@ const TopSellingProducts = () => {
         productId={selectedProduct?.id}
         isOpen={!!selectedProduct}
         open={!!selectedProduct}
-        onClose={() => setSelectedProduct(null)}
-        onRequestClose={() => setSelectedProduct(null)}
+        onClose={closeProductModal}
+        onRequestClose={closeProductModal}
       />
     </>
   );
