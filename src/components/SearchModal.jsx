@@ -3,8 +3,8 @@ import { FiX, FiChevronRight } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 
 import no_image from "../assets/images/no-image.png";
-// import { getQuickOrderProduct } from "../api/apiRequest";
-import { getBetaQuickOrderProduct } from "../api/apiRequest";
+import { getQuickOrderProduct } from "../api/apiRequest";
+// import { getBetaQuickOrderProduct } from "../api/apiRequest";
 import { getLoggedInUser } from "../utils/authUtils";
 
 /**
@@ -141,7 +141,7 @@ const SearchModal = ({
       setApiError("");
       setLoading(true);
 
-      const apiRes = await getBetaQuickOrderProduct(
+      const apiRes = await getQuickOrderProduct(
         filters.cat_groups,
         filters.categories,
         filters.brands,

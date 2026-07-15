@@ -31,6 +31,7 @@ import {
   statementDownload,
   updateProductQty,
   updateCartItemPrice,
+  updateCartItemPriceWithSuperPrice,
   applyMCoin,
   getMCoin,
   removeMCoin,
@@ -53,6 +54,18 @@ function getStoredStaffId() {
 
   // if decode succeeded return decoded, else return original string
   return decoded ? String(decoded) : String(val || "");
+}
+
+function getStoredStaffUserTitle() {
+  const raw = localStorage.getItem("mazingBusinessStaffUserTitle");
+  if (!raw) return "";
+
+  try {
+    const parsed = JSON.parse(raw);
+    return String(parsed || "");
+  } catch {
+    return String(raw || "").replace(/^"|"$/g, "");
+  }
 }
 
 function safeBase64Decode(input) {
@@ -117,6 +130,33 @@ const getProductImage = (product) => {
 const twoDecimal = (value) => {
   const numeric = Number(String(value ?? 0).replace(/,/g, ""));
   return Number.isFinite(numeric) ? numeric.toFixed(2) : "0.00";
+};
+
+const parseMoney = (value) => {
+  const numeric = Number(String(value ?? "").replace(/[^0-9.]/g, ""));
+  return Number.isFinite(numeric) ? numeric : 0;
+};
+
+const getUserDiscountPrice = (item) =>
+  parseMoney(
+    item?.normal_price ??
+      item?.user_discount_price ??
+      item?.product?.discount_price ??
+      item?.product?.unit_price
+  );
+
+const shouldDisableQuantityForSuperPrice = (item, canUpdateSuperPrice) => {
+  if (!canUpdateSuperPrice) return false;
+
+  const price = parseMoney(item?.price);
+  const normalPrice = getUserDiscountPrice(item);
+  const superPrice = parseMoney(item?.super_price ?? item?.product?.super_price);
+
+  if (price <= 0 || normalPrice <= 0) return false;
+
+  if (superPrice > 0 && price < superPrice) return false;
+
+  return price < normalPrice;
 };
 
 const CartSlide = ({ isCartVisible, toggleCart }) => {
@@ -340,8 +380,10 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
 
   // Edit Price -----
     const staffId = useMemo(() => getStoredStaffId(), []);
+    const staffUserTitle = useMemo(() => getStoredStaffUserTitle(), []);
     const PRICE_EDIT_STAFF = useMemo(() => new Set(["180", "169", "25606"]), []);
-    const canEditPrice = PRICE_EDIT_STAFF.has(String(staffId || ""));
+    const canUpdateSuperPrice = String(staffUserTitle || "").trim().toLowerCase() === "manager";
+    const canEditPrice = canUpdateSuperPrice || PRICE_EDIT_STAFF.has(String(staffId || ""));
     const [editPriceById, setEditPriceById] = useState({});      // { [itemId]: "123" }
     const [priceUpdatingById, setPriceUpdatingById] = useState({}); // { [itemId]: true/false }
     useEffect(() => {
@@ -355,19 +397,39 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
       const priceStr = editPriceById[itemId];
       const priceNum = Number(priceStr);
       if (!Number.isFinite(priceNum) || priceNum <= 0) {
-        alert("Enter valid price");
+        showToast("error", "Enter valid price");
         return;
       }
       try {
         setPriceUpdatingById((p) => ({ ...p, [itemId]: true }));
-        await updateCartItemPrice({ id: itemId, price: priceNum });
+        const updatePrice = canUpdateSuperPrice
+          ? updateCartItemPriceWithSuperPrice
+          : updateCartItemPrice;
+        const data = await updatePrice({ id: itemId, price: priceNum });
+        const updatedPrice = Number(data?.price ?? priceNum);
+        const updatedQuantity = data?.quantity != null ? Number(data.quantity) : null;
+        const normalPrice = data?.normal_price != null ? Number(data.normal_price) : null;
+        const superPrice = data?.super_price != null ? Number(data.super_price) : null;
         // ✅ update UI locally (or call your fetchCart())
         setCartItems((prev) =>
-          prev.map((x) => (x.id === itemId ? { ...x, price: priceNum } : x))
+          prev.map((x) =>
+            x.id === itemId
+              ? {
+                  ...x,
+                  price: updatedPrice,
+                  ...(normalPrice ? { normal_price: normalPrice } : {}),
+                  ...(superPrice ? { super_price: superPrice } : {}),
+                  ...(updatedQuantity ? { quantity: updatedQuantity } : {}),
+                }
+              : x
+          )
         );
+        setEditPriceById((p) => ({ ...p, [itemId]: String(updatedPrice) }));
+        showToast("success", data?.msg || "Price had updated.");
+        window.dispatchEvent(new Event("cart-updated"));
       } catch (err) {
         console.error(err);
-        alert(err?.message || "Price update failed");
+        showToast("error", err?.data?.msg || err?.message || "Price update failed");
       } finally {
         setPriceUpdatingById((p) => ({ ...p, [itemId]: false }));
       }
@@ -576,7 +638,7 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
 
     qtyTimersRef.current[itemId] = setTimeout(async () => {
       try {
-        await updateQuantity({ cart_id: itemId, quantity: newQty });
+        await updateQuantity({ cart_id: itemId, quantity: newQty, staffUserTitle });
 
         // ✅ updateProductQty message
         const currentItem = (cartItemsRef.current || []).find((x) => x.id === itemId);
@@ -611,7 +673,11 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
 
     setUpdatingQty((p) => ({ ...p, [itemId]: true }));
     try {
-      await updateQuantity({ cart_id: itemId, quantity: Number(item.quantity || 1) });
+      await updateQuantity({
+        cart_id: itemId,
+        quantity: Number(item.quantity || 1),
+        staffUserTitle,
+      });
 
       await checkQtyAlert(item);
 
@@ -711,7 +777,7 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
   };
 
   const deleteFromCart = async (id, qty) => {
-    await updateQuantity({ cart_id: id, quantity: Number(qty) });
+    await updateQuantity({ cart_id: id, quantity: Number(qty), staffUserTitle });
     await cartData();
   };
 
@@ -1017,6 +1083,12 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
                               type="number"
                               min="1"
                               value={item.quantity}
+                              // disabled={shouldDisableQuantityForSuperPrice(item, canUpdateSuperPrice)}
+                              // title={
+                              //   shouldDisableQuantityForSuperPrice(item, canUpdateSuperPrice)
+                              //     ? "Quantity is locked while price is below user's discount price."
+                              //     : undefined
+                              // }
                               onChange={(e) => handleQtyChange(item.id, e.target.value)}
                               onBlur={() => handleQtyBlur(item)}
                             />

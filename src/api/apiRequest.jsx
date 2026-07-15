@@ -215,7 +215,7 @@ export const getQuickOrderProduct = async (
     queryParams.append("user_id", user.id);
   }
 
-  const url = `${API_BASE_URL}product/quick-order?${queryParams.toString()}`;
+  const url = `${API_BASE_URL}product/beta-version-quick-order?${queryParams.toString()}`;
 
   const response = await fetch(url, {
     method: "GET",
@@ -478,7 +478,7 @@ export const cart = async () => {
   return data;
 };
 
-export const updateQuantity = async ({ id, quantity, product_id, cart_id }) => {
+export const updateQuantity = async ({ id, quantity, product_id, cart_id, staffUserTitle }) => {
   const header = getHeader();
   if (!header) throw new Error("Authorization token missing");
 
@@ -495,6 +495,7 @@ export const updateQuantity = async ({ id, quantity, product_id, cart_id }) => {
     body: JSON.stringify({
       id: finalId,
       quantity: Number(quantity),
+      staffUserTitle,
     }),
   });
 
@@ -527,6 +528,34 @@ export const updateCartItemPrice = async ({ id, price }) => {
   const data = await res.json();
   if (!res.ok || data?.res === false) {
     throw new Error(data?.msg || "Update price failed");
+  }
+  return data;
+};
+
+export const updateCartItemPriceWithSuperPrice = async ({ id, price }) => {
+  const header = getHeader();
+  if (!header) throw new Error("Authorization token missing");
+
+  if (!id) throw new Error("Missing id for update price");
+
+  const res = await fetch(`${API_BASE_URL}cart/update-cart-item-price-with-super-price`, {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+      ...(header.headers || {}),
+    },
+    body: JSON.stringify({
+      id,
+      price: Number(price),
+    }),
+  });
+
+  const data = await res.json();
+  if (!res.ok || data?.res === false) {
+    const error = new Error(data?.msg || "Update price failed");
+    error.data = data;
+    throw error;
   }
   return data;
 };

@@ -7,12 +7,13 @@ function getParams() {
   const sp = new URLSearchParams(window.location.search);
   const u1 = sp.get("user_id");
   const s1 = sp.get("staff_id");
-  if (u1 && s1) return { user_id: u1, staff_id: s1 };
+  const ut1 = sp.get("user_title");
+  if (u1 && s1) return { user_id: u1, staff_id: s1, user_title: ut1 || "" };
 
   // ✅ supports HashRouter: #/login-from-admin?user_id=...&staff_id=...
   const hash = window.location.hash || "";
   const idx = hash.indexOf("?");
-  if (idx === -1) return { user_id: "", staff_id: "" };
+  if (idx === -1) return { user_id: "", staff_id: "", user_title: "" };
 
   const qs = hash.slice(idx + 1);
   const params = new URLSearchParams(qs);
@@ -20,6 +21,7 @@ function getParams() {
   return {
     user_id: params.get("user_id") || "",
     staff_id: params.get("staff_id") || "",
+    user_title: params.get("user_title") || "",
   };
 }
 
@@ -31,7 +33,7 @@ export default function LoginFromAdmin() {
     let alive = true;
 
     (async () => {
-      const { user_id, staff_id } = getParams();
+      const { user_id, staff_id, user_title } = getParams();
 
       if (!user_id || !staff_id) {
         if (alive) setErr("Missing user_id or staff_id in URL.");
@@ -39,7 +41,7 @@ export default function LoginFromAdmin() {
       }
 
       try {
-        const payload = { user_id, staff_id };
+        const payload = { user_id, staff_id, user_title };
 
         const res = await loginFromAdmin(payload);
         const data = await res.json().catch(() => ({}));
@@ -57,6 +59,7 @@ export default function LoginFromAdmin() {
 
         localStorage.setItem("mazingBusinessLoginInfo", JSON.stringify(data));
         localStorage.setItem("mazingBusinessStaffId", JSON.stringify(staff_id));
+        localStorage.setItem("mazingBusinessStaffUserTitle", JSON.stringify(user_title));
 
         // ✅ clean URL (hash)
         if (window.location.hash.includes("?")) {

@@ -306,7 +306,7 @@ const ProfileStatementDetails = () => {
                 </Link>
                 / Party Code: <span>{partyCode || "-"}</span>
               </div>
-              {showAveragePaymentDays && (
+              {/* {showAveragePaymentDays && (
                 <span
                   className={`average-payment-days ${
                     isWithinCreditDays ? "within-credit-days" : "outside-credit-days"
@@ -314,7 +314,7 @@ const ProfileStatementDetails = () => {
                 >
                   Average Payment Clearance Time: {summary.avgPaymentDays} Days
                 </span>
-              )}
+              )} */}
             </div>
           </div>
           <div className="orderdetailsHrRgt">

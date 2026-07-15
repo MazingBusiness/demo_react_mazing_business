@@ -37,6 +37,17 @@ function getStoredStaffId() {
   }
 }
 
+function getStoredUserTitle() {
+  const raw = localStorage.getItem("mazingBusinessStaffUserTitle");
+  if (!raw) return "";
+  try {
+    const parsed = JSON.parse(raw);
+    return String(parsed || "");
+  } catch {
+    return String(raw || "").replace(/^"|"$/g, "");
+  }
+}
+
 const Header = () => {
   const [searchText, setSearchText] = useState("");
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -89,6 +100,7 @@ const Header = () => {
 
   // ✅ Switch Back link logic (staff_id from localStorage)
   const staffId = useMemo(() => getStoredStaffId(), []);
+  const userTitle = useMemo(() => getStoredUserTitle(), []);
   const switchBackHref = useMemo(() => {
     if (!staffId) return "";
     return `https://mazingbusiness.com/mazing_laravel/switch_back_from_react/${encodeURIComponent(
@@ -100,6 +112,7 @@ const Header = () => {
     // ✅ optional cleanup so React session doesn't stay stuck in impersonation
     localStorage.removeItem("mazingBusinessLoginInfo");
     localStorage.removeItem("mazingBusinessStaffId");
+    localStorage.removeItem("mazingBusinessStaffUserTitle");
 
     // go to Laravel URL
     window.location.href = switchBackHref;
@@ -127,6 +140,7 @@ const Header = () => {
   const handleLogout = () => {
     localStorage.removeItem("mazingBusinessLoginInfo");
     localStorage.removeItem("mazingBusinessStaffId");
+    localStorage.removeItem("mazingBusinessStaffUserTitle");
     setUserInfo(null);
     navigate("/login");
   };
