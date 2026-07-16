@@ -10814,3 +10814,148 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   gap: 5px;
   font-size: 12px;
 }
+
+.is-hidden {
+  display: none !important;
+}
+
+.cart-warranty-icon {
+  width: 50px;
+  height: auto;
+}
+
+.cart-qty-alert {
+  margin-top: 6px;
+  padding: 6px 8px;
+  border: 1px solid #ff4d4f;
+  background: #fff1f0;
+  color: #ff4d4f;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.cart-price-edit-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.cart-left .cart-section table tr td.cart-price-editor-cell,
+.cart-left .cart-section table tr td.cart-quantity-cell,
+.cart-left .cart-section table tr td.cart-total-cell {
+  vertical-align: top;
+}
+
+.cart-price-edit-input {
+  width: 90px;
+  padding: 6px 8px;
+}
+
+.cart-price-readonly {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  color: #111827;
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.cart-unlock-super-price-btn,
+.cart-price-update-btn {
+  padding: 7px 12px;
+  border-radius: 6px;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 16px;
+  white-space: nowrap;
+}
+
+.cart-left .cart-section table tr td button.cart-unlock-super-price-btn {
+  min-width: 130px;
+  border: 1px solid #ff9d00;
+  padding: 7px 12px;
+  cursor: pointer;
+  background: #ff9d00;
+  color: #fff;
+  box-shadow: 0 2px 6px rgba(255, 157, 0, 0.25);
+}
+
+.cart-left .cart-section table tr td button.cart-price-update-btn {
+  min-width: 92px;
+  border: 1px solid #17a34a;
+  padding: 7px 12px;
+  cursor: pointer;
+  background: #17a34a;
+  color: #fff;
+  box-shadow: 0 2px 6px rgba(23, 163, 74, 0.22);
+}
+
+.cart-left .cart-section table tr td button.cart-price-update-btn.is-loading,
+.cart-left .cart-section table tr td button.cart-price-update-btn:disabled {
+  cursor: not-allowed;
+  background: #8fd8aa;
+  box-shadow: none;
+  opacity: 0.85;
+}
+
+.cart-super-price-note {
+  margin-top: 10px;
+  padding: 9px 11px;
+  border-radius: 6px;
+  border: 1px solid #ffe1ad;
+  background: #fffaf2;
+  color: #6b4600;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 18px;
+  max-width: 380px;
+}
+
+.cart-super-price-feedback {
+  margin-top: 7px;
+  padding: 8px 10px;
+  border: 1px solid;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 18px;
+  max-width: 380px;
+}
+
+.cart-super-price-feedback.is-success {
+  border-color: #b7e4c7;
+  background: #f0fff4;
+  color: #166534;
+}
+
+.cart-super-price-feedback.is-error {
+  border-color: #fecaca;
+  background: #fff5f5;
+  color: #b42318;
+}
+
+.cart-super-price-feedback.is-warning {
+  border-color: #fed7aa;
+  background: #fff7ed;
+  color: #9a3412;
+}
+
+.cart-pay-mcoin-checkbox {
+  width: 62%;
+}
+
+.cart-mcoin-discount {
+  display: block;
+  width: 100%;
+  color: #077807;
+  margin-top: 6px;
+  font-size: 13px;
+  line-height: 18px;
+}

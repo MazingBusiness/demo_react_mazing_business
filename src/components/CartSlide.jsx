@@ -97,7 +97,7 @@ const renderWarrantyTag = (product) => {
         src={warrantyIcon}
         alt="Warranty"
         loading="lazy"
-        style={{ width: "50px", height: "auto" }}
+        className="cart-warranty-icon"
       />
     </div>
   );
@@ -112,7 +112,7 @@ const fastDeliveryTag = (product) => {
         alt="Fast Delivery"
         loading="lazy"
         onError={(e) => {
-          e.currentTarget.style.display = "none";
+          e.currentTarget.classList.add("is-hidden");
         }}
       />
     </div>
@@ -145,12 +145,20 @@ const getUserDiscountPrice = (item) =>
       item?.product?.unit_price
   );
 
+const getSuperPrice = (item) =>
+  parseMoney(item?.super_price ?? item?.product?.super_price);
+
+const getSuperPriceMinQty = (item) => {
+  const superPrice = getSuperPrice(item);
+  return superPrice > 0 ? Math.ceil(25000 / superPrice) : 0;
+};
+
 const shouldDisableQuantityForSuperPrice = (item, canUpdateSuperPrice) => {
   if (!canUpdateSuperPrice) return false;
 
   const price = parseMoney(item?.price);
   const normalPrice = getUserDiscountPrice(item);
-  const superPrice = parseMoney(item?.super_price ?? item?.product?.super_price);
+  const superPrice = getSuperPrice(item);
 
   if (price <= 0 || normalPrice <= 0) return false;
 
@@ -382,10 +390,47 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
     const staffId = useMemo(() => getStoredStaffId(), []);
     const staffUserTitle = useMemo(() => getStoredStaffUserTitle(), []);
     const PRICE_EDIT_STAFF = useMemo(() => new Set(["180", "169", "25606"]), []);
-    const canUpdateSuperPrice = String(staffUserTitle || "").trim().toLowerCase() === "manager";
+    const normalizedStaffUserTitle = String(staffUserTitle || "")
+      .trim()
+      .toLowerCase()
+      .replace(/_/g, " ");
+    const canUpdateSuperPrice = normalizedStaffUserTitle === "manager";
+    const isHeadManager = normalizedStaffUserTitle === "head manager";
     const canEditPrice = canUpdateSuperPrice || PRICE_EDIT_STAFF.has(String(staffId || ""));
     const [editPriceById, setEditPriceById] = useState({});      // { [itemId]: "123" }
     const [priceUpdatingById, setPriceUpdatingById] = useState({}); // { [itemId]: true/false }
+    const [superPriceUnlockedById, setSuperPriceUnlockedById] = useState({});
+    const [superPriceMessagesById, setSuperPriceMessagesById] = useState({});
+    const superPriceMessageTimersRef = useRef({});
+
+    const showSuperPriceMessage = (itemId, type, message) => {
+      if (superPriceMessageTimersRef.current[itemId]) {
+        clearTimeout(superPriceMessageTimersRef.current[itemId]);
+      }
+
+      setSuperPriceMessagesById((prev) => ({
+        ...prev,
+        [itemId]: { type, message },
+      }));
+
+      superPriceMessageTimersRef.current[itemId] = setTimeout(() => {
+        setSuperPriceMessagesById((prev) => {
+          const next = { ...prev };
+          delete next[itemId];
+          return next;
+        });
+        delete superPriceMessageTimersRef.current[itemId];
+      }, 5000);
+    };
+
+    useEffect(() => {
+      return () => {
+        Object.values(superPriceMessageTimersRef.current).forEach((timer) =>
+          clearTimeout(timer)
+        );
+      };
+    }, []);
+
     useEffect(() => {
       const map = {};
       cartItems.forEach((it) => (map[it.id] = String(it.price ?? "")));
@@ -397,7 +442,11 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
       const priceStr = editPriceById[itemId];
       const priceNum = Number(priceStr);
       if (!Number.isFinite(priceNum) || priceNum <= 0) {
-        showToast("error", "Enter valid price");
+        if (canUpdateSuperPrice) {
+          showSuperPriceMessage(itemId, "error", "Enter valid price");
+        } else {
+          showToast("error", "Enter valid price");
+        }
         return;
       }
       try {
@@ -425,11 +474,33 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
           )
         );
         setEditPriceById((p) => ({ ...p, [itemId]: String(updatedPrice) }));
-        showToast("success", data?.msg || "Price had updated.");
+        if (canUpdateSuperPrice) {
+          showSuperPriceMessage(itemId, "success", data?.msg || "Price had updated.");
+        } else {
+          showToast("success", data?.msg || "Price had updated.");
+        }
         window.dispatchEvent(new Event("cart-updated"));
       } catch (err) {
         console.error(err);
-        showToast("error", err?.data?.msg || err?.message || "Price update failed");
+        const message = err?.data?.msg || err?.message || "Price update failed";
+        if (canUpdateSuperPrice) {
+          if (String(message).toLowerCase().includes("less than super price")) {
+            const refreshedItems = await cartData();
+            const cartItem = refreshedItems.find(
+              (item) => String(item.id) === String(itemId)
+            );
+
+            if (cartItem?.price != null) {
+              setEditPriceById((prev) => ({
+                ...prev,
+                [itemId]: String(cartItem.price),
+              }));
+            }
+          }
+          showSuperPriceMessage(itemId, "error", message);
+        } else {
+          showToast("error", message);
+        }
       } finally {
         setPriceUpdatingById((p) => ({ ...p, [itemId]: false }));
       }
@@ -568,9 +639,14 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
         setSelectedSavedIds((prev) =>
           prev.filter((id) => save_for_later.some((x) => String(x.id) === String(id)))
         );
+
+        return cart_item;
       }
+
+      return [];
     } catch (e) {
       console.error(e);
+      return [];
     } finally {
       setCartLoading(false);
     }
@@ -638,6 +714,9 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
 
     qtyTimersRef.current[itemId] = setTimeout(async () => {
       try {
+        const previousItem = (cartItemsRef.current || []).find((x) => x.id === itemId);
+        const previousPrice = Number(previousItem?.price || 0);
+
         await updateQuantity({ cart_id: itemId, quantity: newQty, staffUserTitle });
 
         // ✅ updateProductQty message
@@ -646,7 +725,17 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
           await checkQtyAlert({ ...currentItem, quantity: newQty });
         }
 
-        await cartData();
+        const refreshedItems = await cartData();
+        const refreshedItem = refreshedItems.find((x) => x.id === itemId);
+        const refreshedPrice = Number(refreshedItem?.price || 0);
+
+        if (canUpdateSuperPrice && refreshedPrice > previousPrice + 0.009) {
+          showSuperPriceMessage(
+            itemId,
+            "warning",
+            "Price had change because of the quantity is less than the super price quantity"
+          );
+        }
         window.dispatchEvent(new Event("cart-updated"));
       } catch (err) {
         console.error(err);
@@ -673,6 +762,8 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
 
     setUpdatingQty((p) => ({ ...p, [itemId]: true }));
     try {
+      const previousPrice = Number(item?.price || 0);
+
       await updateQuantity({
         cart_id: itemId,
         quantity: Number(item.quantity || 1),
@@ -681,7 +772,17 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
 
       await checkQtyAlert(item);
 
-      await cartData();
+      const refreshedItems = await cartData();
+      const refreshedItem = refreshedItems.find((x) => x.id === itemId);
+      const refreshedPrice = Number(refreshedItem?.price || 0);
+
+      if (canUpdateSuperPrice && refreshedPrice > previousPrice + 0.009) {
+        showSuperPriceMessage(
+          itemId,
+          "warning",
+          "Price had change because of the quantity is less than the super price quantity"
+        );
+      }
     } catch (err) {
       console.error(err);
       await cartData();
@@ -1016,9 +1117,26 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
                                     {appliedOfferDetails?.offer_name} Offer Applied
                                   </span>
                                 )}
-                              </div>
-                            </div>
+                                </div>
 
+                                {false && canUpdateSuperPrice && getSuperPrice(item) > 0 && (
+                                  <div className="cart-super-price-note">
+                                    Special price cannot be less than{" "}
+                                    <strong>â‚¹ {twoDecimal(getSuperPrice(item))}</strong>.
+                                    Minimum quantity will be{" "}
+                                    <strong>{getSuperPriceMinQty(item)}</strong> or more.
+                                  </div>
+                                )}
+                                </div>
+
+                                {false && canUpdateSuperPrice && getSuperPrice(item) > 0 && (
+                                  <div className="cart-super-price-note">
+                                    Special price cannot be less than{" "}
+                                    <strong>₹ {twoDecimal(getSuperPrice(item))}</strong>.
+                                    Minimum quantity will be{" "}
+                                    <strong>{getSuperPriceMinQty(item)}</strong> or more.
+                                  </div>
+                                )}
                             <div className="ratingGrp">
                               <div className="ratingGrpLft">
                                 {renderWarrantyTag(item?.product)}
@@ -1028,26 +1146,23 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
 
                             {/* ✅ updateProductQty ALERT */}
                             {item?.product?.is_reward_product == 0 && qtyAlertsById[item.id] && (
-                              <div
-                                style={{
-                                  marginTop: "6px",
-                                  padding: "6px 8px",
-                                  border: "1px solid #ff4d4f",
-                                  background: "#fff1f0",
-                                  color: "#ff4d4f",
-                                  borderRadius: 6,
-                                  fontSize: 12,
-                                  fontWeight: 600,
-                                }}
-                              >
+                              <div className="cart-qty-alert">
                                 {qtyAlertsById[item.id]}
                               </div>
                             )}
                           </td>
 
-                          <td className="cartprice" data-label="Price">
+                          <td
+                            className={`cartprice ${
+                              canEditPrice || isHeadManager ? "cart-price-editor-cell" : ""
+                            }`}
+                            data-label="Price"
+                          >
                             {canEditPrice ? (
-                              <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                              <div>
+                                <div className="cart-price-edit-row">
+                                {(!canUpdateSuperPrice || superPriceUnlockedById[item.id]) && (
+                                  <>
                                 <span>₹</span>
 
                                 <input
@@ -1058,27 +1173,78 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
                                   onChange={(e) =>
                                     setEditPriceById((p) => ({ ...p, [item.id]: e.target.value }))
                                   }
-                                  style={{ width: 90, padding: "6px 8px" }}
+                                  className="cart-price-edit-input"
                                 />
+                                  </>
+                                )}
 
-                                <button type="button" onClick={() => handleUpdatePrice(item.id)} disabled={!!priceUpdatingById[item.id]}
-                                  style={{
-                                    padding: "6px 10px",
-                                    borderRadius: 6,
-                                    border: "1px solid #ddd",
-                                    cursor: "pointer",
-                                    background: "aqua"
-                                  }}
-                                >
-                                  {priceUpdatingById[item.id] ? "Updating..." : "Update"}
-                                </button>
+                                {canUpdateSuperPrice && !superPriceUnlockedById[item.id] && (
+                                  <span className="cart-price-readonly">
+                                    ₹ {twoDecimal(item.price)}
+                                  </span>
+                                )}
+
+                                {canUpdateSuperPrice && !superPriceUnlockedById[item.id] ? (
+                                  <button type="button" onClick={() =>
+                                    setSuperPriceUnlockedById((p) => ({
+                                      ...p,
+                                      [item.id]: true,
+                                    }))
+                                  }
+                                    className="cart-unlock-super-price-btn"
+                                  >
+                                    Unlock Super Price
+                                  </button>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleUpdatePrice(item.id)}
+                                    disabled={!!priceUpdatingById[item.id]}
+                                    className={`cart-price-update-btn ${
+                                      priceUpdatingById[item.id] ? "is-loading" : ""
+                                    }`}
+                                  >
+                                    {priceUpdatingById[item.id] ? "Updating..." : "Update"}
+                                  </button>
+                                )}
+                                </div>
+
+                                {((canUpdateSuperPrice && superPriceUnlockedById[item.id]) ||
+                                  isHeadManager) &&
+                                  getSuperPrice(item) > 0 && (
+                                  <div className="cart-super-price-note">
+                                    Special price cannot be less than{" "}
+                                    <strong>₹ {twoDecimal(getSuperPrice(item))}</strong>.
+                                    Minimum quantity will be{" "}
+                                    <strong>{getSuperPriceMinQty(item)}</strong> or more.
+                                  </div>
+                                )}
+                                {superPriceMessagesById[item.id] && (
+                                  <div
+                                    className={`cart-super-price-feedback is-${
+                                      superPriceMessagesById[item.id].type
+                                    }`}
+                                  >
+                                    {superPriceMessagesById[item.id].message}
+                                  </div>
+                                )}
                               </div>
                             ) : (
-                              <>₹ {twoDecimal(item.price)}</>
+                              <div>
+                                <span>₹ {twoDecimal(item.price)}</span>
+                                {isHeadManager && getSuperPrice(item) > 0 && (
+                                  <div className="cart-super-price-note">
+                                    Special price cannot be less than{" "}
+                                    <strong>₹ {twoDecimal(getSuperPrice(item))}</strong>.
+                                    Minimum quantity will be{" "}
+                                    <strong>{getSuperPriceMinQty(item)}</strong> or more.
+                                  </div>
+                                )}
+                              </div>
                             )}
                           </td>
 
-                          <td className="narrow3" data-label="Quantity">
+                          <td className="narrow3 cart-quantity-cell" data-label="Quantity">
                             <input
                               type="number"
                               min="1"
@@ -1097,7 +1263,7 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
                             )}
                           </td>
 
-                          <td className="cartprice" data-label="Total">
+                          <td className="cartprice cart-total-cell" data-label="Total">
                             ₹ {twoDecimal(Number(item.quantity || 1) * Number(item.price || 0))}
                           </td>
 
@@ -1341,7 +1507,7 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
               {availableMCoinBalance > 0 && (
                 <>
                   <div className="pay-mcoin-toggle">
-                    <label className="pay-mcoin-checkbox" style={{width:'62%'}}>
+                    <label className="pay-mcoin-checkbox cart-pay-mcoin-checkbox">
                       <input
                         type="checkbox"
                         checked={payWithMCoin}
@@ -1443,16 +1609,7 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
               <div className="subtotal">
                 <div className="subtotal-main">
                   {savedAppliedCoinValue > 0 && (
-                    <div
-                      style={{
-                        display: "block",
-                        width: "100%",
-                        color: "#077807",
-                        marginTop: "6px",
-                        fontSize: "13px",
-                        lineHeight: "18px",
-                      }}
-                    >
+                    <div className="cart-mcoin-discount">
                       M Coin Discount Applied: - ₹ {twoDecimal(savedAppliedCoinValue)}
                     </div>
                   )}

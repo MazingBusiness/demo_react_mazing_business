@@ -14,7 +14,20 @@ import {
   getMCoin,
   removeMCoin,
   getAvailableMCoin,
+  sendQuotation,
 } from "../api/apiRequest.jsx";
+
+function getStoredStaffUserTitle() {
+  const raw = localStorage.getItem("mazingBusinessStaffUserTitle");
+  if (!raw) return "";
+
+  try {
+    const parsed = JSON.parse(raw);
+    return String(parsed || "");
+  } catch {
+    return String(raw || "").replace(/^"|"$/g, "");
+  }
+}
 
 const CartSummary = ({
   isCartVisible,
@@ -57,6 +70,13 @@ const CartSummary = ({
   const [payWithMCoin, setPayWithMCoin] = useState(false);
 
   const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [quotationLoading, setQuotationLoading] = useState(false);
+  const staffUserTitle = getStoredStaffUserTitle();
+  const canSendQuotation =
+    location.pathname === "/confirmation" &&
+    ["manager", "head manager"].includes(
+      String(staffUserTitle || "").trim().toLowerCase()
+    );
 
   // ✅ no hardcoded redeem point, only safe guard
   const hasValidRedeemPoint = Number(mCoinRedeemPoint) > 0;
@@ -473,6 +493,21 @@ const CartSummary = ({
     }
   };
 
+  const handleSendQuotation = async () => {
+    if (quotationLoading) return;
+
+    try {
+      setQuotationLoading(true);
+      const data = await sendQuotation();
+      showToast("success", data?.msg || data?.message || "Quotation sent successfully.");
+    } catch (e) {
+      console.error(e);
+      showToast("error", e?.data?.msg || e?.data?.message || e?.message || "Send quotation failed");
+    } finally {
+      setQuotationLoading(false);
+    }
+  };
+
   useEffect(() => {
     document.body.style.overflow = isCartVisible ? "hidden" : "auto";
     return () => {
@@ -700,6 +735,15 @@ const CartSummary = ({
             {butnText}
             {checkoutLoading && <span className="btn-loader" />}
           </button>
+          {canSendQuotation && (
+            <button
+              className={`checkout-btn Offer-btn`}
+              onClick={handleSendQuotation}
+              disabled={quotationLoading}
+            >
+              {quotationLoading ? "SENDING..." : "SEND QUOTATION"}
+            </button>
+          )}
         </div>
       </div>
     </>

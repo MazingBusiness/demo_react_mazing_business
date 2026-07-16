@@ -478,6 +478,35 @@ export const cart = async () => {
   return data;
 };
 
+export const sendQuotation = async (user_id) => {
+  const header = getHeader();
+  if (!header) throw new Error("Authorization token missing");
+
+  const user = getLoggedInUser();
+  const finalUserId = user_id ?? user?.id;
+  if (!finalUserId) throw new Error("Missing user_id for send quotation");
+
+  const res = await fetch(`${API_BASE_URL}cart/send-quotation`, {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+      ...(header.headers || {}),
+    },
+    body: JSON.stringify({
+      user_id: finalUserId,
+    }),
+  });
+
+  const data = await res.json();
+  if (!res.ok || data?.res === false) {
+    const error = new Error(data?.msg || data?.message || "Send quotation failed");
+    error.data = data;
+    throw error;
+  }
+  return data;
+};
+
 export const updateQuantity = async ({ id, quantity, product_id, cart_id, staffUserTitle }) => {
   const header = getHeader();
   if (!header) throw new Error("Authorization token missing");
