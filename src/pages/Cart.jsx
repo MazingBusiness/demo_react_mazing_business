@@ -35,6 +35,7 @@ import {
   statementDownload,
   updateProductQty,
   updateCartItemPrice,
+  updateCartItemPriceWithSuperPrice,
   applyMCoin, 
   getMCoin, 
   removeMCoin,
@@ -57,6 +58,18 @@ function getStoredStaffId() {
 
   // if decode succeeded return decoded, else return original string
   return decoded ? String(decoded) : String(val || "");
+}
+
+function getStoredStaffUserTitle() {
+  const raw = localStorage.getItem("mazingBusinessStaffUserTitle");
+  if (!raw) return "";
+
+  try {
+    const parsed = JSON.parse(raw);
+    return String(parsed || "");
+  } catch {
+    return String(raw || "").replace(/^"|"$/g, "");
+  }
 }
 
 function safeBase64Decode(input) {
@@ -113,6 +126,19 @@ const fastDeliveryTag = (product) => {
 const twoDecimal = (value) => {
   const numeric = Number(String(value ?? 0).replace(/,/g, ""));
   return Number.isFinite(numeric) ? numeric.toFixed(2) : "0.00";
+};
+
+const parseMoney = (value) => {
+  const numeric = Number(String(value ?? "").replace(/[^0-9.]/g, ""));
+  return Number.isFinite(numeric) ? numeric : 0;
+};
+
+const getSuperPrice = (item) =>
+  parseMoney(item?.super_price ?? item?.product?.super_price);
+
+const getSuperPriceMinQty = (item) => {
+  const superPrice = getSuperPrice(item);
+  return superPrice > 0 ? Math.ceil(25000 / superPrice) : 0;
 };
 
 const Cart = ({ isCartVisible, toggleCart }) => {
@@ -396,10 +422,48 @@ const Cart = ({ isCartVisible, toggleCart }) => {
 
   // Edit Price -----
   const staffId = useMemo(() => getStoredStaffId(), []);
+  const staffUserTitle = useMemo(() => getStoredStaffUserTitle(), []);
   const PRICE_EDIT_STAFF = useMemo(() => new Set(["180", "169", "25606"]), []);
-  const canEditPrice = PRICE_EDIT_STAFF.has(String(staffId || ""));
+  const normalizedStaffUserTitle = String(staffUserTitle || "")
+    .trim()
+    .toLowerCase()
+    .replace(/_/g, " ");
+  const canUpdateSuperPrice = normalizedStaffUserTitle === "manager";
+  const isHeadManager = normalizedStaffUserTitle === "head manager";
+  const canEditPrice = canUpdateSuperPrice || PRICE_EDIT_STAFF.has(String(staffId || ""));
   const [editPriceById, setEditPriceById] = useState({});      // { [itemId]: "123" }
   const [priceUpdatingById, setPriceUpdatingById] = useState({}); // { [itemId]: true/false }
+  const [superPriceUnlockedById, setSuperPriceUnlockedById] = useState({});
+  const [superPriceMessagesById, setSuperPriceMessagesById] = useState({});
+  const superPriceMessageTimersRef = useRef({});
+
+  const showSuperPriceMessage = (itemId, type, message) => {
+    if (superPriceMessageTimersRef.current[itemId]) {
+      clearTimeout(superPriceMessageTimersRef.current[itemId]);
+    }
+
+    setSuperPriceMessagesById((prev) => ({
+      ...prev,
+      [itemId]: { type, message },
+    }));
+
+    superPriceMessageTimersRef.current[itemId] = setTimeout(() => {
+      setSuperPriceMessagesById((prev) => {
+        const next = { ...prev };
+        delete next[itemId];
+        return next;
+      });
+      delete superPriceMessageTimersRef.current[itemId];
+    }, 5000);
+  };
+
+  useEffect(() => {
+    return () => {
+      Object.values(superPriceMessageTimersRef.current).forEach((timer) =>
+        clearTimeout(timer)
+      );
+    };
+  }, []);
   useEffect(() => {
     const map = {};
     cartItems.forEach((it) => (map[it.id] = String(it.price ?? "")));
@@ -411,19 +475,66 @@ const Cart = ({ isCartVisible, toggleCart }) => {
     const priceStr = editPriceById[itemId];
     const priceNum = Number(priceStr);
     if (!Number.isFinite(priceNum) || priceNum <= 0) {
-      alert("Enter valid price");
+      if (canUpdateSuperPrice) {
+        showSuperPriceMessage(itemId, "error", "Enter valid price");
+      } else {
+        showToast("error", "Enter valid price");
+      }
       return;
     }
     try {
       setPriceUpdatingById((p) => ({ ...p, [itemId]: true }));
-      await updateCartItemPrice({ id: itemId, price: priceNum });
+      const updatePrice = canUpdateSuperPrice
+        ? updateCartItemPriceWithSuperPrice
+        : updateCartItemPrice;
+      const data = await updatePrice({ id: itemId, price: priceNum });
+      const updatedPrice = Number(data?.price ?? priceNum);
+      const updatedQuantity = data?.quantity != null ? Number(data.quantity) : null;
+      const normalPrice = data?.normal_price != null ? Number(data.normal_price) : null;
+      const superPrice = data?.super_price != null ? Number(data.super_price) : null;
       // ✅ update UI locally (or call your fetchCart())
       setCartItems((prev) =>
-        prev.map((x) => (x.id === itemId ? { ...x, price: priceNum } : x))
+        prev.map((x) =>
+          x.id === itemId
+            ? {
+                ...x,
+                price: updatedPrice,
+                ...(normalPrice ? { normal_price: normalPrice } : {}),
+                ...(superPrice ? { super_price: superPrice } : {}),
+                ...(updatedQuantity ? { quantity: updatedQuantity } : {}),
+              }
+            : x
+        )
       );
+      setEditPriceById((prev) => ({ ...prev, [itemId]: String(updatedPrice) }));
+
+      if (canUpdateSuperPrice) {
+        showSuperPriceMessage(itemId, "success", data?.msg || "Price had updated.");
+      } else {
+        showToast("success", data?.msg || "Price had updated.");
+      }
+      window.dispatchEvent(new Event("cart-updated"));
     } catch (err) {
       console.error(err);
-      alert(err?.message || "Price update failed");
+      const message = err?.data?.msg || err?.message || "Price update failed";
+      if (canUpdateSuperPrice) {
+        if (String(message).toLowerCase().includes("less than super price")) {
+          const refreshedItems = await cartPageData();
+          const cartItem = refreshedItems.find(
+            (item) => String(item.id) === String(itemId)
+          );
+
+          if (cartItem?.price != null) {
+            setEditPriceById((prev) => ({
+              ...prev,
+              [itemId]: String(cartItem.price),
+            }));
+          }
+        }
+        showSuperPriceMessage(itemId, "error", message);
+      } else {
+        showToast("error", message);
+      }
     } finally {
       setPriceUpdatingById((p) => ({ ...p, [itemId]: false }));
     }
@@ -508,9 +619,14 @@ const Cart = ({ isCartVisible, toggleCart }) => {
         // ✅ if cart changed, clean selections that no longer exist
         setSelectedCartIds((prev) => prev.filter((id) => cart_item.some((x) => String(x.id) === String(id))));
         setSelectedSavedIds((prev) => prev.filter((id) => save_for_later.some((x) => String(x.id) === String(id))));
+
+        return cart_item;
       }
+
+      return [];
     } catch (e) {
       console.error(e);
+      return [];
     } finally {
       setCartLoading(false);
     }
@@ -585,14 +701,31 @@ const Cart = ({ isCartVisible, toggleCart }) => {
 
     qtyTimersRef.current[itemId] = setTimeout(async () => {
       try {
-        await updateQuantity({ cart_id: itemId, quantity: newQty });
+        const previousItem = (cartItemsRef.current || []).find((x) => x.id === itemId);
+        const previousPrice = Number(previousItem?.price || 0);
+
+        await updateQuantity({
+          cart_id: itemId,
+          quantity: newQty,
+          staffUserTitle,
+        });
 
         const currentItem = (cartItemsRef.current || []).find((x) => x.id === itemId);
         if (currentItem) {
           await checkQtyAlert({ ...currentItem, quantity: newQty });
         }
 
-        await cartPageData();
+        const refreshedItems = await cartPageData();
+        const refreshedItem = refreshedItems.find((x) => x.id === itemId);
+        const refreshedPrice = Number(refreshedItem?.price || 0);
+
+        if (canUpdateSuperPrice && refreshedPrice > previousPrice + 0.009) {
+          showSuperPriceMessage(
+            itemId,
+            "warning",
+            "Price had change because of the quantity is less than the super price quantity"
+          );
+        }
       } catch (err) {
         console.error(err);
         await cartPageData();
@@ -619,9 +752,25 @@ const Cart = ({ isCartVisible, toggleCart }) => {
 
       setUpdatingQty((p) => ({ ...p, [itemId]: true }));
       try {
-        await updateQuantity({ cart_id: itemId, quantity: Number(item.quantity || 1) });
+        const previousPrice = Number(item?.price || 0);
+
+        await updateQuantity({
+          cart_id: itemId,
+          quantity: Number(item.quantity || 1),
+          staffUserTitle,
+        });
         await checkQtyAlert(item);
-        await cartPageData();
+        const refreshedItems = await cartPageData();
+        const refreshedItem = refreshedItems.find((x) => x.id === itemId);
+        const refreshedPrice = Number(refreshedItem?.price || 0);
+
+        if (canUpdateSuperPrice && refreshedPrice > previousPrice + 0.009) {
+          showSuperPriceMessage(
+            itemId,
+            "warning",
+            "Price had change because of the quantity is less than the super price quantity"
+          );
+        }
       } catch (err) {
         console.error(err);
         await cartPageData();
@@ -714,7 +863,11 @@ const Cart = ({ isCartVisible, toggleCart }) => {
   };
 
   const deleteFromCart = async (id, qty) => {
-    await updateQuantity({ cart_id: id, quantity: Number(qty) }); // ✅ number
+    await updateQuantity({
+      cart_id: id,
+      quantity: Number(qty),
+      staffUserTitle,
+    });
     await cartPageData();
   };
 
@@ -1008,40 +1161,112 @@ const Cart = ({ isCartVisible, toggleCart }) => {
                                   )}
                                 </td>
 
-                                <td className="cartprice" data-label="Price">
+                                <td
+                                  className={`cartprice ${
+                                    canEditPrice || isHeadManager ? "cart-price-editor-cell" : ""
+                                  }`}
+                                  data-label="Price"
+                                >
                                   {canEditPrice ? (
-                                    <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                                      <span>₹</span>
+                                    <div>
+                                      <div className="cart-price-edit-row">
+                                        {(!canUpdateSuperPrice ||
+                                          superPriceUnlockedById[item.id]) && (
+                                          <>
+                                            <span>₹</span>
+                                            <input
+                                              type="number"
+                                              min="0"
+                                              step="0.01"
+                                              value={editPriceById[item.id] ?? ""}
+                                              onChange={(e) =>
+                                                setEditPriceById((prev) => ({
+                                                  ...prev,
+                                                  [item.id]: e.target.value,
+                                                }))
+                                              }
+                                              className="cart-price-edit-input"
+                                            />
+                                          </>
+                                        )}
 
-                                      <input
-                                        type="number"
-                                        min="0"
-                                        step="0.01"
-                                        value={editPriceById[item.id] ?? ""}
-                                        onChange={(e) =>
-                                          setEditPriceById((p) => ({ ...p, [item.id]: e.target.value }))
-                                        }
-                                        style={{ width: 90, padding: "6px 8px" }}
-                                      />
+                                        {canUpdateSuperPrice &&
+                                          !superPriceUnlockedById[item.id] && (
+                                          <span className="cart-price-readonly">
+                                            ₹ {twoDecimal(item.price)}
+                                          </span>
+                                        )}
 
-                                      <button type="button" onClick={() => handleUpdatePrice(item.id)} disabled={!!priceUpdatingById[item.id]}
-                                        style={{
-                                          padding: "6px 10px",
-                                          borderRadius: 6,
-                                          border: "1px solid #ddd",
-                                          cursor: "pointer",
-                                          background: "aqua"
-                                        }}
-                                      >
-                                        {priceUpdatingById[item.id] ? "Updating..." : "Update"}
-                                      </button>
+                                        {canUpdateSuperPrice &&
+                                        !superPriceUnlockedById[item.id] ? (
+                                          <button
+                                            type="button"
+                                            onClick={() =>
+                                              setSuperPriceUnlockedById((prev) => ({
+                                                ...prev,
+                                                [item.id]: true,
+                                              }))
+                                            }
+                                            className="cart-unlock-super-price-btn"
+                                          >
+                                            Unlock Super Price
+                                          </button>
+                                        ) : (
+                                          <button
+                                            type="button"
+                                            onClick={() => handleUpdatePrice(item.id)}
+                                            disabled={!!priceUpdatingById[item.id]}
+                                            className={`cart-price-update-btn ${
+                                              priceUpdatingById[item.id] ? "is-loading" : ""
+                                            }`}
+                                          >
+                                            {priceUpdatingById[item.id]
+                                              ? "Updating..."
+                                              : "Update"}
+                                          </button>
+                                        )}
+                                      </div>
+
+                                      {((canUpdateSuperPrice &&
+                                        superPriceUnlockedById[item.id]) ||
+                                        isHeadManager) &&
+                                        getSuperPrice(item) > 0 && (
+                                          <div className="cart-super-price-note">
+                                            Special price cannot be less than{" "}
+                                            <strong>
+                                              ₹ {twoDecimal(getSuperPrice(item))}
+                                            </strong>
+                                            . Minimum quantity will be{" "}
+                                            <strong>{getSuperPriceMinQty(item)}</strong> or more.
+                                          </div>
+                                        )}
+
+                                      {superPriceMessagesById[item.id] && (
+                                        <div
+                                          className={`cart-super-price-feedback is-${
+                                            superPriceMessagesById[item.id].type
+                                          }`}
+                                        >
+                                          {superPriceMessagesById[item.id].message}
+                                        </div>
+                                      )}
                                     </div>
                                   ) : (
-                                    <>₹ {twoDecimal(item.price)}</>
+                                    <div>
+                                      <span>₹ {twoDecimal(item.price)}</span>
+                                      {isHeadManager && getSuperPrice(item) > 0 && (
+                                        <div className="cart-super-price-note">
+                                          Special price cannot be less than{" "}
+                                          <strong>₹ {twoDecimal(getSuperPrice(item))}</strong>.
+                                          Minimum quantity will be{" "}
+                                          <strong>{getSuperPriceMinQty(item)}</strong> or more.
+                                        </div>
+                                      )}
+                                    </div>
                                   )}
                                 </td>
 
-                                <td className="narrow3" data-label="Quantity">
+                                <td className="narrow3 cart-quantity-cell" data-label="Quantity">
                                   <input
                                     type="number"
                                     min="1"
@@ -1054,7 +1279,7 @@ const Cart = ({ isCartVisible, toggleCart }) => {
                                   )}
                                 </td>
 
-                                <td className="cartprice" data-label="Total">
+                                <td className="cartprice cart-total-cell" data-label="Total">
                                   ₹ {twoDecimal(Number(item.quantity || 1) * Number(item.price || 0))}
                                 </td>
 
