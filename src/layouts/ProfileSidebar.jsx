@@ -1,6 +1,6 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { NavLink, useLocation, useNavigate  } from "react-router-dom";
-import userImage from "../assets/images/pic2.png";
+import defaultUserImage from "../assets/images/pic2.png";
 import icon1 from "../assets/icons/sidemenuIcon1.svg";
 import icon2 from "../assets/icons/sidemenuIcon2.svg";
 import icon3 from "../assets/icons/sidemenuIcon3.svg";
@@ -11,12 +11,47 @@ import icon7 from "../assets/icons/sidemenuIcon7.svg";
 import icon8 from "../assets/icons/sidemenuIcon8.svg";
 import icon9 from "../assets/icons/sidemenuIcon9.svg";
 import { getLoggedInUser } from "../utils/authUtils";
+import { userDetails } from "../api/apiRequest";
 
 const ProfileSidebar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const currentPath = location.pathname;
-  const user = getLoggedInUser();
+  const [user, setUser] = useState(getLoggedInUser());
+
+  useEffect(() => {
+    const loadUser = async () => {
+      try {
+        const response = await userDetails();
+        const currentUser = response?.data?.userDetails
+          ?? response?.data?.user
+          ?? response?.userDetails
+          ?? response?.user
+          ?? response?.data
+          ?? response;
+
+        if (currentUser) {
+          setUser((existingUser) => ({ ...existingUser, ...currentUser }));
+        }
+      } catch (error) {
+        console.error("Failed to load sidebar user details:", error);
+      }
+    };
+
+    const handleProfileUpdated = (event) => {
+      if (event.detail) {
+        setUser((existingUser) => ({ ...existingUser, ...event.detail }));
+      } else {
+        loadUser();
+      }
+    };
+
+    loadUser();
+    window.addEventListener("user-profile-updated", handleProfileUpdated);
+
+    return () =>
+      window.removeEventListener("user-profile-updated", handleProfileUpdated);
+  }, []);
   // console.log("✅ Logged In User:", user);
 
   // ✅ Define aliases: key = currentPath, value = base route to activate
@@ -34,15 +69,30 @@ const ProfileSidebar = () => {
   // Get the active path from aliases, or fallback to current path
   const resolvedPath = routeAliases[currentPath] || currentPath;
 
+  const profileImage = user?.avatar_original
+    ? user.avatar_original.replace(
+        "/mazing_business_react/user_profile_pic/",
+        "/mazing_business_react/public/user_profile_pic/"
+      )
+    : defaultUserImage;
+
   // Helper function to determine active route
   const isActive = (targetPath) => resolvedPath === targetPath;
 
   return (
     <aside className="profile-sidebar">
       <div className="profile-card">
-        <img src={userImage} alt="User" className="user-image" />
+        <img
+          src={profileImage}
+          alt="User"
+          className="user-image"
+          onError={(event) => {
+            event.currentTarget.onerror = null;
+            event.currentTarget.src = defaultUserImage;
+          }}
+        />
         <div className="user-info">
-          <h3>{user?.first_name || "Guest User"}</h3>
+          <h3>{user?.name || user?.first_name || "Guest User"}</h3>
           <p className="party-code">
             Party Code: <span>{user?.party_code || ""}</span>
           </p>
@@ -95,7 +145,7 @@ const ProfileSidebar = () => {
           </span>
           <span className="menu-title">Mcoin Statement</span>
         </NavLink>
-        {/*<NavLink
+        <NavLink
           to="/manage-profile"
           className={`sidebar-menu-item ${
             isActive("/manage-profile") ? "active" : ""
@@ -106,7 +156,7 @@ const ProfileSidebar = () => {
           </span>
           <span className="menu-title">Manage Profile</span>
         </NavLink>
-         <NavLink
+        {/* <NavLink
           to="/rewards"
           className={`sidebar-menu-item ${
             isActive("/rewards") ? "active" : ""

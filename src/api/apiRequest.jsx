@@ -990,6 +990,180 @@ export const userDetails = async () => {
   return json;
 };
 
+export const updateBasicInfo = async (basicInfo, photo = null) => {
+  const header = getHeader();
+  const formData = new FormData();
+
+  formData.append("name", basicInfo.fullName);
+  formData.append("company_name", basicInfo.companyName);
+  formData.append("aadhar_card", basicInfo.aadharNumber);
+  formData.append("phone", basicInfo.phoneNumber);
+  formData.append("gstin", basicInfo.gstin);
+
+  if (photo) {
+    formData.append("photo", photo);
+  }
+
+  const res = await fetch(`${API_BASE_URL}user/update-basic-Info`, {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      ...(header?.headers || {}),
+    },
+    body: formData,
+  });
+  const json = await res.json();
+
+  if (!res.ok || json?.res === false) {
+    throw new Error(json?.msg || json?.message || `HTTP ${res.status}`);
+  }
+
+  return json;
+};
+
+export const updatePassword = async ({ newPassword, confirmPassword }) => {
+  const header = getHeader();
+
+  const res = await fetch(`${API_BASE_URL}user/update-password`, {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+      ...(header?.headers || {}),
+    },
+    body: JSON.stringify({
+      new_password: newPassword,
+      confirm_password: confirmPassword,
+    }),
+  });
+  const json = await res.json();
+
+  if (!res.ok || json?.res === false) {
+    throw new Error(json?.msg || json?.message || `HTTP ${res.status}`);
+  }
+
+  return json;
+};
+
+export const updateEmail = async (email) => {
+  const header = getHeader();
+
+  const res = await fetch(`${API_BASE_URL}user/update-email`, {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+      ...(header?.headers || {}),
+    },
+    body: JSON.stringify({ email }),
+  });
+  const json = await res.json();
+
+  if (!res.ok || json?.res === false) {
+    throw new Error(json?.msg || json?.message || `HTTP ${res.status}`);
+  }
+
+  return json;
+};
+
+export const updateSetDefaultAddress = async (addressId) => {
+  const header = getHeader();
+
+  const res = await fetch(`${API_BASE_URL}user/update-set-default-address`, {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+      ...(header?.headers || {}),
+    },
+    body: JSON.stringify({ address_id: addressId }),
+  });
+  const json = await res.json();
+
+  if (!res.ok || json?.res === false) {
+    throw new Error(json?.msg || json?.message || `HTTP ${res.status}`);
+  }
+
+  return json;
+};
+
+export const getStateList = async () => {
+  const header = getHeader();
+  const res = await fetch(`${API_BASE_URL}user/state`, {
+    method: "GET",
+    headers: { Accept: "application/json", ...(header?.headers || {}) },
+  });
+  const json = await res.json();
+
+  if (!res.ok || json?.res === false) {
+    throw new Error(json?.msg || json?.message || `HTTP ${res.status}`);
+  }
+
+  return json;
+};
+
+export const updateAddress = async (address) => {
+  const header = getHeader();
+  const res = await fetch(`${API_BASE_URL}user/update-address`, {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+      ...(header?.headers || {}),
+    },
+    body: JSON.stringify({
+      address_id: address.id,
+      aadhar_card: address.aadharCard || null,
+      company_name: address.companyName,
+      address: address.address,
+      address_2: address.address2,
+      postal_code: address.postalCode,
+      city: address.city,
+      state_id: address.stateId,
+      phone: address.phone,
+    }),
+  });
+  const json = await res.json();
+
+  if (!res.ok || json?.res === false) {
+    throw new Error(json?.msg || json?.message || `HTTP ${res.status}`);
+  }
+
+  return json;
+};
+
+export const addAddress = async (address) => {
+  const header = getHeader();
+  const res = await fetch(`${API_BASE_URL}user/add-address`, {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+      ...(header?.headers || {}),
+    },
+    body: JSON.stringify({
+      gstin: address.gstin?.trim() || null,
+      company_name: address.companyName,
+      address: address.address,
+      address_2: address.address2 || "",
+      postal_code: address.postalCode,
+      city: address.city,
+      city_id: null,
+      state_id: address.stateId,
+      country_id: 101,
+      phone: address.phone,
+      aadhar_card: address.aadharCard || null,
+    }),
+  });
+  const json = await res.json();
+
+  if (!res.ok || json?.res === false) {
+    throw new Error(json?.msg || json?.message || `HTTP ${res.status}`);
+  }
+
+  return json;
+};
+
 export const getShippingAddress = async () => {
   const header = getHeader();
   const url = `${API_BASE_URL}cart/shipping-address`;

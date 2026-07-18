@@ -4927,6 +4927,7 @@ a.all-link svg {
 
 .company-card {
   position: relative;
+  cursor: pointer;
   border: 1px solid #ddd;
   border-radius: 12px;
   padding: 20px;
@@ -4984,6 +4985,15 @@ a.all-link svg {
   cursor: pointer;
   height: 70px;
   width: 70px;
+}
+
+.company-card .edit-btn .edit-icon {
+  display: block;
+  width: 22px;
+  height: 22px;
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
 }
 
 .add-btn {
@@ -5046,7 +5056,8 @@ a.all-link svg {
   font-weight: 600;
 }
 
-.modal-box input {
+.modal-box input,
+.modal-box select {
   display: block;
   width: 100%;
   margin-bottom: 10px;
@@ -8786,6 +8797,53 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   font-weight: 500;
   font-family: "Poppins", sans-serif;
   margin-bottom: 15px;
+}
+
+.modal-box .address-fields {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+
+.modal-box .gstin-check-field {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.modal-box .gstin-check-field input {
+  margin-bottom: 0;
+}
+
+.modal-box .gstin-check-field button {
+  flex: 0 0 auto;
+  margin-bottom: 0;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 6px;
+  background: #004b84;
+  color: #fff;
+  cursor: pointer;
+}
+
+.modal-box .gstin-check-field button:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.modal-box .gstin-message {
+  margin: -7px 0 10px;
+  font-size: 13px;
+}
+
+.modal-box .gstin-message.success {
+  color: #198754;
+}
+
+.modal-box .gstin-message.error {
+  color: #dc3545;
 }
 
 .desc-section .description-content {
