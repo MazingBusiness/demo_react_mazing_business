@@ -410,7 +410,8 @@ const QuickOrderGrid = ({ filters, onPriceRangeUpdate }) => {
                 }}
               >
                 <img src={CartIcon} alt="CartIcon" /> Add to Cart
-              {/* </button><button
+               </button>
+               {/*<button
                 type="button"
                 className="quick-wishlist-btn"
                 aria-label="Add to wishlist"
