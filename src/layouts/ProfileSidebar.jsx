@@ -156,18 +156,7 @@ const ProfileSidebar = () => {
           </span>
           <span className="menu-title">Manage Profile</span>
         </NavLink>
-        {/* <NavLink
-          to="/rewards"
-          className={`sidebar-menu-item ${
-            isActive("/rewards") ? "active" : ""
-          }`}
-        >
-          <span className="menu-icon">
-            <img src={icon5} alt="Rewards" />
-          </span>
-          <span className="menu-title">Rewards</span>
-        </NavLink>
-
+         
         <NavLink
           to="/wishlist"
           className={`sidebar-menu-item ${
@@ -178,6 +167,17 @@ const ProfileSidebar = () => {
             <img src={icon6} alt="Wishlist" />
           </span>
           <span className="menu-title">Wishlist</span>
+        </NavLink>
+        {/* <NavLink
+          to="/rewards"
+          className={`sidebar-menu-item ${
+            isActive("/rewards") ? "active" : ""
+          }`}
+        >
+          <span className="menu-icon">
+            <img src={icon5} alt="Rewards" />
+          </span>
+          <span className="menu-title">Rewards</span>
         </NavLink>
 
         <NavLink

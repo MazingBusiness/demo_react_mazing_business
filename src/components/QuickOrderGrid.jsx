@@ -7,6 +7,7 @@ import CartIcon from "../assets/icons/CartIcon.svg";
 import warrantyIcon from "../assets/icons/warranty.jpeg";
 
 import { FiHeart } from "react-icons/fi";
+import Swal from "sweetalert2";
 
 import ProductModal from "./ProductModal.jsx";
 import {
@@ -17,6 +18,8 @@ import {
   deletePdfFile,
   generateExcelFileName,
   getExcelQuickOrderProduct,
+  addToWishlist,
+  removeFromWishlist,
 } from "../api/apiRequest.jsx";
 import { getLoggedInUser } from "../utils/authUtils.js";
 
@@ -25,9 +28,39 @@ const QuickOrderGrid = ({ filters, onPriceRangeUpdate }) => {
   const loaderRef = useRef(null);
   const user = getLoggedInUser();
 
+  const showToast = (icon, title) => {
+    Swal.fire({
+      target: document.body,
+      toast: true,
+      position: "top-end",
+      icon,
+      title,
+      showConfirmButton: false,
+      timer: 2500,
+      timerProgressBar: true,
+      customClass: {
+        container: "swal-toast-container",
+        popup: "swal-toast-popup",
+      },
+    });
+  };
+
   const [totalRecord, setTotalRecord] = useState(0);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [wishlistLoadingIds, setWishlistLoadingIds] = useState([]);
+
+  useEffect(() => {
+    const handleWishlistUpdated = (event) => {
+      const { productId, wish_list_flag } = event.detail || {};
+      setProducts((current) => current.map((item) =>
+        item.id === productId ? { ...item, wish_list_flag } : item
+      ));
+    };
+
+    window.addEventListener("wishlist-updated", handleWishlistUpdated);
+    return () => window.removeEventListener("wishlist-updated", handleWishlistUpdated);
+  }, []);
 
   const [currentPage, setCurrentPage] = useState(1);
   const productsPerPage = 16;
@@ -200,6 +233,7 @@ const QuickOrderGrid = ({ filters, onPriceRangeUpdate }) => {
             reviews: item.reviews || [],
             earnMCoin: earnMCoin || 0,
             c_instock_m_coin: cInstockMCoin || 0,
+            wish_list_flag: Number(item.wish_list_flag || 0),
           };
         });
 
@@ -225,6 +259,54 @@ const QuickOrderGrid = ({ filters, onPriceRangeUpdate }) => {
       setHasMore(false);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleWishlistClick = async (event, product) => {
+    event.stopPropagation();
+
+    if (wishlistLoadingIds.includes(product.id)) return;
+
+    const isWishlisted = Number(product.wish_list_flag) === 1;
+
+    if (isWishlisted) {
+      const confirmation = await Swal.fire({
+        title: "Are you sure you want to remove from your wishlist?",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonText: "Sure",
+        cancelButtonText: "Cancel",
+        confirmButtonColor: "#d70000",
+        reverseButtons: true,
+      });
+
+      if (!confirmation.isConfirmed) return;
+    }
+
+    setWishlistLoadingIds((current) => [...current, product.id]);
+
+    try {
+      const response = isWishlisted
+        ? await removeFromWishlist(product.id)
+        : await addToWishlist(product.id);
+
+      if (response?.res === false) {
+        showToast("error", response?.msg || response?.message || "Unable to update wishlist.");
+        return;
+      }
+
+      setProducts((current) => current.map((item) =>
+        item.id === product.id
+          ? { ...item, wish_list_flag: isWishlisted ? 0 : 1 }
+          : item
+      ));
+      showToast("success", response?.msg || response?.message || (isWishlisted
+        ? "Product removed from wishlist."
+        : "Product added to wishlist."));
+    } catch (error) {
+      showToast("error", error?.message || "Unable to update wishlist.");
+    } finally {
+      setWishlistLoadingIds((current) => current.filter((id) => id !== product.id));
     }
   };
 
@@ -399,6 +481,16 @@ const QuickOrderGrid = ({ filters, onPriceRangeUpdate }) => {
 
         {product.user_id != null && (
           <>
+            <button
+              type="button"
+              className={`quick-wishlist-btn quick-order-wishlist-btn${Number(product.wish_list_flag) === 1 ? " is-wishlisted" : ""}`}
+              aria-label={Number(product.wish_list_flag) === 1 ? "Remove from wishlist" : "Add to wishlist"}
+              disabled={wishlistLoadingIds.includes(product.id)}
+              onClick={(e) => handleWishlistClick(e, product)}
+            >
+              <FiHeart aria-hidden="true" />
+            </button>
+
             <div className="btnGrp">
               
               <button
@@ -410,15 +502,7 @@ const QuickOrderGrid = ({ filters, onPriceRangeUpdate }) => {
                 }}
               >
                 <img src={CartIcon} alt="CartIcon" /> Add to Cart
-               </button>
-               {/*<button
-                type="button"
-                className="quick-wishlist-btn"
-                aria-label="Add to wishlist"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <FiHeart aria-hidden="true" />
-              </button> */}
+              </button>
             </div>
 
             {Number(product.cash_and_carry_item) === 1 && (

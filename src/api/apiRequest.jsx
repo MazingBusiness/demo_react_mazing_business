@@ -229,6 +229,73 @@ export const getQuickOrderProduct = async (
   return response;
 };
 
+export const addToWishlist = async (product_id) => {
+  const header = getHeader();
+  const user = getLoggedInUser();
+  const userId = user?.id ?? user?.user?.id ?? user?.data?.id;
+  const params = new URLSearchParams();
+  params.append("product_id", product_id);
+  if (userId) {
+    params.append("user_id", userId);
+  }
+
+  const response = await fetch(`${API_BASE_URL}product/add-to-wishlist?${params.toString()}`, {
+    method: "GET",
+    headers: {
+      ...(header?.headers || {}),
+      Accept: "application/json",
+    },
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(data?.msg || data?.message || `Wishlist request failed (${response.status}).`);
+  }
+
+  return data;
+};
+
+export const removeFromWishlist = async (product_id) => {
+  const header = getHeader();
+  const params = new URLSearchParams();
+  params.append("product_id", product_id);
+
+  const response = await fetch(`${API_BASE_URL}product/remove-from-wishlist?${params.toString()}`, {
+    method: "GET",
+    headers: {
+      ...(header?.headers || {}),
+      Accept: "application/json",
+    },
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(data?.msg || data?.message || `Wishlist request failed (${response.status}).`);
+  }
+
+  return data;
+};
+
+export const getWishList = async () => {
+  const header = getHeader();
+  if (!header) throw new Error("Authorization token missing");
+
+  const response = await fetch(`${API_BASE_URL}product/wishlist-list-products`, {
+    method: "GET",
+    headers: {
+      ...(header.headers || {}),
+      Accept: "application/json",
+    },
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok || data?.res === false) {
+    throw new Error(data?.msg || data?.message || "Unable to load wishlist products.");
+  }
+
+  return data;
+};
+
 export const getBetaQuickOrderProduct = async (
   cat_groups,
   categories,

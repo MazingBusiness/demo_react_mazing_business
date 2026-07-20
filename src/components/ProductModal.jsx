@@ -11,8 +11,9 @@ import { FiDownload, FiSettings, FiX, FiHeart } from "react-icons/fi";
 import CartbtnIcon from "../assets/icons/cartbtnIcon.svg";
 import CartIconPlus from "../assets/icons/cartIconplus.svg";
 import { GoDotFill } from "react-icons/go";
+import Swal from "sweetalert2";
 
-import { getProductDetails, getGenericProducts, getMasterProducts, addToCart, updateProductQty, downloadGenericProductList } from "../api/apiRequest";
+import { getProductDetails, getGenericProducts, getMasterProducts, addToCart, updateProductQty, downloadGenericProductList, addToWishlist, removeFromWishlist } from "../api/apiRequest";
 import { getLoggedInUser } from "../utils/authUtils";
 
 const firstValidId = (...values) =>
@@ -420,6 +421,7 @@ const ProductModal = ({ product, isOpen, onClose }) => {
   const [qtyAlert, setQtyAlert] = useState("");
   const [checkingPrice, setCheckingPrice] = useState(false);
   const [loadingProduct, setLoadingProduct] = useState(false);
+  const [wishlistLoading, setWishlistLoading] = useState(false);
 
   const [genericModalOpen, setGenericModalOpen] = useState(false);
   const [selectedGenericLink, setSelectedGenericLink] = useState(null);
@@ -431,6 +433,70 @@ const ProductModal = ({ product, isOpen, onClose }) => {
   const qtySeqRef = useRef(0);
 
   const productId = product?.id;
+  const isWishlisted = Number(
+    productDetails?.wish_list_flag ?? product?.wish_list_flag ?? 0
+  ) === 1;
+
+  const showToast = (icon, title) => {
+    Swal.fire({
+      target: document.body,
+      toast: true,
+      position: "top-end",
+      icon,
+      title,
+      showConfirmButton: false,
+      timer: 2500,
+      timerProgressBar: true,
+      customClass: {
+        container: "swal-toast-container",
+        popup: "swal-toast-popup",
+      },
+    });
+  };
+
+  const handleWishlistClick = async () => {
+    const pid = productDetails?.id ?? product?.id;
+    if (!pid || wishlistLoading) return;
+
+    if (isWishlisted) {
+      const confirmation = await Swal.fire({
+        title: "Are you sure you want to remove from your wishlist?",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonText: "Sure",
+        cancelButtonText: "Cancel",
+        confirmButtonColor: "#d70000",
+        reverseButtons: true,
+      });
+
+      if (!confirmation.isConfirmed) return;
+    }
+
+    setWishlistLoading(true);
+    try {
+      const response = isWishlisted
+        ? await removeFromWishlist(pid)
+        : await addToWishlist(pid);
+
+      if (response?.res === false) {
+        showToast("error", response?.msg || response?.message || "Unable to update wishlist.");
+        return;
+      }
+
+      const nextFlag = isWishlisted ? 0 : 1;
+      setProductDetails((current) => ({ ...current, wish_list_flag: nextFlag }));
+      window.dispatchEvent(new CustomEvent("wishlist-updated", {
+        detail: { productId: pid, wish_list_flag: nextFlag },
+      }));
+      showToast("success", response?.msg || response?.message || (isWishlisted
+        ? "Product removed from wishlist."
+        : "Product added to wishlist."));
+    } catch (error) {
+      showToast("error", error?.message || "Unable to update wishlist.");
+    } finally {
+      setWishlistLoading(false);
+    }
+  };
 
   const rating = 3.5;
   const totalRatings = 12;
@@ -1214,9 +1280,15 @@ const ProductModal = ({ product, isOpen, onClose }) => {
                         Cart
                       </button>
                       
-                      {/* <button className="modal-wishlist-btn">
-                        <FiHeart />
-                      </button> */}
+                      <button
+                        type="button"
+                        className={`modal-wishlist-btn${isWishlisted ? " is-wishlisted" : ""}`}
+                        aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
+                        disabled={wishlistLoading}
+                        onClick={handleWishlistClick}
+                      >
+                        <FiHeart aria-hidden="true" />
+                      </button>
                     </div>
                   </div>
                 </>
