@@ -7,7 +7,7 @@ import fastDeliveryIcon from "../assets/icons/fast-delivery.svg";
 import warrantyIcon from "../assets/icons/warranty.jpeg";
 import no_image from "../assets/images/no-image.png";
 
-import { FiDownload, FiSettings, FiX } from "react-icons/fi";
+import { FiDownload, FiSettings, FiX, FiHeart } from "react-icons/fi";
 import CartbtnIcon from "../assets/icons/cartbtnIcon.svg";
 import CartIconPlus from "../assets/icons/cartIconplus.svg";
 import { GoDotFill } from "react-icons/go";
@@ -1213,6 +1213,10 @@ const ProductModal = ({ product, isOpen, onClose }) => {
                         <img src={CartbtnIcon} alt="cartbtnIcon" className="cartbtnIcon" /> Add to
                         Cart
                       </button>
+                      
+                      {/* <button className="modal-wishlist-btn">
+                        <FiHeart />
+                      </button> */}
                     </div>
                   </div>
                 </>

@@ -215,7 +215,7 @@ export const getQuickOrderProduct = async (
     queryParams.append("user_id", user.id);
   }
 
-  const url = `${API_BASE_URL}product/beta-version-quick-order?${queryParams.toString()}`;
+  const url = `${API_BASE_URL}product/quick-order?${queryParams.toString()}`;
 
   const response = await fetch(url, {
     method: "GET",

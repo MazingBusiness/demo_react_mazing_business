@@ -9,6 +9,11 @@ import Swal from "sweetalert2";
 import { useNavigate, Link } from "react-router-dom";
 
 const ManageProfile = () => {
+  const formatCompanyPhone = (value) => {
+    const phone = String(value ?? "").trim();
+    return /^\d{10}$/.test(phone) ? `+91${phone}` : phone;
+  };
+
   const [fileName, setFileName] = useState("");
   const [photo, setPhoto] = useState(null);
   const [isUpdatingBasicInfo, setIsUpdatingBasicInfo] = useState(false);
@@ -53,6 +58,12 @@ const ManageProfile = () => {
           phoneNumber: user?.phone ?? user?.phone_number ?? user?.mobile ?? "",
           gstin: user?.gstin ?? user?.gst_no ?? "",
         });
+        setNewCompany((current) => ({
+          ...current,
+          phone: formatCompanyPhone(
+            user?.phone ?? user?.phone_number ?? user?.mobile ?? ""
+          ),
+        }));
         setEmail(user?.email ?? "");
 
         const savedPhoto = user?.avatar_original
@@ -375,6 +386,10 @@ const ManageProfile = () => {
 
   const openAddModal = () => {
     setGstinMessage({ type: "", text: "" });
+    setNewCompany((current) => ({
+      ...current,
+      phone: current.phone || formatCompanyPhone(basicInfo.phoneNumber),
+    }));
     setShowAddModal(true);
     loadStates();
   };
@@ -415,6 +430,10 @@ const ManageProfile = () => {
       }
 
       if (result?.res !== false) {
+        const taxpayerInfo = result?.data?.gst_data?.taxpayerInfo
+          ?? result?.gst_data?.taxpayerInfo
+          ?? result?.data?.taxpayerInfo
+          ?? result?.taxpayerInfo;
         const gstData = result?.data?.name || result?.data?.address
           ? result.data
           : result;
@@ -425,7 +444,10 @@ const ManageProfile = () => {
 
         setNewCompany((current) => ({
           ...current,
-          companyName: gstData?.name ?? current.companyName,
+          companyName: taxpayerInfo?.tradeNam
+            ?? gstData?.tradeNam
+            ?? gstData?.name
+            ?? current.companyName,
           address: gstData?.address ?? current.address,
           address2: gstData?.address2 ?? current.address2,
           postalCode: gstData?.postal_code ?? current.postalCode,

@@ -6,6 +6,8 @@ import fastDeliveryIcon from "../assets/icons/fast-delivery.svg";
 import CartIcon from "../assets/icons/CartIcon.svg";
 import warrantyIcon from "../assets/icons/warranty.jpeg";
 
+import { FiHeart } from "react-icons/fi";
+
 import ProductModal from "./ProductModal.jsx";
 import {
   getQuickOrderProduct,
@@ -398,6 +400,7 @@ const QuickOrderGrid = ({ filters, onPriceRangeUpdate }) => {
         {product.user_id != null && (
           <>
             <div className="btnGrp">
+              
               <button
                 className="cart-btn"
                 aria-label="Add to cart"
@@ -407,7 +410,14 @@ const QuickOrderGrid = ({ filters, onPriceRangeUpdate }) => {
                 }}
               >
                 <img src={CartIcon} alt="CartIcon" /> Add to Cart
-              </button>
+              {/* </button><button
+                type="button"
+                className="quick-wishlist-btn"
+                aria-label="Add to wishlist"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <FiHeart aria-hidden="true" />
+              </button> */}
             </div>
 
             {Number(product.cash_and_carry_item) === 1 && (
