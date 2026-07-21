@@ -10039,11 +10039,21 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
 .product-grid.Quick-grid .wishlist-delete-btn img {
   position: static;
-  width: 18px;
-  height: 21px;
+  width: 16px;
+  height: 18px;
   padding: 0;
   border-radius: 0;
   object-fit: contain;
+}
+
+.product-grid.Quick-grid .wishlist-delete-btn {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  right: auto;
+  width: 32px;
+  height: 32px;
+  z-index: 3;
 }
 
 /* AboutUs.css */

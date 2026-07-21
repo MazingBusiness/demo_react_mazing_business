@@ -168,6 +168,17 @@ const ProfileSidebar = () => {
           </span>
           <span className="menu-title">Wishlist</span>
         </NavLink>
+        <NavLink
+          to="/support-tickets"
+          className={`sidebar-menu-item ${
+            isActive("/support-tickets") ? "active" : ""
+          }`}
+        >
+          <span className="menu-icon">
+            <img src={icon7} alt="Support Ticket" />
+          </span>
+          <span className="menu-title">Support Ticket</span>
+        </NavLink>
         {/* <NavLink
           to="/rewards"
           className={`sidebar-menu-item ${

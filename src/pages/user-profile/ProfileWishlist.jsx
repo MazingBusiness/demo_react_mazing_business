@@ -119,6 +119,9 @@ const ProfileWishlist = () => {
       }
 
       setProducts((current) => current.filter((item) => item.id !== product.id));
+      window.dispatchEvent(new CustomEvent("wishlist-updated", {
+        detail: { productId: product.id, wish_list_flag: 0 },
+      }));
       showToast("success", response?.msg || response?.message || "Product removed from wishlist.");
     } catch (error) {
       showToast("error", error?.message || "Unable to remove product.");
@@ -169,6 +172,16 @@ const ProfileWishlist = () => {
                     }}
                   />
 
+                  <button
+                    type="button"
+                    className="quick-wishlist-btn wishlist-delete-btn"
+                    aria-label="Remove from wishlist"
+                    disabled={removingIds.includes(product.id)}
+                    onClick={(event) => handleRemove(event, product)}
+                  >
+                    <img src={DeleteIcon} alt="" aria-hidden="true" />
+                  </button>
+
                   <div className="btnGrp">
                     <button
                       type="button"
@@ -180,15 +193,6 @@ const ProfileWishlist = () => {
                       }}
                     >
                       <img src={CartIcon} alt="CartIcon" /> Add to Cart
-                    </button>
-                    <button
-                      type="button"
-                      className="quick-wishlist-btn wishlist-delete-btn"
-                      aria-label="Remove from wishlist"
-                      disabled={removingIds.includes(product.id)}
-                      onClick={(event) => handleRemove(event, product)}
-                    >
-                      <img src={DeleteIcon} alt="" aria-hidden="true" />
                     </button>
                   </div>
                 </div>

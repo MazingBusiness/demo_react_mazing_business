@@ -6567,7 +6567,10 @@ class ProductService
     {
         try {
             $user = auth()->user();
-            $getWishlist = Wishlist::where('user_id', $user->id)->paginate(15);
+            $getWishlist = Wishlist::where('user_id', $user->id)
+                ->whereIn('product_id', Product::select('id')
+                    ->where('is_reward_product', '0'))
+                ->paginate(15);
             $newCollection = $getWishlist->getCollection()
                 ->map(function ($wishlistRow) use ($user) {
                     $productData = Product::with('thumb_img')

@@ -21,7 +21,7 @@ import MegaMenu from "./MegaMenu";
 import SearchModal from "../components/SearchModal";
 import CartSlide from "../components/CartSlide";
 
-import { cart } from "../api/apiRequest";
+import { cart, getWishList } from "../api/apiRequest";
 // import { NotificationManager } from "react-notifications"; // if you're using it
 
 // ✅ helper: read staff id safely from localStorage
@@ -57,6 +57,7 @@ const Header = () => {
   const [cartItems, setCartItems] = useState([]);
   const [cartCount, setCartCount] = useState(0);
   const [cartSubTotal, setCartSubTotal] = useState(0);
+  const [wishlistCount, setWishlistCount] = useState(0);
 
   /** store login credentials */
   const [userInfo, setUserInfo] = useState(null);
@@ -133,6 +134,28 @@ const Header = () => {
     } catch (error) {
       console.error("Fetch error:", error);
       // NotificationManager.error("Failed to load Cart", "", 2000);
+    }
+  };
+
+  const wishlistData = async () => {
+    if (!localStorage.getItem("mazingBusinessLoginInfo")) {
+      setWishlistCount(0);
+      return;
+    }
+
+    try {
+      const responseData = await getWishList();
+      const paginator = responseData?.data;
+      const list = paginator?.data
+        ?? paginator?.products
+        ?? responseData?.products
+        ?? responseData?.wishlist
+        ?? (Array.isArray(paginator) ? paginator : []);
+      const total = paginator?.total ?? responseData?.count ?? list.length;
+      setWishlistCount(Number(total) || 0);
+    } catch (error) {
+      console.error("Failed to load wishlist count:", error);
+      setWishlistCount(0);
     }
   };
 
@@ -214,6 +237,17 @@ const Header = () => {
     };
   }, []);
 
+  useEffect(() => {
+    wishlistData();
+
+    const handler = () => wishlistData();
+    window.addEventListener("wishlist-updated", handler);
+
+    return () => {
+      window.removeEventListener("wishlist-updated", handler);
+    };
+  }, []);
+
   return (
     <header className="main-header">
       <div className="top-header">
@@ -268,11 +302,12 @@ const Header = () => {
                   <img src={userIcon} alt="User" />
                 </button>
               </Link>
-
-              <button className="icon-btn badge-container" type="button">
-                <img src={wishlistIcon} alt="Wishlist" />
-                <span className="badge">0</span>
-              </button>
+              <Link to="/wishlist">
+                <button className="icon-btn badge-container" type="button">
+                  <img src={wishlistIcon} alt="Wishlist" />
+                  <span className="badge">{wishlistCount}</span>
+                </button>
+              </Link>
 
               <button
                 className="icon-btn badge-container cart-item"

@@ -300,6 +300,12 @@ const QuickOrderGrid = ({ filters, onPriceRangeUpdate }) => {
           ? { ...item, wish_list_flag: isWishlisted ? 0 : 1 }
           : item
       ));
+      window.dispatchEvent(new CustomEvent("wishlist-updated", {
+        detail: {
+          productId: product.id,
+          wish_list_flag: isWishlisted ? 0 : 1,
+        },
+      }));
       showToast("success", response?.msg || response?.message || (isWishlisted
         ? "Product removed from wishlist."
         : "Product added to wishlist."));

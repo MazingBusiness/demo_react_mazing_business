@@ -33,7 +33,7 @@ const ProfileSupportTicket = () => {
       <div>
         {/* Header section */}
         <div className="tickets-hr">
-          <div className="tickets-hrLft">
+          {/* <div className="tickets-hrLft">
             <div className="tickets-hrLft-info">
               <h4>Connect with</h4>
               <h4>Jhone Doe</h4>
@@ -44,7 +44,7 @@ const ProfileSupportTicket = () => {
             <div className="tickets-hrLft-info-img">
               <img src={Man} alt="man" />
             </div>
-          </div>
+          </div> */}
 
           <div className="tickets-hrRgt">
             <div className="tickets-hrRgt-info">
