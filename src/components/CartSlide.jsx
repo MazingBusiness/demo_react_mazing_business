@@ -1121,20 +1121,14 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
 
                                 {false && canUpdateSuperPrice && getSuperPrice(item) > 0 && (
                                   <div className="cart-super-price-note">
-                                    Special price cannot be less than{" "}
-                                    <strong>â‚¹ {twoDecimal(getSuperPrice(item))}</strong>.
-                                    Minimum quantity will be{" "}
-                                    <strong>{getSuperPriceMinQty(item)}</strong> or more.
+                                    {item?.product?.special_price_message || ""}
                                   </div>
                                 )}
                                 </div>
 
                                 {false && canUpdateSuperPrice && getSuperPrice(item) > 0 && (
                                   <div className="cart-super-price-note">
-                                    Special price cannot be less than{" "}
-                                    <strong>₹ {twoDecimal(getSuperPrice(item))}</strong>.
-                                    Minimum quantity will be{" "}
-                                    <strong>{getSuperPriceMinQty(item)}</strong> or more.
+                                    {item?.product?.special_price_message || ""}
                                   </div>
                                 )}
                             <div className="ratingGrp">
@@ -1213,10 +1207,7 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
                                   isHeadManager) &&
                                   getSuperPrice(item) > 0 && (
                                   <div className="cart-super-price-note">
-                                    Special price cannot be less than{" "}
-                                    <strong>₹ {twoDecimal(getSuperPrice(item))}</strong>.
-                                    Minimum quantity will be{" "}
-                                    <strong>{getSuperPriceMinQty(item)}</strong> or more.
+                                    {item?.product?.special_price_message || ""}
                                   </div>
                                 )}
                                 {superPriceMessagesById[item.id] && (
@@ -1234,10 +1225,7 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
                                 <span>₹ {twoDecimal(item.price)}</span>
                                 {isHeadManager && getSuperPrice(item) > 0 && (
                                   <div className="cart-super-price-note">
-                                    Special price cannot be less than{" "}
-                                    <strong>₹ {twoDecimal(getSuperPrice(item))}</strong>.
-                                    Minimum quantity will be{" "}
-                                    <strong>{getSuperPriceMinQty(item)}</strong> or more.
+                                    {item?.product?.special_price_message || ""}
                                   </div>
                                 )}
                               </div>

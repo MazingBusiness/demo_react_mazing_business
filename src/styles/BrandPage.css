@@ -1,0 +1,138 @@
+
+*{
+margin: 0;
+padding: 0;
+box-sizing: border-box;
+font-family:  sans-serif;
+}
+
+.wrapper{
+background: #F5F5F5;
+padding: 20px;
+min-height: 100vh;
+}
+
+
+.loader{
+    font-size: 25px;
+    text-align: center;
+}
+
+.container{
+    width: 90%;
+    margin: 30px auto;
+    padding: 25px;
+    background: white;
+    border-radius: 12px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 20px;
+}
+
+.card{
+background: #ffffff;
+border: 1px solid black;
+border-radius: 12px;
+padding: 26px 20px;
+display: flex;
+flex-direction: column;
+align-items: center;
+justify-content: center;
+box-shadow: 0 5px 8px rgba(0, 0, 0, 0.15);
+transition: all 0.3s ease;
+min-height: 200px;
+cursor: pointer;
+}
+
+.image{
+height: 120px;
+width: 120px;
+object-fit: contain;
+border-radius: 10px;
+margin-bottom: 10px;
+}
+
+.card h2{
+font-size: 15px;
+margin-top: 5px;
+margin-bottom: 5px;
+padding:5px;
+}
+
+.card:hover{
+transform: translateY(-6px);
+box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15)     ;
+}
+
+.search-box{
+    display: flex;
+    justify-content: flex-start;
+    width: 90%;
+     margin: 20px auto;
+}
+
+.search-wrapper{
+    position: relative;
+    width: min(450px, 100%);
+}
+
+.search-wrapper input{
+    width: 100%;
+    height: 42px;
+    padding: 10px 36px 10px 12px;
+    border-radius: 12px;
+    outline: none;
+    box-shadow: none;
+}
+
+.search-icon{
+    position: absolute;
+    top: 50%;
+    right: 12px;
+    transform: translateY(-50%);
+    width: 18px;
+    height: 16px;
+    pointer-events: none;
+}
+ @media (max-width:1200px){ /*screen width is 1200px or smaller */
+    .container{
+        width:95%;
+    }
+
+    .search-wrapper{
+        width:min(500px,100%);
+    }
+}
+
+@media (max-width:576px){
+    .wrapper{
+        padding:10px;
+    }
+
+    .container{
+        width:100%;
+        padding:12px;
+        grid-template-columns:1fr;
+        gap:15px;
+    }
+
+    .search-wrapper{
+        width:100%;
+    }
+
+    .search-wrapper input{
+        width:100%;
+        height:40px;
+        font-size:14px;
+    }
+
+    .card{
+        min-height:180px;
+        padding:15px;
+    }
+
+    .card h2{
+        text-align:center;
+        font-size:14px;
+    }
+}

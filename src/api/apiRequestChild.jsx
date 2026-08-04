@@ -102,16 +102,33 @@ export const verifyPhoneForRegistration = async (phone) => {
 // --Registraton Process APIs end--
 
 // --Login API start--
+// export const login = async (login_info) => {
+//     const response = await fetch(`${API_BASE_URL}user/login`, {
+//         method: 'POST',
+//         headers: {
+//             'Content-Type': 'application/json',
+//         },
+//         body: JSON.stringify(login_info),
+//     });
+//     return response;
+// }
+
 export const login = async (login_info) => {
     const response = await fetch(`${API_BASE_URL}user/login`, {
         method: 'POST',
+
         headers: {
             'Content-Type': 'application/json',
+            'Accept': 'application/json',
         },
+
+        credentials: 'include',
+
         body: JSON.stringify(login_info),
     });
+
     return response;
-}
+};
 
 export const loginFromAdmin = async (login_info) => {
     const response = await fetch(`${API_BASE_URL}user/login-from-admin`, {

@@ -22,6 +22,7 @@ import SearchModal from "../components/SearchModal";
 import CartSlide from "../components/CartSlide";
 
 import { cart, getWishList } from "../api/apiRequest";
+import { API_BASE_URL } from "../app_url";
 // import { NotificationManager } from "react-notifications"; // if you're using it
 
 // ✅ helper: read staff id safely from localStorage
@@ -160,12 +161,31 @@ const Header = () => {
   };
 
   /** User Logout */
-  const handleLogout = () => {
-    localStorage.removeItem("mazingBusinessLoginInfo");
-    localStorage.removeItem("mazingBusinessStaffId");
-    localStorage.removeItem("mazingBusinessStaffUserTitle");
-    setUserInfo(null);
-    navigate("/login");
+  const handleLogout = async () => {
+    try {
+      const loginInfo = JSON.parse(
+        localStorage.getItem("mazingBusinessLoginInfo") || "{}"
+      );
+      const token = loginInfo?.authorisation?.token || loginInfo?.token || "";
+
+      await fetch(`${API_BASE_URL}user/logout`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        credentials: "include",
+      });
+    } catch (error) {
+      console.error("Logout API failed:", error);
+    } finally {
+      localStorage.removeItem("mazingBusinessLoginInfo");
+      localStorage.removeItem("mazingBusinessStaffId");
+      localStorage.removeItem("mazingBusinessStaffUserTitle");
+      setUserInfo(null);
+      navigate("/login");
+    }
   };
 
   useEffect(() => {

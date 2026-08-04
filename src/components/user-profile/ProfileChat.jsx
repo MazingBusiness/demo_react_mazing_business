@@ -1,123 +1,192 @@
-import React, { useState, useRef, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useEffect, useRef, useState } from "react";
 import Send from "../../assets/icons/SendBtn.svg";
 import Attachment from "../../assets/icons/AttachmentIcon.svg";
+import { addTicketReply } from "../../api/apiRequest";
 
-const ProfileChat = () => {
-  const navigate = useNavigate();
+const FILE_BASE_URL = "https://mazingbusiness.com/";
+
+const ProfileChat = ({ ticket, onTicketUpdate }) => {
   const chatBodyRef = useRef(null);
-
-  const [messages, setMessages] = useState([
-    {
-      id: 1,
-      text: "Lorem Ipsum is simply dummy text.",
-      timestamp: "2024-11-24 01:09:12",
-      sender: "admin",
-    },
-    {
-      id: 2,
-      text: "Lorem Ipsum is simply dummy text of the printing and typesetting industry...",
-      timestamp: "2024-11-24 01:09:24",
-      sender: "user",
-    },
-  ]);
+  const fileInputRef = useRef(null);
 
   const [newMessage, setNewMessage] = useState("");
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
 
-  const handleSend = () => {
-    if (newMessage.trim()) {
-      const newMsg = {
-        id: messages.length + 1,
-        text: newMessage,
-        timestamp: new Date().toISOString().slice(0, 19).replace("T", " "),
-        sender: "user",
-      };
-      setMessages([...messages, newMsg]);
-      setNewMessage("");
-    }
+  const replies = Array.isArray(ticket?.replies) ? ticket.replies : [];
+  const ticketStatus = String(ticket?.status || "").toLowerCase();
+  const canReply = ticketStatus === "open";
+
+  const getFileUrl = (path) => {
+    if (!path) return "";
+    if (/^https?:\/\//i.test(path)) return path;
+    return `${FILE_BASE_URL}mazing_business_react/${String(path).replace(/^\/+/, "")}`;
   };
 
-  const handleFileUpload = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+  const isImageFile = (path) =>
+    /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(String(path || "").split("?")[0]);
 
-    const url = URL.createObjectURL(file);
-    const isImage = file.type.startsWith("image/");
+  const formatReplyDate = (value) => {
+    if (!value) return "";
 
-    const fileMessage = {
-      id: messages.length + 1,
-      fileUrl: url,
-      fileName: file.name,
-      isImage,
-      timestamp: new Date().toISOString().slice(0, 19).replace("T", " "),
-      sender: "user",
-    };
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return value;
 
-    setMessages((prev) => [...prev, fileMessage]);
+    const datePart = date.toLocaleDateString("en-GB", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+    const timePart = date.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    });
+
+    return `${datePart.replace(/(\d{1,2}) ([A-Za-z]+) (\d{4})/, "$1 $2, $3")} at ${timePart}`;
+  };
+
+  const handleSend = async () => {
+    if ((!newMessage.trim() && !selectedFile) || submitting) return;
+
+    setSubmitting(true);
+    setSubmitError("");
+
+    try {
+      const response = await addTicketReply({
+        ticket_id: ticket.id,
+        reply: newMessage,
+        file: selectedFile,
+      });
+
+      if (response?.data) onTicketUpdate(response.data);
+      setNewMessage("");
+      setSelectedFile(null);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    } catch (error) {
+      setSubmitError(error?.message || "Unable to submit ticket reply.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   useEffect(() => {
     if (chatBodyRef.current) {
       chatBodyRef.current.scrollTop = chatBodyRef.current.scrollHeight;
     }
-  }, [messages]);
+  }, [replies.length]);
+
+  if (ticketStatus === "pending") return null;
 
   return (
     <div className="chat-container">
       <div className="ticket-chat" ref={chatBodyRef}>
-        {messages.map((msg) => (
-          <div
-            key={msg.id}
-            className={`ticket-message ${
-              msg.sender === "user" ? "user-msg" : "admin-msg"
-            }`}
-          >
-            <div className="msg-bubble">
-              {msg.text && <p>{msg.text}</p>}
+        {replies.length === 0 && (
+          <div className="Nofound">No replies yet.</div>
+        )}
 
-              {msg.isImage && (
-                <img
-                  src={msg.fileUrl}
-                  alt={msg.fileName}
-                  className="chat-image"
-                />
-              )}
+        {replies.map((reply) => {
+          const isUserReply = Number(reply.user_id) === Number(ticket.user_id);
+          const fileUrl = getFileUrl(reply.files);
 
-              {!msg.isImage && msg.fileUrl && (
-                <a href={msg.fileUrl} target="_blank" rel="noopener noreferrer">
-                  {msg.fileName}
-                </a>
-              )}
+          return (
+            <div
+              key={reply.id}
+              className={`ticket-message ${isUserReply ? "user-msg" : "admin-msg"}`}
+            >
+              <div className="msg-bubble">
+                {reply.reply && <p>{reply.reply}</p>}
+
+                {fileUrl && isImageFile(reply.files) && (
+                  <a href={fileUrl} target="_blank" rel="noopener noreferrer">
+                    <img
+                      src={fileUrl}
+                      alt="Ticket attachment"
+                      className="chat-image"
+                    />
+                  </a>
+                )}
+
+                {fileUrl && !isImageFile(reply.files) && (
+                  <a href={fileUrl} target="_blank" rel="noopener noreferrer">
+                    View attachment
+                  </a>
+                )}
+              </div>
+              <div className="msg-time">{formatReplyDate(reply.created_at)}</div>
             </div>
-            <div className="msg-time">{msg.timestamp}</div>
-          </div>
-        ))}
+          );
+        })}
       </div>
+
+      {canReply && (
+        <>
+      {selectedFile && (
+        <div className="ticket-selected-file">
+          <div className="ticket-selected-file-icon" aria-hidden="true">
+            {selectedFile.type?.startsWith("image/") ? "IMG" : "FILE"}
+          </div>
+          <div className="ticket-selected-file-info">
+            <span title={selectedFile.name}>{selectedFile.name}</span>
+            <small>Ready to send</small>
+          </div>
+          <button
+            type="button"
+            aria-label="Remove selected attachment"
+            title="Remove attachment"
+            onClick={() => {
+              setSelectedFile(null);
+              if (fileInputRef.current) fileInputRef.current.value = "";
+            }}
+          >
+            ×
+          </button>
+        </div>
+      )}
+
+      {submitError && <p className="form-error">{submitError}</p>}
 
       <div className="ticket-input-box">
         <input
           type="text"
-          placeholder="Type here .."
+          placeholder="Type here..."
           value={newMessage}
-          onChange={(e) => setNewMessage(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && handleSend()}
+          disabled={submitting}
+          onChange={(event) => setNewMessage(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              event.preventDefault();
+              handleSend();
+            }
+          }}
         />
 
         <div className="ticket-input-boxLft">
-          <label htmlFor="attachment" className="attachment-icon">
+          <label htmlFor="ticket-reply-attachment" className="attachment-icon">
             <img src={Attachment} alt="Attachment" />
           </label>
           <input
+            ref={fileInputRef}
             type="file"
-            id="attachment"
-            onChange={handleFileUpload}
+            id="ticket-reply-attachment"
+            accept=".jpg,.jpeg,.png,.pdf,.doc,.docx"
+            disabled={submitting}
+            onChange={(event) => setSelectedFile(event.target.files?.[0] ?? null)}
             style={{ display: "none" }}
           />
-          <button className="send-btn" onClick={handleSend}>
+          <button
+            type="button"
+            className="send-btn"
+            disabled={submitting || (!newMessage.trim() && !selectedFile)}
+            onClick={handleSend}
+          >
             <img src={Send} alt="Send" />
           </button>
         </div>
       </div>
+        </>
+      )}
     </div>
   );
 };

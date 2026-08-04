@@ -5,7 +5,11 @@ import Delete from "../../assets/icons/Delete.svg";
 import { Link } from "react-router-dom";
 import { FiChevronDown } from "react-icons/fi";
 
-import { getMyOrders, downloadInvoice  } from "../../api/apiRequest";
+import {
+  getMyOrders,
+  downloadInvoice,
+  deleteDownloadedFile,
+} from "../../api/apiRequest";
 
 const OrderTable = () => {
   const [orders, setOrders] = useState([]);
@@ -107,6 +111,16 @@ const OrderTable = () => {
       }
 
       window.open(pdfUrl, "_blank", "noopener,noreferrer");
+
+      // Allow the browser time to receive the PDF before deleting the
+      // temporary server copy.
+      window.setTimeout(async () => {
+        try {
+          await deleteDownloadedFile(pdfUrl);
+        } catch (deleteError) {
+          console.error("Invoice PDF delete failed:", deleteError);
+        }
+      }, 30000);
     } catch (e) {
       alert(e?.message || "Failed to download invoice.");
     } finally {

@@ -737,6 +737,18 @@ export const getAllBrands = async (category_group_id, category_id) => {
   return response;
 };
 
+// Get Brands for the brand listing page
+export const getBrands = async () => {
+  const response = await fetch(`${API_BASE_URL}product/all-brands`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+
+  return response;
+};
+
 // Get All Brands
 export const getAllMCoinRate = async () => {
   const url = `${API_BASE_URL}product/all-mCoin-rate`;
@@ -1055,6 +1067,123 @@ export const userDetails = async () => {
   }
   const json = await res.json(); // ✅ read response body
   return json;
+};
+
+export const getSupportTickets = async (page = 1, pagination = 15) => {
+  const header = getHeader();
+  if (!header) throw new Error("Authorization token missing");
+
+  const params = new URLSearchParams();
+  params.append("page", page);
+  params.append("pagination", pagination);
+
+  const response = await fetch(
+    `${API_BASE_URL}user/suport-tickets?${params.toString()}`,
+    {
+      method: "GET",
+      headers: {
+        Accept: "application/json",
+        ...(header.headers || {}),
+      },
+    }
+  );
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok || data?.res === false) {
+    throw new Error(data?.msg || data?.message || "Unable to load support tickets.");
+  }
+
+  return data;
+};
+
+export const addSuportTickets = async ({ subject, details, photo } = {}) => {
+  const header = getHeader();
+  if (!header) throw new Error("Authorization token missing");
+
+  const formData = new FormData();
+  formData.append("subject", subject || "");
+  formData.append("details", details || "");
+  if (photo) formData.append("photo", photo);
+
+  const response = await fetch(`${API_BASE_URL}user/add-suport-tickets`, {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      ...(header.headers || {}),
+    },
+    body: formData,
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok || data?.res === false) {
+    const validationMessage = data?.errors
+      ? Object.values(data.errors).flat()[0]
+      : null;
+    throw new Error(validationMessage || data?.msg || data?.message || "Unable to submit support ticket.");
+  }
+
+  return data;
+};
+
+export const getTicketDetails = async ({ ticket_id, code } = {}) => {
+  const header = getHeader();
+  if (!header) throw new Error("Authorization token missing");
+
+  const params = new URLSearchParams();
+  if (ticket_id) params.append("ticket_id", ticket_id);
+  if (code) params.append("code", code);
+
+  const response = await fetch(
+    `${API_BASE_URL}user/get-ticket-details?${params.toString()}`,
+    {
+      method: "GET",
+      headers: {
+        Accept: "application/json",
+        ...(header.headers || {}),
+      },
+    }
+  );
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok || data?.res === false) {
+    const error = new Error(
+      data?.msg || data?.message || "Unable to load ticket details.",
+    );
+    error.status = response.status;
+    error.retryAfter = Number(response.headers.get("Retry-After")) || 0;
+    throw error;
+  }
+
+  return data;
+};
+
+export const addTicketReply = async ({ ticket_id, reply, file } = {}) => {
+  const header = getHeader();
+  if (!header) throw new Error("Authorization token missing");
+
+  const formData = new FormData();
+  formData.append("ticket_id", ticket_id || "");
+  if (reply?.trim()) formData.append("reply", reply.trim());
+  if (file) formData.append("file", file);
+
+  const response = await fetch(`${API_BASE_URL}user/add-ticket-reply`, {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      ...(header.headers || {}),
+    },
+    body: formData,
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok || data?.res === false) {
+    const validationMessage = data?.errors
+      ? Object.values(data.errors).flat()[0]
+      : null;
+    throw new Error(validationMessage || data?.msg || data?.message || "Unable to submit ticket reply.");
+  }
+
+  return data;
 };
 
 export const updateBasicInfo = async (basicInfo, photo = null) => {
@@ -1695,6 +1824,25 @@ export const getPdfQuickOrderProduct = async (
   const user = getLoggedInUser();
   const header = getHeader();
 
+  // Debug: print every parameter received by getPdfQuickOrderProduct.
+  console.log("getPdfQuickOrderProduct parameters:", {
+    file_name,
+    cat_groups,
+    categories,
+    brands,
+    m_coin_rates,
+    search_text,
+    min_price,
+    max_price,
+    location_id,
+    inhouse_product,
+    price_sort,
+    delivery,
+    page,
+    pagination,
+    user_id: user?.id ?? null,
+  });
+
   const queryParams = new URLSearchParams();
 
   if (file_name) queryParams.append("file_name", file_name);
@@ -1773,6 +1921,29 @@ export const deletePdfFile = async (file_name) => {
   return response.json();
 };
 
+export const deleteDownloadedFile = async (filePath) => {
+  const header = getHeader();
+  const queryParams = new URLSearchParams({ filePath });
+  const url = `${API_BASE_URL}user/delete-downloaded-file?${queryParams.toString()}`;
+
+  const response = await fetch(url, {
+    method: "GET",
+    headers: {
+      ...(header?.headers || {}),
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    },
+  });
+
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok || data?.res === false) {
+    throw new Error(data?.msg || data?.message || "Unable to delete downloaded file.");
+  }
+
+  return data;
+};
+
 export const generateExcelFileName = async () => {
   const header = getHeader();
   const queryParams = new URLSearchParams();
@@ -1841,5 +2012,62 @@ export const getExcelQuickOrderProduct = async (
   });
 
   return response;
+};
+
+const getHomeBanner = async (endpoint) => {
+  const header = getHeader();
+  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+    method: "GET",
+    headers: {
+      ...(header?.headers || {}),
+      Accept: "application/json",
+    },
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok || data?.res === false) {
+    throw new Error(data?.msg || data?.message || "Unable to load banners.");
+  }
+  return data;
+};
+
+export const getBannerOne = async () =>
+  getHomeBanner("home/get-banner-one");
+
+export const getBannerTwo = async () =>
+  getHomeBanner("home/get-banner-two");
+
+export const getBannerThree = async () =>
+  getHomeBanner("home/get-banner-three");
+
+export const getAllPageShug = async () => {
+  const response = await fetch(`${API_BASE_URL}page/get-all-page-slug`, {
+    method: "GET",
+    headers: {
+      Accept: "application/json",
+    },
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok || data?.res === false) {
+    throw new Error(data?.msg || data?.message || "Unable to load page slugs.");
+  }
+  return data;
+};
+
+export const pageContent = async (slug) => {
+  const params = new URLSearchParams({ slug: slug || "" });
+  const response = await fetch(
+    `${API_BASE_URL}page/page-content?${params.toString()}`,
+    {
+      method: "GET",
+      headers: {
+        Accept: "application/json",
+      },
+    },
+  );
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok || data?.res === false) {
+    throw new Error(data?.msg || data?.message || "Unable to load page.");
+  }
+  return data;
 };
 

@@ -1,0 +1,841 @@
+<?php
+
+namespace Modules\User\Http\Controllers;
+
+use Illuminate\Contracts\Support\Renderable;
+use Illuminate\Http\Request;
+use Illuminate\Routing\Controller;
+use Illuminate\Http\JsonResponse;
+use Modules\User\Http\Services\UserService;
+use Modules\User\Http\Requests\LoginUserRequest;
+use Modules\User\Http\Requests\OtpRequest;
+use Modules\User\Http\Requests\GstRequest;
+use Modules\User\Http\Requests\PhoneRequest;
+use Modules\User\Http\Requests\RegistrationRequest;
+use Modules\User\Http\Requests\ManagerClientAddRequest;
+use Modules\User\Http\Requests\NanagerClientAddRequest;
+use Modules\User\Http\Requests\AddAddressRequest;
+use Modules\User\Http\Requests\ForgetPasswordRequest;
+use Modules\User\Http\Requests\UpdatePasswordRequest;
+
+class UserController extends Controller
+{
+    private $userAbsPath = "";
+
+    private $userRelPath = "";
+
+    private UserService $userService;
+    public function __construct(UserService $userService)
+    {
+        $this->userService = $userService;
+        $this->userAbsPath = public_path('uploads/users');
+        $this->userRelPath = 'uploads/users/';
+    }
+    
+    /**
+     * Get Login.
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    // public function login(LoginUserRequest $request): JsonResponse
+    // {
+    //     $response = $this->userService->login($request->validated());
+    //     return response()->json($response);
+    // }
+
+    public function login(LoginUserRequest $request): JsonResponse
+    {
+        $response = $this->userService->login($request->validated());
+
+        $json = response()->json($response);
+
+        // Only set cookie when login is successful
+        if (
+            isset($response['authorisation']['token']) &&
+            !empty($response['authorisation']['token'])
+        ) {
+            $json->cookie(
+                'mazing_api_token',                     // Cookie name
+                $response['authorisation']['token'],    // Passport token
+                60 * 24 * 7,                            // 7 days
+                '/',                                    // Available everywhere
+                '.mazingbusiness.com',                  // Domain
+                true,                                   // Secure (HTTPS)
+                true,                                   // HttpOnly
+                false,                                  // Raw
+                'Lax'                                   // SameSite
+            );
+        }
+
+        return $json;
+    }
+    /**
+     * Get Login.
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function loginFromAdmin(Request $request): JsonResponse
+    {
+        $response = $this->userService->loginFromAdmin($request);
+
+        $json = response()->json($response);
+
+        // Only set cookie when login is successful
+        if (
+            isset($response['authorisation']['token']) &&
+            !empty($response['authorisation']['token'])
+        ) {
+            $json->cookie(
+                'mazing_api_token',                     // Cookie name
+                $response['authorisation']['token'],    // Passport token
+                60 * 24 * 7,                            // 7 days
+                '/',                                    // Available everywhere
+                '.mazingbusiness.com',                  // Domain
+                true,                                   // Secure (HTTPS)
+                true,                                   // HttpOnly
+                false,                                  // Raw
+                'Lax'                                   // SameSite
+            );
+        }
+
+        return $json;
+    }
+    /**
+     * Logout.
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    // public function logout(Request $request): JsonResponse
+    // {
+    //     $response = $this->userService->logout($request);
+    //     return response()->json($response);
+    // }
+
+    public function logout(Request $request): JsonResponse
+    {
+        $response = $this->userService->logout(
+            $request->all()
+        );
+
+        return response()
+            ->json($response)
+            ->withoutCookie(
+                'mazing_api_token',
+                '/',
+                '.mazingbusiness.com'
+            );
+    }
+
+    /**
+     * Update Firebase Api.
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function updateFirebaseApi(Request $request): JsonResponse
+    {
+        $response = $this->userService->updateFirebaseApi($request);
+        return response()->json($response);
+    }
+
+    /**
+     * Update Basic Info.
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function updateBasicInfo(Request $request): JsonResponse
+    {
+        $response = $this->userService->updateBasicInfo($request);
+        return response()->json($response);
+    }
+
+    /**
+     * Get Login Msg.
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function loginMsg(Request $request): JsonResponse
+    {
+        $response = $this->userService->login($request);
+        return response()->json($response);
+    }
+    
+    /**
+     * Send Otp.
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function sendOtp(OtpRequest $request): JsonResponse
+    {
+        $response = $this->userService->sendOtp($request->validated());
+        return response()->json($response);
+    }
+
+    /**
+     * Verify Gst For Registration.
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function verifyGstForRegistration(GstRequest $request): JsonResponse
+    {
+        $response = $this->userService->verifyGstForRegistration($request->validated());
+        return response()->json($response);
+    }
+
+    /**
+     * Verify phone For Registration.
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function verifyPhoneForRegistration(PhoneRequest $request): JsonResponse
+    {
+        $response = $this->userService->verifyPhoneForRegistration($request->validated());
+        return response()->json($response);
+    }
+
+    /**
+     * Sign Up.
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function signUp(RegistrationRequest $request): JsonResponse
+    {
+        $response = $this->userService->signUp($request->validated());
+        return response()->json($response);
+    }
+
+    /**
+     * Sign Up.
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function managerClientAdd(ManagerClientAddRequest $request): JsonResponse
+    {
+        $response = $this->userService->managerClientAdd($request->validated());
+        return response()->json($response);
+    }
+
+    /**
+     * send Otp For Reg.
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function sendOtpForReg(OtpRequest $request): JsonResponse
+    {
+        $response = $this->userService->sendOtpForReg($request->validated());
+        return response()->json($response);
+    }
+
+    /**
+     * send Otp For reset password.
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function sendOtpForForgetPassword(OtpRequest $request): JsonResponse
+    {
+        $response = $this->userService->sendOtpForForgetPassword($request->validated());
+        return response()->json($response);
+    }
+
+    /**
+     * Update Prefered Category.
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function submitPreferedCategory(Request $request): JsonResponse
+    {
+        $response = $this->userService->submitPreferedCategory($request);
+        return response()->json($response);
+    }
+
+    /**
+     * Update Email.
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function updateEmail(Request $request): JsonResponse
+    {
+        $response = $this->userService->updateEmail($request);
+        return response()->json($response);
+    }
+
+    /**
+     * Update Email.
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function updateSetDefaultAddress(Request $request): JsonResponse
+    {
+        $response = $this->userService->updateSetDefaultAddress($request);
+        return response()->json($response);
+    }
+
+    /**
+     * Update Email.
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function updateAddress(Request $request): JsonResponse
+    {
+        $response = $this->userService->updateAddress($request);
+        return response()->json($response);
+    }
+
+    /**
+     * Sign Up.
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function forgetPassword(ForgetPasswordRequest $request): JsonResponse
+    {
+        $response = $this->userService->forgetPassword($request->validated());
+        return response()->json($response);
+    }
+
+    /**
+     * Update Password.
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function updatePassword(UpdatePasswordRequest $request): JsonResponse
+    {
+        $response = $this->userService->updatePassword($request->validated());
+        return response()->json($response);
+    }
+
+    /**
+     * Get User Details
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function getUserDetails(Request $request): JsonResponse
+    {
+        $response = $this->userService->getUserDetails($request);
+        return response()->json($response);
+    }
+    /**
+     * My Order.
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function myOrder(Request $request): JsonResponse
+    {
+        $response = $this->userService->myOrder($request);
+        return response()->json($response);
+    }
+
+    /**
+     * totalCountOfOrder.
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function totalCountOfOrder(Request $request): JsonResponse
+    {
+        $response = $this->userService->totalCountOfOrder($request);
+        return response()->json($response);
+    }
+
+    /**
+     * Statement.
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function statementList(Request $request): JsonResponse
+    {
+        $response = $this->userService->statementList($request);
+        return response()->json($response);
+    }
+
+    /**
+     * Statement.
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function statementDetails(Request $request): JsonResponse
+    {
+        $response = $this->userService->statementDetails($request);
+        return response()->json($response);
+    }
+
+    /**
+     * Refresh Statement.
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function refreshStatement(Request $request): JsonResponse
+    {
+        $response = $this->userService->refreshStatement($request);
+        return response()->json($response);
+    }
+
+    /**
+     * Download Statement.
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function downloadStatement(Request $request): JsonResponse
+    {
+        $response = $this->userService->downloadStatement($request);
+        return response()->json($response);
+    }
+
+    /**
+     * Manager Client List.
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function managerClientList(Request $request): JsonResponse
+    {
+        $response = $this->userService->managerClientList($request);
+        return response()->json($response);
+    }
+
+    /**
+     * Manager Client Search.
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function managerClientSearch(Request $request): JsonResponse
+    {
+        $response = $this->userService->managerClientSearch($request);
+        return response()->json($response);
+    }
+
+    /**
+     * Manager Client List.
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function managerClientStatement(Request $request): JsonResponse
+    {
+        $response = $this->userService->managerClientStatement($request);
+        return response()->json($response);
+    }
+
+    /**
+     * Get Cities By Manager Statement.
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function getCitiesByManagerStatement(Request $request): JsonResponse
+    {
+        $response = $this->userService->getCitiesByManagerStatement($request);
+        return response()->json($response);
+    }
+
+     /**
+     * Get Manager Details.
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function getManagerDetails(Request $request): JsonResponse
+    {
+        $response = $this->userService->getManagerDetails($request);
+        return response()->json($response);
+    }
+
+    /**
+     * Order Details.
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function orderDetails(Request $request): JsonResponse
+    {
+        $response = $this->userService->orderDetails($request);
+        return response()->json($response);
+    }
+
+    /**
+     * Download Statement.
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function statementDownload(Request $request): JsonResponse
+    {
+        $response = $this->userService->statementDownload($request);
+        return response()->json($response);
+    }
+    
+    /**
+     * Send Statement.
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function sendStatement(Request $request): JsonResponse
+    {
+        $response = $this->userService->sendStatement($request);
+        return response()->json($response);
+    }
+
+    /**
+     * Invoice Statement.
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function downloadInvoice(Request $request): JsonResponse
+    {
+        $response = $this->userService->downloadInvoice($request);
+        return response()->json($response);
+    }
+
+    /**
+     * Client Login.
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function clientLogin(Request $request): JsonResponse
+    {
+        $response = $this->userService->clientLogin($request);
+        return response()->json($response);
+    }
+
+    /**
+     * Generate Paymen Url.
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function paymentUrlGenerate(Request $request): JsonResponse
+    {
+        $response = $this->userService->paymentUrlGenerate($request);
+        return response()->json($response);
+    }
+    /**
+     * Generate Paymen Url.
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function payAmount(Request $request): JsonResponse
+    {
+        $response = $this->userService->payAmount($request);
+        return response()->json($response);
+    }
+
+    /**
+     * Add Address.
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function addAddress(AddAddressRequest $request): JsonResponse
+    {
+        $response = $this->userService->addAddress($request->validated());
+        return response()->json($response);
+    }
+
+    /**
+     * Get State
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function state(Request $request): JsonResponse
+    {
+        $response = $this->userService->state($request);
+        return response()->json($response);
+    }
+
+    /**
+     * City.
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function city(Request $request): JsonResponse
+    {
+        $response = $this->userService->city($request);
+        return response()->json($response);
+    }
+
+    /**
+     * Manager List.
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function getManagerList(Request $request): JsonResponse
+    {
+        $response = $this->userService->getManagerList($request);
+        return response()->json($response);
+    }
+
+    /**
+     * Saller List.
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function seller(Request $request): JsonResponse
+    {
+        $response = $this->userService->seller($request);
+        return response()->json($response);
+    }
+    
+    /**
+     * User Statement List.
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function userStatementList(Request $request): JsonResponse
+    {
+        $response = $this->userService->userStatementList($request);
+        return response()->json($response);
+    }
+
+    /**
+     * Get Cities By Manager List.
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function getCitiesByManager(Request $request): JsonResponse
+    {
+        $response = $this->userService->getCitiesByManager($request);
+        return response()->json($response);
+    }
+
+    /**
+     * Get Cities By Manager List.
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function syncStatementOfSelectedCustomer(Request $request): JsonResponse
+    {
+        $response = $this->userService->syncStatementOfSelectedCustomer($request);
+        return response()->json($response);
+    }
+
+    /**
+     * Download Statement From Manager.
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function downloadStatementFromManager(Request $request): JsonResponse
+    {
+        $response = $this->userService->downloadStatementFromManager($request);
+        return response()->json($response);
+    }
+    /**
+     * Send Whatsapp Statement To Selected Client.
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function managerSendWhatsappStatementToSelectedClient(Request $request): JsonResponse
+    {
+        $response = $this->userService->managerSendWhatsappStatementToSelectedClient($request);
+        return response()->json($response);
+    }
+
+    /**
+     * Notify manager .
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function notifyManagerSendWhatsapp(Request $request): JsonResponse
+    {
+        $response = $this->userService->notifyManagerSendWhatsapp($request);
+        return response()->json($response);
+    }
+
+    /**
+     * send Push Notification .
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function sendPushNotification(Request $request): JsonResponse
+    {
+        // echo "Hello"; die;
+        $response = $this->userService->sendPushNotification($request);
+        return response()->json($response);
+    }
+    /**
+     * send Push Notification Bulk.
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function sendPushNotificationsBulk(Request $request): JsonResponse
+    {
+        // echo "Hello"; die;
+        $response = $this->userService->sendPushNotificationsBulk($request);
+        return response()->json($response);
+    }
+
+    /**
+     * send Popup Message.
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function sendPopupMessage(Request $request): JsonResponse
+    {
+        // echo "Hello"; die;
+        $response = $this->userService->sendPopupMessage($request);
+        return response()->json($response);
+    }
+
+    /**
+     * Get All Pending Order.
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function getAllPendingOrder(Request $request): JsonResponse
+    {
+        // echo "Hello"; die;
+        $response = $this->userService->getAllPendingOrder($request);
+        return response()->json($response);
+    }
+
+    /**
+     * Get Current Year Order.
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function currentYearOrder(Request $request): JsonResponse
+    {
+        // echo "Hello"; die;
+        $response = $this->userService->currentYearOrder($request);
+        return response()->json($response);
+    }
+    /**
+     * Get Current Year Order.
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function getDataFromReact(Request $request): JsonResponse
+    {
+        // echo "Hello"; die;
+        $response = $this->userService->getDataFromReact($request);
+        return response()->json($response);
+    }
+
+    /**
+     * Get M Coin Statement.
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function mCoinStatement(Request $request): JsonResponse
+    {
+        // echo "Hello"; die;
+        $response = $this->userService->mCoinStatement($request);
+        return response()->json($response);
+    }
+    
+    /**
+     * Get Manager M Coin Statement.
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function managerMCoinStatement(Request $request): JsonResponse
+    {
+        // echo "Hello"; die;
+        $response = $this->userService->managerMCoinStatement($request);
+        return response()->json($response);
+    }
+
+    /**
+     * Get Suport Tickets.
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function suportTickets(Request $request): JsonResponse
+    {
+        // echo "Hello"; die;
+        $response = $this->userService->suportTickets($request);
+        return response()->json($response);
+    }
+
+    /**
+     * Add Suport Tickets.
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function addSuportTickets(Request $request): JsonResponse
+    {
+        // echo "Hello"; die;
+        $response = $this->userService->addSuportTickets($request);
+        return response()->json($response);
+    }
+
+    /**
+     * Get Ticket Details.
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function getTicketDetails(Request $request): JsonResponse
+    {
+        // echo "Hello"; die;
+        $response = $this->userService->getTicketDetails($request);
+        return response()->json($response);
+    }
+
+    /**
+     * Get Ticket Details.
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function addTicketReply(Request $request): JsonResponse
+    {
+        // echo "Hello"; die;
+        $response = $this->userService->addTicketReply($request);
+        return response()->json($response);
+    }
+    
+    /**
+     * Get Ticket Details.
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function deleteDownloadedFile(Request $request): JsonResponse
+    {
+        // echo "Hello"; die;
+        $response = $this->userService->deleteDownloadedFile($request);
+        return response()->json($response);
+    }
+}

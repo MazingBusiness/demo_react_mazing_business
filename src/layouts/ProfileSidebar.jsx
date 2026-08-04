@@ -12,6 +12,7 @@ import icon8 from "../assets/icons/sidemenuIcon8.svg";
 import icon9 from "../assets/icons/sidemenuIcon9.svg";
 import { getLoggedInUser } from "../utils/authUtils";
 import { userDetails } from "../api/apiRequest";
+import { API_BASE_URL } from "../app_url";
 
 const ProfileSidebar = () => {
   const navigate = useNavigate();
@@ -60,10 +61,47 @@ const ProfileSidebar = () => {
   };
 
   // Handle Logout
-  const handleLogout = () => {
-    localStorage.removeItem("mazingBusinessLoginInfo"); // Clear token
-    localStorage.removeItem("mazingBusinessStaffId"); // Clear token
-    navigate("/login"); // Redirect to login
+  // const handleLogout = () => {
+  //   localStorage.removeItem("mazingBusinessLoginInfo"); // Clear token
+  //   localStorage.removeItem("mazingBusinessStaffId"); // Clear token
+  //   navigate("/login"); // Redirect to login
+  // };
+
+  const handleLogout = async () => {
+      try {
+          const loginInfo = JSON.parse(
+              localStorage.getItem("mazingBusinessLoginInfo") || "{}"
+          );
+
+          const token =
+              loginInfo?.authorisation?.token ||
+              loginInfo?.token ||
+              "";
+
+          await fetch(`${API_BASE_URL}user/logout`, {
+              method: "POST",
+
+              headers: {
+                  "Content-Type": "application/json",
+                  "Accept": "application/json",
+                  ...(token
+                      ? {
+                            Authorization: `Bearer ${token}`,
+                        }
+                      : {}),
+              },
+
+              credentials: "include",
+          });
+      } catch (error) {
+          console.error("Logout API failed:", error);
+      } finally {
+          localStorage.removeItem("mazingBusinessLoginInfo");
+          localStorage.removeItem("mazingBusinessStaffId");
+          localStorage.removeItem("mazingBusinessStaffUserTitle");
+
+          navigate("/login");
+      }
   };
 
   // Get the active path from aliases, or fallback to current path

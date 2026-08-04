@@ -137,7 +137,7 @@ const BrandCarousel = () => {
             <div className="section-headerLft">
               <h2>Search by Brands</h2>
 
-              <Link to="/quick-order" className="all-link" state={{ select_all_brands: true }}>
+              <Link to="/brands" className="all-link" state={{ select_all_brands: true }}>
                 All Brands <FiChevronRight />
               </Link>
             </div>

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import UserProfileLayout from "../../layouts/UserProfileLayout";
 
@@ -8,22 +8,104 @@ import Ticket from "../../assets/images/ticket.png";
 import Plusicon from "../../assets/icons/plusicon.svg";
 import Bigtick from "../../assets/icons/Bigtick.svg";
 import Modal from "../../components/Modal";
+import { addSuportTickets, getSupportTickets } from "../../api/apiRequest";
 
 const ProfileSupportTicket = () => {
   const [fileName, setFileName] = useState("");
-  const [email, setEmail] = useState("");
+  const [ticketPhoto, setTicketPhoto] = useState(null);
+  const [subject, setSubject] = useState("");
+  const [details, setDetails] = useState("");
   const [isFocused, setIsFocused] = useState(false);
   const [showTicketModal, setShowTicketModal] = useState(false);
+  const [submittingTicket, setSubmittingTicket] = useState(false);
+  const [ticketSubmitted, setTicketSubmitted] = useState(false);
+  const [submitError, setSubmitError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+  const [refreshTicketsKey, setRefreshTicketsKey] = useState(0);
+  const [tickets, setTickets] = useState([]);
+  const [loadingTickets, setLoadingTickets] = useState(true);
+  const [ticketError, setTicketError] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [lastPage, setLastPage] = useState(1);
 
-  const handleTicketFormSubmit = (e) => {
+  useEffect(() => {
+    const loadTickets = async () => {
+      setLoadingTickets(true);
+      setTicketError("");
+
+      try {
+        const response = await getSupportTickets(currentPage);
+        const paginator = response?.data ?? {};
+        const list = paginator?.data ?? (Array.isArray(paginator) ? paginator : []);
+
+        setTickets(Array.isArray(list) ? list : []);
+        setLastPage(Number(paginator?.last_page) || 1);
+      } catch (error) {
+        setTickets([]);
+        setTicketError(error?.message || "Unable to load support tickets.");
+      } finally {
+        setLoadingTickets(false);
+      }
+    };
+
+    loadTickets();
+  }, [currentPage, refreshTicketsKey]);
+
+  const formatTicketDate = (value) => {
+    if (!value) return "-";
+    const date = new Date(String(value).replace(" ", "T"));
+    if (Number.isNaN(date.getTime())) return value;
+
+    return date.toLocaleString("en-IN", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    });
+  };
+
+  const getStatus = (status) => {
+    const value = String(status ?? "Pending").toLowerCase();
+    return {
+      label: value.charAt(0).toUpperCase() + value.slice(1),
+      className: ["closed", "resolved", "solved"].includes(value)
+        ? "delivered"
+        : "pending",
+    };
+  };
+
+  const handleTicketFormSubmit = async (e) => {
     e.preventDefault();
-    console.log("Ticket form submitted!");
-    setShowTicketModal(false);
+    setSubmitError("");
+    setSubmittingTicket(true);
+
+    try {
+      const response = await addSuportTickets({ subject, details, photo: ticketPhoto });
+      setSuccessMessage(response?.msg || "Support ticket submitted successfully.");
+      setTicketSubmitted(true);
+      setSubject("");
+      setDetails("");
+      setTicketPhoto(null);
+      setFileName("");
+
+      if (currentPage === 1) {
+        setRefreshTicketsKey((key) => key + 1);
+      } else {
+        setCurrentPage(1);
+      }
+    } catch (error) {
+      setSubmitError(error?.message || "Unable to submit support ticket.");
+    } finally {
+      setSubmittingTicket(false);
+    }
   };
 
   const handleFileChange = (e) => {
     if (e.target.files.length > 0) {
       setFileName(e.target.files[0].name);
+      setTicketPhoto(e.target.files[0]);
     }
     setIsFocused(false); // remove focus after file selection
   };
@@ -44,8 +126,7 @@ const ProfileSupportTicket = () => {
             <div className="tickets-hrLft-info-img">
               <img src={Man} alt="man" />
             </div>
-          </div> */}
-
+          </div> 
           <div className="tickets-hrRgt">
             <div className="tickets-hrRgt-info">
               <div
@@ -59,7 +140,20 @@ const ProfileSupportTicket = () => {
             <div className="tickets-hrRgt-info-img">
               <img src={Ticket} alt="ticket" />
             </div>
-          </div>
+          </div> */}
+          <button
+            className="download-pdf-btn"
+            type="button"
+            onClick={() => {
+              setTicketSubmitted(false);
+              setSubmitError("");
+              setSuccessMessage("");
+              setShowTicketModal(true);
+            }}
+          >
+            Create a ticket
+          </button>
+          
         </div>
 
         {/* Tickets Table */}
@@ -82,119 +176,146 @@ const ProfileSupportTicket = () => {
                 </tr>
               </thead>
               <tbody>
-                <tr>
-                  <td>
-                    <Link to="/ticketDetails" className="order-link">
-                      #10000003
-                    </Link>
-                  </td>
-                  <td>
-                    2025-03-31 <span>14:01:20</span>
-                  </td>
-                  <td>Request for Bulk Order Pricing and Availability</td>
-                  <td>
-                    <span className="status-badge pending">Pending</span>
-                  </td>
-                  <td className="actions">
-                    <button className="ordertbl-icon-btn view" title="View">
-                      <img src={View} alt="View" />
-                    </button>
-                  </td>
-                </tr>
-
-                <tr>
-                  <td>
-                    <Link to="/ticketDetails" className="order-link">
-                      #10000004
-                    </Link>
-                  </td>
-                  <td>
-                    2025-03-31 <span>14:01:20</span>
-                  </td>
-                  <td>Request for Product Stock</td>
-                  <td>
-                    <span className="status-badge delivered">Closed</span>
-                  </td>
-                  <td className="actions">
-                    <button className="ordertbl-icon-btn view" title="View">
-                      <img src={View} alt="View" />
-                    </button>
-                  </td>
-                </tr>
+                {loadingTickets && (
+                  <tr><td colSpan="5">Loading tickets…</td></tr>
+                )}
+                {!loadingTickets && ticketError && (
+                  <tr><td colSpan="5">{ticketError}</td></tr>
+                )}
+                {!loadingTickets && !ticketError && tickets.length === 0 && (
+                  <tr><td colSpan="5">No support tickets found.</td></tr>
+                )}
+                {!loadingTickets && !ticketError && tickets.map((ticket) => {
+                  const status = getStatus(ticket.status);
+                  return (
+                    <tr key={ticket.id}>
+                      <td>
+                        <Link to="/ticket-details" state={{ ticket }} className="order-link">
+                          #{ticket.code || ticket.id}
+                        </Link>
+                      </td>
+                      <td>{formatTicketDate(ticket.created_at)}</td>
+                      <td>{ticket.subject || "-"}</td>
+                      <td>
+                        <span className={`status-badge ${status.className}`}>
+                          {status.label}
+                        </span>
+                      </td>
+                      <td className="actions">
+                        <Link to="/ticket-details" state={{ ticket }} className="ordertbl-icon-btn view" title="View">
+                          <img src={View} alt="View" />
+                        </Link>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
+
+          {lastPage > 1 && (
+            <div className="pagination">
+              <button
+                type="button"
+                disabled={currentPage === 1 || loadingTickets}
+                onClick={() => setCurrentPage((page) => page - 1)}
+              >
+                Previous
+              </button>
+              <span>Page {currentPage} of {lastPage}</span>
+              <button
+                type="button"
+                disabled={currentPage === lastPage || loadingTickets}
+                onClick={() => setCurrentPage((page) => page + 1)}
+              >
+                Next
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Ticket Modal */}
         <Modal
           isOpen={showTicketModal}
-          onClose={() => setShowTicketModal(false)}
+          onClose={() => {
+            setShowTicketModal(false);
+            setTicketSubmitted(false);
+          }}
           showFooter={false}
           size="xlg"
+          className={`support-ticket-modal ${ticketSubmitted ? "support-ticket-modal-success" : ""}`}
         >
-          <div className="ba-modal-wpap">
+          <div className={`ba-modal-wpap ${ticketSubmitted ? "ticket-success" : "ticket-form-only"}`}>
             <div className="ba-modal-Lft">
-              <form className="ba-modal-form" onSubmit={handleTicketFormSubmit}>
+              <form className="ba-modal-form manage-profile-form" onSubmit={handleTicketFormSubmit}>
                 <h3 className="modal-title">Create a Ticket</h3>
-
                 <div className="manageProfileFrmBoxInner">
-                  <form class="manage-profile-form">
-                    <div className="form-row">
-                      <div className="form-group">
-                        <label>Subject</label>
-                        <input type="text" placeholder="Enter your subject" />
-                      </div>
-
-                      <div className="form-group">
-                        <label>Provide a Detailed Description</label>
-                        <textarea placeholder="Write your description"></textarea>
-                      </div>
-
-                      <div className="form-group">
-                        <label>Photo</label>
-                        <div
-                          className={`file-upload-box ${
-                            isFocused ? "focused" : ""
-                          }`}
-                          onClick={() => setIsFocused(true)}
-                          onBlur={() => setIsFocused(false)} // will work only if element is focusable
-                          tabIndex={0} // make div focusable
-                        >
-                          <span
-                            className={`file-status ${
-                              fileName ? "uploaded" : "placeholder"
-                            }`}
-                          >
-                            {fileName || "Select your file!"}
-                          </span>
-
-                          <label className="custom-upload-btn">
-                            Choose file
-                            <input type="file" onChange={handleFileChange} />
-                          </label>
-                        </div>
-                      </div>
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label>Subject</label>
+                      <input
+                        type="text"
+                        value={subject}
+                        onChange={(event) => setSubject(event.target.value)}
+                        placeholder="Enter your subject"
+                        maxLength={255}
+                        required
+                      />
                     </div>
 
-                    <div className="form-row">
-                      <button type="submit" className="form-submit">
-                        Send Ticket
-                      </button>
+                    <div className="form-group">
+                      <label>Provide a Detailed Description</label>
+                      <textarea
+                        value={details}
+                        onChange={(event) => setDetails(event.target.value)}
+                        placeholder="Write your description"
+                        required
+                      />
                     </div>
-                  </form>
+
+                    <div className="form-group">
+                      <label>Photo</label>
+                      <div
+                        className={`file-upload-box ${isFocused ? "focused" : ""}`}
+                        onClick={() => setIsFocused(true)}
+                        onBlur={() => setIsFocused(false)}
+                        tabIndex={0}
+                      >
+                        <span className={`file-status ${fileName ? "uploaded" : "placeholder"}`}>
+                          {fileName || "Select your file!"}
+                        </span>
+
+                        <label className="custom-upload-btn">
+                          Choose file
+                          <input
+                            type="file"
+                            accept=".jpg,.jpeg,.png,.pdf"
+                            onChange={handleFileChange}
+                          />
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+
+                  {submitError && <p className="form-error">{submitError}</p>}
+
+                  <div className="form-row">
+                    <button type="submit" className="form-submit" disabled={submittingTicket}>
+                      {submittingTicket ? "Sending..." : "Send Ticket"}
+                    </button>
+                  </div>
                 </div>
               </form>
             </div>
 
-            <div className="ba-modal-Rgt">
-              <h5>
-                Thank you for successfully raising your ticket. We appreciate
-                you reaching out to us.
-              </h5>
-
-              <img src={Bigtick} alt="Bigtick" />
-            </div>
+            {ticketSubmitted && (
+              <div className="ba-modal-Rgt">
+                <h5>
+                  {successMessage} Thank you for reaching out to us.
+                </h5>
+                <img src={Bigtick} alt="Success" />
+              </div>
+            )}
           </div>
         </Modal>
       </div>

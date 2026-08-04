@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Routes, Route , HashRouter  } from "react-router-dom";
 // import { Routes, Route , BrowserRouter   } from "react-router-dom";  // to remove # link 
 import PrivateRoute from "./PrivateRoute";
@@ -37,8 +37,36 @@ import WarrentyClaimHistory from "../pages/WarrentyClaimHistory";
 import NewWarrentyClaim from "../pages/NewWarrentyClaim";
 import WarrentyClaimFull from "../pages/WarrentyClaimFull";
 import ScrollToTop from "../components/ScrollToTop";
+import PageContent from "../pages/PageContent";
+import BrandPage from "../components/BrandPage"
+import { getAllPageShug } from "../api/apiRequest";
 
-const AppRoutes = () => (
+const AppRoutes = () => {
+  const [pageSlugs, setPageSlugs] = useState([]);
+
+  useEffect(() => {
+    let active = true;
+
+    getAllPageShug()
+      .then((response) => {
+        if (!active) return;
+        const items = Array.isArray(response?.data) ? response.data : [];
+        const slugs = items
+          .map((item) => (typeof item === "string" ? item : item?.slug))
+          .map((slug) => String(slug || "").replace(/^\/+|\/+$/g, ""))
+          .filter(Boolean);
+        setPageSlugs([...new Set(slugs)]);
+      })
+      .catch(() => {
+        if (active) setPageSlugs([]);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  return (
   <HashRouter>
     <Routes>
       {/* Public Routes */}
@@ -66,6 +94,13 @@ const AppRoutes = () => (
       {/* <Route path="/login-from-admin" element={<LoginFromAdmin />} /> */}
 
       <Route path="/login-from-admin" element={<LoginFromAdmin />} />
+      {pageSlugs.map((slug) => (
+        <Route
+          key={slug}
+          path={`/${slug}`}
+          element={<PageContent pageSlug={slug} />}
+        />
+      ))}
       <Route path="*" element={<div style={{ padding: 20 }}>NO ROUTE MATCHED</div>} />
 
       <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -82,8 +117,10 @@ const AppRoutes = () => (
       <Route path="/support-tickets" element={<PrivateRoute><ProfileSupportTicket /></PrivateRoute>} />
       <Route path="/wallet" element={<PrivateRoute><ProfileWallet /></PrivateRoute>} />
       <Route path="/ticket-details" element={<PrivateRoute><TicketDetails /></PrivateRoute>} />
+      <Route path="/brands" element={<BrandPage/>}/>
       
     </Routes>
   </HashRouter>
-);
+  );
+};
 export default AppRoutes;

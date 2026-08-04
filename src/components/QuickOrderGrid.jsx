@@ -15,7 +15,7 @@ import {
   generatePdfFileName,
   getPdfQuickOrderProduct,
   getPdfCreateCompleteStatus,
-  deletePdfFile,
+  deleteDownloadedFile,
   generateExcelFileName,
   getExcelQuickOrderProduct,
   addToWishlist,
@@ -362,9 +362,11 @@ const QuickOrderGrid = ({ filters, onPriceRangeUpdate }) => {
 
       triggerBrowserDownload(downloadUrl, finalFileName);
 
+      // Give the browser enough time to finish receiving the PDF before
+      // asking the server to remove its temporary copy.
       window.setTimeout(async () => {
         try {
-          await deletePdfFile(finalFileName);
+          await deleteDownloadedFile(downloadUrl);
         } catch (deleteError) {
           console.error("PDF delete failed:", deleteError);
         }

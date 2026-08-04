@@ -10,7 +10,13 @@ import WhatsButton from "../../assets/icons/WhatsButton.svg";
 import calendarIcon from "../../assets/icons/calendar-icon.svg";
 import RefreshIcon from "../../assets/icons/refresh-btn-Icon.svg";
 
-import { getStatementDetails, refreshStatementDetails, downloadUserStatement, sendStatementWhatsapp } from "../../api/apiRequest";
+import {
+  getStatementDetails,
+  refreshStatementDetails,
+  downloadUserStatement,
+  deleteDownloadedFile,
+  sendStatementWhatsapp,
+} from "../../api/apiRequest";
 
 const money = (val) => {
   const n = Number(val || 0);
@@ -139,14 +145,18 @@ const ProfileStatementDetails = () => {
     }
   };
 
-  const forceDownload = (fileUrl, fileName = "statement.pdf") => {
-    const a = document.createElement("a");
-    a.href = fileUrl;
-    a.setAttribute("download", fileName); // hint to download
-    a.setAttribute("target", "_blank");   // fallback if browser ignores download
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
+  const openPdfAndScheduleDeletion = (fileUrl, fileType = "PDF") => {
+    window.open(fileUrl, "_blank", "noopener,noreferrer");
+
+    // Allow the browser time to receive the PDF before deleting the
+    // temporary server copy.
+    window.setTimeout(async () => {
+      try {
+        await deleteDownloadedFile(fileUrl);
+      } catch (deleteError) {
+        console.error(`${fileType} delete failed:`, deleteError);
+      }
+    }, 30000);
   };
 
   const StatementDownloadBtn = ({ party_code, data_from = "live" }) => {
@@ -167,7 +177,7 @@ const ProfileStatementDetails = () => {
         });
 
         if (response?.pdf_url) {
-          window.open(response.pdf_url, "_blank", "noopener,noreferrer");
+          openPdfAndScheduleDeletion(response.pdf_url, "Statement PDF");
         } else {
           console.log("pdf_url missing:", response);
           alert("PDF link not found");
@@ -450,7 +460,9 @@ const ProfileStatementDetails = () => {
                         key={`${r?.trn_no || "row"}-${idx}`}
                         style={{ cursor: invoiceLink ? "pointer" : "default",backgroundColor: rowBg }}
                         onClick={() => {
-                          if (invoiceLink) window.open(invoiceLink, "_blank", "noopener,noreferrer");
+                          if (invoiceLink) {
+                            window.open(invoiceLink, "_blank", "noopener,noreferrer");
+                          }
                         }}
                         title={invoiceLink ? "Open invoice" : ""}
                       >

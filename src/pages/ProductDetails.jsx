@@ -1,4 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
+import "react-responsive-carousel/lib/styles/carousel.min.css";
+import { Carousel } from "react-responsive-carousel";
 import { FaStar, FaStarHalfAlt, FaRegStar } from "react-icons/fa";
 import { GoDotFill } from "react-icons/go";
 import { FiSettings, FiX } from "react-icons/fi";
@@ -443,8 +445,16 @@ const ProductDetails = () => {
     [descriptionText]
   );
 
-  const mainImage =
-    product?.thumb_img?.file_name || product?.images?.[0]?.file_name || "";
+  const productImages = useMemo(() => {
+    const images = Array.isArray(product?.images)
+      ? product.images.filter((image) => image?.file_name)
+      : [];
+
+    if (images.length > 0) return images;
+
+    const fallbackImage = product?.thumb_img?.file_name;
+    return fallbackImage ? [{ file_name: fallbackImage }] : [];
+  }, [product]);
 
   const crumbGroup = product?.category_group?.name || "Category Group";
   const crumbCategory = product?.category?.name || "Category";
@@ -845,21 +855,79 @@ const ProductDetails = () => {
                 <div className="product-details-error">{err}</div>
               ) : (
                 <>
-                  {mainImage ? (
-                    <img
-                      src={mainImage}
-                      alt={productName}
-                      className={`main-product-img ${user_id != null ? "main-product-img-clickable" : ""}`}
-                      onClick={() => {
-                        if (user_id != null && product?.id) {
-                          setIsModalOpen(true);
+                  {productImages.length > 0 ? (
+                    <div className="product-modal-carousel product-details-carousel">
+                      {isNoCreditItem && (
+                        <div className="no-credit-tag-product-details">
+                          No Credit Item
+                        </div>
+                      )}
+
+                      <Carousel
+                        showThumbs={productImages.length > 1}
+                        showArrows={productImages.length > 1}
+                        showStatus={false}
+                        showIndicators={false}
+                        infiniteLoop={productImages.length > 1}
+                        renderArrowPrev={(onClickHandler, hasPrev, label) =>
+                          hasPrev && (
+                            <button
+                              type="button"
+                              onClick={onClickHandler}
+                              title={label}
+                              className="custom-arrow prev-arrow"
+                            >
+                              &#10094;
+                            </button>
+                          )
                         }
-                      }}
-                      onError={(e) => {
-                        e.currentTarget.src =
-                          "https://via.placeholder.com/500x500?text=No+Image";
-                      }}
-                    />
+                        renderArrowNext={(onClickHandler, hasNext, label) =>
+                          hasNext && (
+                            <button
+                              type="button"
+                              onClick={onClickHandler}
+                              title={label}
+                              className="custom-arrow next-arrow"
+                            >
+                              &#10095;
+                            </button>
+                          )
+                        }
+                        renderThumbs={() =>
+                          productImages.map((image, index) => (
+                            <div className="custom-thumb" key={image.file_name || index}>
+                              <img
+                                src={image.file_name}
+                                alt={`${productName} thumbnail ${index + 1}`}
+                                onError={(event) => {
+                                  event.currentTarget.onerror = null;
+                                  event.currentTarget.src = no_image;
+                                }}
+                              />
+                            </div>
+                          ))
+                        }
+                      >
+                        {productImages.map((image, index) => (
+                          <div key={image.file_name || index}>
+                            <img
+                              src={image.file_name}
+                              alt={`${productName} ${index + 1}`}
+                              className={`main-product-img ${user_id != null ? "main-product-img-clickable" : ""}`}
+                              onClick={() => {
+                                if (user_id != null && product?.id) {
+                                  setIsModalOpen(true);
+                                }
+                              }}
+                              onError={(event) => {
+                                event.currentTarget.onerror = null;
+                                event.currentTarget.src = no_image;
+                              }}
+                            />
+                          </div>
+                        ))}
+                      </Carousel>
+                    </div>
                   ) : (
                     <div className="product-no-image">No Image</div>
                   )}
@@ -870,11 +938,6 @@ const ProductDetails = () => {
                     </div>
                   )}
 
-                  {isNoCreditItem && (
-                    <div className="no-credit-tag-product-details">
-                      No Credit Item
-                    </div>
-                  )}
                 </>
               )}
             </div>

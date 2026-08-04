@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 
 import fastDeliveryIcon from "../assets/icons/FtIcon1.svg";
 import qualityAssuranceIcon from "../assets/icons/FtIcon2.svg";
@@ -10,11 +10,30 @@ import facebookIcon from "../assets/icons/fbIcon.svg";
 import twitterIcon from "../assets/icons/xIcon.svg";
 import linkedinIcon from "../assets/icons/playIcon.svg";
 
-import { useNavigate, Link } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 import Logo from "../assets/images/Logo.svg";
 
 const Footer = () => {
+  const [isLoggedIn, setIsLoggedIn] = useState(() => {
+    return Boolean(localStorage.getItem("mazingBusinessLoginInfo"));
+  });
+
+  useEffect(() => {
+    const updateLoginState = () => {
+      setIsLoggedIn(Boolean(localStorage.getItem("mazingBusinessLoginInfo")));
+    };
+
+    updateLoginState();
+    window.addEventListener("storage", updateLoginState);
+    window.addEventListener("focus", updateLoginState);
+
+    return () => {
+      window.removeEventListener("storage", updateLoginState);
+      window.removeEventListener("focus", updateLoginState);
+    };
+  }, []);
+
   return (
     <footer className="footer-wrapper">
       <div className="footer-top">
@@ -89,25 +108,25 @@ const Footer = () => {
               <h3>Quick Links</h3>
               <ul>
                 <li>
-                  <Link to="/">About Us </Link>
+                  <Link to="/about-us">About Us </Link>
                 </li>
                 <li>
-                  <Link to="/">Copyright Policy </Link>
+                  <Link to="/copyright-policy">Copyright Policy </Link>
                 </li>
                 <li>
-                  <Link to="/">Contact Us </Link>
+                  <Link to="/contact-us">Contact Us </Link>
                 </li>
                 <li>
-                  <Link to="/">Terms & Conditions </Link>
+                  <Link to="/terms">Terms & Conditions </Link>
                 </li>
                 <li>
-                  <Link to="/">Return Policy </Link>
+                  <Link to="/return-policy">Return Policy </Link>
                 </li>
                 <li>
-                  <Link to="/">Shipping Policy </Link>
+                  <Link to="/shipping-policy">Shipping Policy </Link>
                 </li>
                 <li>
-                  <Link to="/">Privacy Policy </Link>
+                  <Link to="/privacy-policy">Privacy Policy </Link>
                 </li>
               </ul>
             </div>
@@ -115,18 +134,23 @@ const Footer = () => {
             <div className="footer-col">
               <h3>My Account</h3>
               <ul>
-                <li>
-                  <Link to="/">Login</Link>
-                </li>
-                <li>
-                  <Link to="/">Order History</Link>
-                </li>
-                <li>
-                  <Link to="/">My Wishlist</Link>
-                </li>
-                <li>
+                {isLoggedIn ? (
+                  <>
+                    <li>
+                      <Link to="/profile-order">Order History</Link>
+                    </li>
+                    <li>
+                      <Link to="/wishlist">My Wishlist</Link>
+                    </li>
+                  </>
+                ) : (
+                  <li>
+                    <Link to="/login">Login</Link>
+                  </li>
+                )}
+                {/* <li>
                   <Link to="/">Track Order</Link>
-                </li>
+                </li> */}
               </ul>
             </div>
 

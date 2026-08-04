@@ -15,6 +15,7 @@ import {
   removeMCoin,
   getAvailableMCoin,
   sendQuotation,
+  deleteDownloadedFile,
 } from "../api/apiRequest.jsx";
 
 function getStoredStaffUserTitle() {
@@ -500,6 +501,14 @@ const CartSummary = ({
       setQuotationLoading(true);
       const data = await sendQuotation();
       showToast("success", data?.msg || data?.message || "Quotation sent successfully.");
+
+      if (data?.pdf_url) {
+        try {
+          await deleteDownloadedFile(data.pdf_url);
+        } catch (deleteError) {
+          console.error("Quotation PDF delete failed:", deleteError);
+        }
+      }
     } catch (e) {
       console.error(e);
       showToast("error", e?.data?.msg || e?.data?.message || e?.message || "Send quotation failed");

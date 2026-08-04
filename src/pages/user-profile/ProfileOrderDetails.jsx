@@ -5,7 +5,11 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { FiPlus, FiMinus } from "react-icons/fi";
 
 import InvoiceBtn from "../../assets/icons/InvoiceBtn.svg";
-import { getOrderDetails, downloadInvoice } from "../../api/apiRequest";
+import {
+  getOrderDetails,
+  downloadInvoice,
+  deleteDownloadedFile,
+} from "../../api/apiRequest";
 
 const safeJsonParse = (val) => {
   try {
@@ -103,6 +107,16 @@ const ProfileOrderDetails = () => {
       }
 
       window.open(pdfUrl, "_blank", "noopener,noreferrer");
+
+      // Allow the browser time to receive the PDF before deleting the
+      // temporary server copy.
+      window.setTimeout(async () => {
+        try {
+          await deleteDownloadedFile(pdfUrl);
+        } catch (deleteError) {
+          console.error("Invoice PDF delete failed:", deleteError);
+        }
+      }, 30000);
     } catch (e) {
       alert(e?.message || "Failed to download invoice.");
     } finally {

@@ -1232,12 +1232,7 @@ const Cart = ({ isCartVisible, toggleCart }) => {
                                         isHeadManager) &&
                                         getSuperPrice(item) > 0 && (
                                           <div className="cart-super-price-note">
-                                            Special price cannot be less than{" "}
-                                            <strong>
-                                              ₹ {twoDecimal(getSuperPrice(item))}
-                                            </strong>
-                                            . Minimum quantity will be{" "}
-                                            <strong>{getSuperPriceMinQty(item)}</strong> or more.
+                                            {item?.product?.special_price_message || ""}
                                           </div>
                                         )}
 
@@ -1256,10 +1251,7 @@ const Cart = ({ isCartVisible, toggleCart }) => {
                                       <span>₹ {twoDecimal(item.price)}</span>
                                       {isHeadManager && getSuperPrice(item) > 0 && (
                                         <div className="cart-super-price-note">
-                                          Special price cannot be less than{" "}
-                                          <strong>₹ {twoDecimal(getSuperPrice(item))}</strong>.
-                                          Minimum quantity will be{" "}
-                                          <strong>{getSuperPriceMinQty(item)}</strong> or more.
+                                          {item?.product?.special_price_message || ""}
                                         </div>
                                       )}
                                     </div>

@@ -5,6 +5,7 @@ import { Toaster } from "react-hot-toast";
 import AppRoutes from "./routes/AppRoutes";
 import "./styles/global.css";
 import "./styles/mainStyle.css";
+import "./styles/BrandPage.css";
 import "./styles/responsive.css";
 // console.log("✅ main.jsx loaded", window.location.href);
 // alert("main.jsx loaded");
