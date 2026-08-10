@@ -10,6 +10,8 @@ import icon6 from "../assets/icons/sidemenuIcon6.svg";
 import icon7 from "../assets/icons/sidemenuIcon7.svg";
 import icon8 from "../assets/icons/sidemenuIcon8.svg";
 import icon9 from "../assets/icons/sidemenuIcon9.svg";
+import icon10 from "../assets/icons/pre-arrival-items-icon.svg";
+
 import { getLoggedInUser } from "../utils/authUtils";
 import { userDetails } from "../api/apiRequest";
 import { API_BASE_URL } from "../app_url";
@@ -217,6 +219,15 @@ const ProfileSidebar = () => {
           </span>
           <span className="menu-title">Support Ticket</span>
         </NavLink>
+        <NavLink
+          to="/pre-arrival"
+          className={`sidebar-menu-item ${isActive("/pre-arrival") ? "active" : ""}`}
+        >
+          <span className="menu-icon">
+            <img src={icon10} alt="Pre-Arrival" />
+          </span>
+          <span className="menu-title">Pre-Arrival</span>
+        </NavLink>
         {/* <NavLink
           to="/rewards"
           className={`sidebar-menu-item ${
@@ -227,18 +238,6 @@ const ProfileSidebar = () => {
             <img src={icon5} alt="Rewards" />
           </span>
           <span className="menu-title">Rewards</span>
-        </NavLink>
-
-        <NavLink
-          to="/support-ticket"
-          className={`sidebar-menu-item ${
-            isActive("/support-ticket") ? "active" : ""
-          }`}
-        >
-          <span className="menu-icon">
-            <img src={icon7} alt="Support Ticket" />
-          </span>
-          <span className="menu-title">Support Ticket</span>
         </NavLink>
 
         <NavLink

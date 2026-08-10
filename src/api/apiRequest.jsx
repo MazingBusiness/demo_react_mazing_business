@@ -737,6 +737,132 @@ export const getAllBrands = async (category_group_id, category_id) => {
   return response;
 };
 
+const PRE_ARRIVAL_AUTHORIZATION = "Bearer abm_12345_secure_token";
+
+const getPreArrivalApiUrl = (userId, action) => {
+  const encodedUserId = encodeURIComponent(userId);
+
+  if (import.meta.env.DEV) {
+    return `/abm-api/remote/abm/pre-arrivals/users/${encodedUserId}/${action}`;
+  }
+
+  const queryParams = new URLSearchParams({
+    action,
+    user_id: String(userId),
+  });
+  return `${import.meta.env.BASE_URL}abm-api.php?${queryParams.toString()}`;
+};
+
+// Get pre-arrival items for the currently logged-in user
+export const getPreArrivalItems = async (userId) => {
+  const loggedInUser = getLoggedInUser();
+  const resolvedUserId = userId || loggedInUser?.id;
+
+  if (!resolvedUserId) {
+    throw new Error("Logged-in user ID is missing.");
+  }
+
+  const response = await fetch(
+    getPreArrivalApiUrl(resolvedUserId, "items"),
+    {
+      method: "GET",
+      headers: {
+        Accept: "application/json",
+        Authorization: PRE_ARRIVAL_AUTHORIZATION,
+      },
+    }
+  );
+
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok || data?.success === false) {
+    throw new Error(data?.message || data?.msg || "Unable to load pre-arrival items.");
+  }
+
+  return data;
+};
+
+// Save one or more pre-arrival orders for the currently logged-in user
+export const savePreArrivalOrder = async ({ address_id, order_ids = {}, rows = [] } = {}, userId) => {
+  const loggedInUser = getLoggedInUser();
+  const resolvedUserId = userId || loggedInUser?.id;
+
+  if (!resolvedUserId) {
+    throw new Error("Logged-in user ID is missing.");
+  }
+
+  if (!Array.isArray(rows) || rows.length === 0) {
+    throw new Error("Enter a quantity greater than 0 for at least one product.");
+  }
+
+  if (!address_id) {
+    throw new Error("Select a delivery address before saving the order.");
+  }
+
+  const response = await fetch(
+    getPreArrivalApiUrl(resolvedUserId, "save-orders"),
+    {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        Authorization: PRE_ARRIVAL_AUTHORIZATION,
+      },
+      body: JSON.stringify({ address_id, order_ids, rows }),
+    }
+  );
+
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok || data?.success === false) {
+    const error = new Error(data?.message || data?.msg || "Unable to save pre-arrival order.");
+    error.data = data;
+    throw error;
+  }
+
+  return data;
+};
+
+// Download the pre-arrival product list as a PDF
+export const downloadPreArrivalProductPdf = async ({
+  etaDate,
+  categoryId,
+} = {}) => {
+  const queryParams = new URLSearchParams();
+
+  if (etaDate) queryParams.append("eta_date", etaDate);
+  if (categoryId) queryParams.append("category_id", categoryId);
+
+  const queryString = queryParams.toString();
+  const url = `${API_BASE_URL}prearrival/products/pdf${queryString ? `?${queryString}` : ""}`;
+  const response = await fetch(url, {
+    method: "GET",
+    headers: {
+      Accept: "application/json",
+      Authorization: PRE_ARRIVAL_AUTHORIZATION,
+    },
+    credentials: "include",
+  });
+
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok || data?.success === false || !data?.pdf_url) {
+    throw new Error(data?.message || data?.msg || "Unable to download pre-arrival PDF.");
+  }
+
+  const pdfUrl = data.pdf_url;
+  const fileName = decodeURIComponent(
+    new URL(pdfUrl, window.location.origin).pathname.split("/").pop() ||
+      "pre-arrival-products.pdf"
+  );
+
+  return {
+    ...data,
+    pdfUrl,
+    fileName,
+  };
+};
+
 // Get Brands for the brand listing page
 export const getBrands = async () => {
   const response = await fetch(`${API_BASE_URL}product/all-brands`, {

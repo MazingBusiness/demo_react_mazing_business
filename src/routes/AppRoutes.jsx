@@ -22,6 +22,7 @@ import ProfileWishlist from "../pages/user-profile/ProfileWishlist";
 import ProfileSupportTicket from "../pages/user-profile/ProfileSupportTicket";
 import ProfileWallet from "../pages/user-profile/ProfileWallet";
 import TicketDetails from "../pages/user-profile/TicketDetails";
+import PreArrival from "../pages/Pre_Arrival";
 import Cart from "../pages/Cart";
 import Payment from "../pages/Payment";
 import Confirmation from "../pages/Confirmation";
@@ -117,6 +118,7 @@ const AppRoutes = () => {
       <Route path="/support-tickets" element={<PrivateRoute><ProfileSupportTicket /></PrivateRoute>} />
       <Route path="/wallet" element={<PrivateRoute><ProfileWallet /></PrivateRoute>} />
       <Route path="/ticket-details" element={<PrivateRoute><TicketDetails /></PrivateRoute>} />
+      <Route path="/pre-arrival" element={<PrivateRoute><PreArrival /></PrivateRoute>} />
       <Route path="/brands" element={<BrandPage/>}/>
       
     </Routes>

@@ -1,0 +1,13 @@
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<title>Pre-Arrival Items</title>
+<g transform="translate(-0.3,-0.3) scale(1.08)">
+  <path d="M3.6 7.2L11.35 3.15C11.76 2.94 12.24 2.94 12.65 3.15L20.4 7.2L12 11.58L3.6 7.2Z" fill="white"/>
+  <path d="M3 8.65L11.25 12.95V21.05L3.85 17.18C3.33 16.91 3 16.37 3 15.78V8.65Z" fill="white"/>
+  <path d="M12.75 12.95L21 8.65V13.2C19.87 12.62 18.55 12.42 17.27 12.64C14.76 13.08 12.88 15.24 12.75 17.79V12.95Z" fill="white"/>
+  <path d="M8.1 5.55L16.25 9.8L14.15 10.9L6 6.65L8.1 5.55Z" fill="white" fill-opacity="0.72"/>
+  <circle cx="18" cy="18" r="4.8" fill="white"/>
+  <path d="M18 15.2V18.15L20.05 19.35" stroke="#000" stroke-opacity="0.72" stroke-width="1.45" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M15.55 14.55L14.8 13.8" stroke="white" stroke-width="1.4" stroke-linecap="round"/>
+  <path d="M20.45 14.55L21.2 13.8" stroke="white" stroke-width="1.4" stroke-linecap="round"/>
+</g>
+</svg>

@@ -2,13 +2,14 @@ import { Link, useLocation } from "react-router-dom";
 import Header from "./Header";
 import Footer from "./Footer";
 
-import whatsappButton from "../assets/icons/WhatsappButton.svg";
 import quickButton from "../assets/icons/QuickButton.svg";
+import preArrivalIcon from "../assets/icons/pre-arrival-items-icon.svg";
 
 const MainLayout = ({ children }) => {
   const location = useLocation();
 
   const isQuickOrderPage = location.pathname === "/quick-order";
+  const isPreArrivalPage = location.pathname === "/pre-arrival";
 
   return (
     <div className="layout-wrapper">
@@ -20,6 +21,13 @@ const MainLayout = ({ children }) => {
         {!isQuickOrderPage && (
           <Link to="/quick-order" className="quick-order-btn">
             <img src={quickButton} alt="Quick Order" />
+          </Link>
+        )}
+
+        {!isPreArrivalPage && (
+          <Link to="/pre-arrival" className="pre-arrival-floating-btn">
+            <img src={preArrivalIcon} alt="" aria-hidden="true" />
+            <span>PRE ARRIVAL</span>
           </Link>
         )}
 
