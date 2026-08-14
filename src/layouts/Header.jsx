@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { FiX, FiChevronDown } from "react-icons/fi";
-import { NavLink, useNavigate, Link } from "react-router-dom";
+import { NavLink, useNavigate, Link, useLocation } from "react-router-dom";
 
 import searchIcon from "../assets/icons/SearchIcon.svg";
 import userIcon from "../assets/icons/HrIcon1.svg";
@@ -54,6 +54,7 @@ const Header = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchAnchor, setSearchAnchor] = useState(null);
   const [showMegaMenu, setShowMegaMenu] = useState(false);
+  const [showViewAll, setShowViewAll] = useState(false);
   const [isLangOpen, setIsLangOpen] = useState(false);
   const [cartItems, setCartItems] = useState([]);
   const [cartCount, setCartCount] = useState(0);
@@ -76,6 +77,15 @@ const Header = () => {
   const langDropdownRef = useRef(null);
   const searchContainerRef = useRef(null);
   const navigate = useNavigate();
+  const location = useLocation();
+  const isCategorySlidePage =
+    location.pathname.toLowerCase() === "/all-categories";
+
+  useEffect(() => {
+    if (!showMegaMenu) {
+      setShowViewAll(false);
+    }
+  }, [showMegaMenu]);
 
   const languages = [
     { code: "en", name: "English", flag: flagEN },
@@ -227,7 +237,8 @@ const Header = () => {
       if (
         megaMenuRef.current &&
         !megaMenuRef.current.contains(event.target) &&
-        !event.target.closest(".category-btn")
+        !event.target.closest(".category-btn") &&
+        !event.target.closest(".view-btn")
       ) {
         setShowMegaMenu(false);
       }
@@ -348,15 +359,43 @@ const Header = () => {
         </div>
       </div>
 
-      <div className="nav-bar">
+      <div
+        className={`nav-bar ${
+          isCategorySlidePage ? "category-slide-nav" : ""
+        }`}
+      >
         <div className="maincontainer">
-          <button
-            className="category-btn"
-            onClick={() => setShowMegaMenu((prev) => !prev)}
-            type="button"
-          >
-            <img src={MenuBarIcon} alt="MenuBarIcon" /> Shop by Category
-          </button>
+          {!isCategorySlidePage && (
+            <div className="category-nav-actions">
+              <button
+                className="category-btn"
+                onClick={() => {
+                  setShowMegaMenu((prev) => {
+                    const nextValue = !prev;
+                    setShowViewAll(nextValue);
+                    return nextValue;
+                  });
+                }}
+                type="button"
+              >
+                <img src={MenuBarIcon} alt="MenuBarIcon" /> Shop by Category
+              </button>
+
+              {showViewAll && (
+                <Link
+                  to="/all-categories"
+                  className="view-btn"
+                  state={{ showAllCategories: true }}
+                  onClick={() => {
+                    setShowMegaMenu(false);
+                    setShowViewAll(false);
+                  }}
+                >
+                  View All Categories
+                </Link>
+              )}
+            </div>
+          )}
 
           <ul className="nav-links">
             {/* <li>
@@ -392,6 +431,7 @@ const Header = () => {
             </li> */}
           </ul>
 
+          {!isCategorySlidePage && (
           <div className="language-selector" ref={langDropdownRef}>
             <button
               className="language-toggle"
@@ -427,6 +467,7 @@ const Header = () => {
               ))}
             </div>
           </div>
+          )}
         </div>
       </div>
 

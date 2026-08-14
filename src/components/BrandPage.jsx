@@ -5,7 +5,7 @@ import Footer from '../layouts/Footer';
 import quickButton from "../assets/icons/QuickButton.svg";
 import { Link } from 'react-router-dom';
 import searchIcon from "../assets/icons/SearchIcon.svg";
-import { getBrands } from '../api/apiRequest';
+import { getAllBrands } from '../api/apiRequest';
 
 const BrandPage = () => {
   const [brands, setBrands] = useState([]);
@@ -16,8 +16,8 @@ const BrandPage = () => {
   // api to get brands  
   const getBrandsFromAPI = async () => {
     try {
-      const apiResponse = await getBrands();
-      const responseData = await apiResponse.json();
+      const apiRes = await getAllBrands();
+      const responseData = await apiRes.json();
       setBrands(responseData.data);
     }
     catch (error) {
@@ -103,4 +103,3 @@ const BrandPage = () => {
 }
 
 export default BrandPage
-

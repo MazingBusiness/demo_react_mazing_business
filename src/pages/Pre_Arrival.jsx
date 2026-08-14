@@ -1,5 +1,5 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { FiCalendar, FiDownload, FiMapPin, FiTag, FiX } from "react-icons/fi";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { FiCalendar, FiDownload, FiMapPin, FiMenu, FiTag, FiX } from "react-icons/fi";
 import UserProfileLayout from "../layouts/UserProfileLayout";
 import {
   downloadPreArrivalProductPdf,
@@ -102,6 +102,7 @@ const PreArrival = () => {
   const [selectedDate, setSelectedDate] = useState(ALL);
   const [selectedCategory, setSelectedCategory] = useState(ALL);
   const [quantities, setQuantities] = useState({});
+  const [initialQuantities, setInitialQuantities] = useState({});
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -111,6 +112,51 @@ const PreArrival = () => {
   const [addressModalOpen, setAddressModalOpen] = useState(false);
   const [addressError, setAddressError] = useState("");
   const [error, setError] = useState("");
+  const [headerInView, setHeaderInView] = useState(true);
+  const [stickyHeaderOpen, setStickyHeaderOpen] = useState(false);
+  const [pendingNavigation, setPendingNavigation] = useState(null);
+  const headerSentinelRef = useRef(null);
+  const contentRef = useRef(null);
+  const saveBarRef = useRef(null);
+  const allowNavigationRef = useRef(false);
+
+  useEffect(() => {
+    const sentinel = headerSentinelRef.current;
+    if (!sentinel) return undefined;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setHeaderInView(entry.isIntersecting);
+        if (entry.isIntersecting) setStickyHeaderOpen(false);
+      },
+      { threshold: 0 }
+    );
+
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    const content = contentRef.current;
+    const saveBar = saveBarRef.current;
+    if (!content || !saveBar) return undefined;
+
+    const alignSaveBar = () => {
+      const contentRect = content.getBoundingClientRect();
+      saveBar.style.left = `${contentRect.left}px`;
+      saveBar.style.width = `${contentRect.width}px`;
+    };
+    const resizeObserver = new ResizeObserver(alignSaveBar);
+
+    alignSaveBar();
+    resizeObserver.observe(content);
+    window.addEventListener("resize", alignSaveBar);
+
+    return () => {
+      resizeObserver.disconnect();
+      window.removeEventListener("resize", alignSaveBar);
+    };
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -138,6 +184,7 @@ const PreArrival = () => {
         setArrivalGroups(groups);
         setCategoryGroups(categories);
         setQuantities(initialQuantities);
+        setInitialQuantities(initialQuantities);
       })
       .catch((requestError) => {
         if (active) setError(requestError.message || "Unable to load pre-arrival items.");
@@ -150,6 +197,54 @@ const PreArrival = () => {
       active = false;
     };
   }, []);
+
+  const hasUnsavedQuantityChanges = useMemo(() => {
+    const itemIds = new Set([
+      ...Object.keys(initialQuantities),
+      ...Object.keys(quantities),
+    ]);
+
+    return [...itemIds].some(
+      (itemId) =>
+        (Number(quantities[itemId]) || 0) !==
+        (Number(initialQuantities[itemId]) || 0)
+    );
+  }, [initialQuantities, quantities]);
+
+  useEffect(() => {
+    const handleBeforeUnload = (event) => {
+      if (!hasUnsavedQuantityChanges || allowNavigationRef.current) return;
+      event.preventDefault();
+      event.returnValue = "";
+    };
+
+    const handleLinkClick = (event) => {
+      if (!hasUnsavedQuantityChanges || allowNavigationRef.current) return;
+      if (event.defaultPrevented || event.button !== 0) return;
+      if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+
+      const link = event.target.closest("a[href]");
+      if (!link || link.hasAttribute("download")) return;
+
+      const href = link.getAttribute("href");
+      if (!href || href.startsWith("javascript:") || href.startsWith("mailto:") || href.startsWith("tel:")) return;
+
+      const destination = new URL(link.href, window.location.href);
+      if (destination.href === window.location.href) return;
+
+      event.preventDefault();
+      event.stopPropagation();
+      setPendingNavigation({ href: destination.href });
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    document.addEventListener("click", handleLinkClick, true);
+
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      document.removeEventListener("click", handleLinkClick, true);
+    };
+  }, [hasUnsavedQuantityChanges]);
 
   const etaDates = useMemo(() => {
     const dates = arrivalGroups
@@ -437,6 +532,7 @@ const PreArrival = () => {
       }
 
       setAddressModalOpen(false);
+      setInitialQuantities({ ...quantities });
       alert(response?.message || "Pre-arrival order saved successfully.");
     } catch (saveError) {
       console.error("Pre-arrival order save failed:", saveError);
@@ -449,9 +545,21 @@ const PreArrival = () => {
   return (
     <UserProfileLayout>
       <section className="pre-arrival-page">
-        <header className="pre-arrival-header">
+        {!headerInView && (
+          <button
+            type="button"
+            className={`pre-arrival-header-menu ${stickyHeaderOpen ? "is-open" : ""}`}
+            onClick={() => setStickyHeaderOpen((open) => !open)}
+            aria-label={stickyHeaderOpen ? "Close pre-arrival filters" : "Open pre-arrival filters"}
+            aria-expanded={stickyHeaderOpen}
+          >
+            {stickyHeaderOpen ? <FiX aria-hidden="true" /> : <FiMenu aria-hidden="true" />}
+          </button>
+        )}
+
+        <header className={`pre-arrival-header ${!headerInView && stickyHeaderOpen ? "is-sticky-open" : ""}`}>
           <div className="pre-arrival-title-row">
-            <h1>Pre-Arrival</h1>
+            <h1>Pre Arrival</h1>
             <button
               type="button"
               className="pre-arrival-export-btn"
@@ -493,8 +601,9 @@ const PreArrival = () => {
             </div>
           </div>
         </header>
+        <div ref={headerSentinelRef} className="pre-arrival-header-sentinel" />
 
-        <div className="pre-arrival-content">
+        <div className="pre-arrival-content" ref={contentRef}>
           {loading && <div className="pre-arrival-status">Loading pre-arrival items...</div>}
           {!loading && error && <div className="pre-arrival-status pre-arrival-error">{error}</div>}
           {!loading && !error && visibleProducts.length === 0 && <div className="pre-arrival-status">No pre-arrival products found.</div>}
@@ -556,13 +665,13 @@ const PreArrival = () => {
               ))}
             </div>
           )}
-        </div>
 
-        <footer className="pre-arrival-footer">
-          <button type="button" onClick={handleOpenAddressModal} disabled={loadingAddresses || saving || loading}>
-            {saving ? "SAVING ORDER..." : loadingAddresses ? "LOADING ADDRESSES..." : "SAVE ORDER"}
-          </button>
-        </footer>
+          <div className="pre-arrival-save-bar" ref={saveBarRef}>
+            <button type="button" onClick={handleOpenAddressModal} disabled={loadingAddresses || saving || loading}>
+              {saving ? "SAVING ORDER..." : loadingAddresses ? "LOADING ADDRESSES..." : "SAVE ORDER"}
+            </button>
+          </div>
+        </div>
       </section>
 
       {addressModalOpen && (
@@ -650,6 +759,42 @@ const PreArrival = () => {
                 </button>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {pendingNavigation && (
+        <div className="pre-arrival-unsaved-overlay" role="presentation">
+          <div
+            className="pre-arrival-unsaved-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="pre-arrival-unsaved-title"
+          >
+            <h2 id="pre-arrival-unsaved-title">
+              Do you want to exit this page without saving your pre arrival order?
+            </h2>
+            <div className="pre-arrival-unsaved-actions">
+              <button
+                type="button"
+                className="confirm"
+                onClick={() => {
+                  const destination = pendingNavigation.href;
+                  allowNavigationRef.current = true;
+                  setPendingNavigation(null);
+                  window.location.href = destination;
+                }}
+              >
+                Yes
+              </button>
+              <button
+                type="button"
+                className="cancel"
+                onClick={() => setPendingNavigation(null)}
+              >
+                No
+              </button>
+            </div>
           </div>
         </div>
       )}

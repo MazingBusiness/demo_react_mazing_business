@@ -137,6 +137,26 @@ const parseMoney = (value) => {
   return Number.isFinite(numeric) ? numeric : 0;
 };
 
+const handleApply = async (offerId) => {
+    try {
+      const res = await applyOffer(offerId); // or applyOffer({ offer_id: offerId })
+      const json = await res.json(); // ✅ must read response body
+      console.log("apply-offer json:", json);
+      if (json?.res === false) {
+        alert(json?.msg || "Offer apply failed");
+        return;
+      }else{
+        alert(json?.msg || "Offer applied.");
+      }
+      onClose?.();
+      // ✅ refresh cart
+      await onApplied?.(); // call your cart refresh function
+    } catch (e) {
+      console.error(e);
+      alert(e?.message || "Something went wrong");
+    }
+};
+
 const getUserDiscountPrice = (item) =>
   parseMoney(
     item?.normal_price ??
@@ -192,8 +212,7 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
   const [saveForLaterCategory, setSaveForLaterCategory] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("All");
 
-  const [offerApplied, setofferApplied] = useState(0);
-  const [appliedOfferDetails, setAppliedOfferDetails] = useState(null);
+  const [appliedOffers, setAppliedOffers] = useState([]);
 
   const [downloading, setDownloading] = useState(false);
   const [movingLoading, setMovingLoading] = useState(false);
@@ -589,7 +608,30 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
         const overDue = Number(responseData.over_due_amount || 0);
         const payable = Number(responseData.payable_amount || 0);
 
-        const offerDetails = responseData.offerDetails ?? null;
+        const offerDetails = responseData.offerDetails ?? [];
+        const offerDetailsList = Array.isArray(offerDetails)
+          ? offerDetails
+          : offerDetails
+            ? [offerDetails]
+            : [];
+        const validOffers = responseData.valid_offers || [];
+        const appliedOfferIds = [
+          ...new Set(
+            cart_item
+              .map((item) => item?.applied_offer_id)
+              .filter((id) => id !== null && id !== undefined && id !== "")
+              .map(String)
+          ),
+        ];
+        const appliedOfferList = appliedOfferIds.map((id) => {
+          const appliedDetails = offerDetailsList.find(
+            (offer) => String(offer?.id) === id
+          );
+          if (appliedDetails) return appliedDetails;
+          const details = validOffers.find((offer) => String(offer?.id) === id);
+          if (details) return details;
+          return { id, offer_name: `Offer ${id}` };
+        });
         const save_for_later = responseData.save_for_later || [];
         const save_for_later_category = responseData.save_for_later_category || [];
 
@@ -629,8 +671,7 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
         setSaveForLaterCount(save_for_later.length);
         setSaveForLaterCategory(save_for_later_category);
 
-        setAppliedOfferDetails(offerDetails);
-        setofferApplied(responseData.applied_offer_id != null ? "1" : "0");
+        setAppliedOffers(appliedOfferList);
 
         // ✅ clean selections that no longer exist (string compare)
         setSelectedCartIds((prev) =>
@@ -976,7 +1017,7 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
       showToast("success", json?.msg || "Offer removed.");
     } catch (e) {
       console.error(e);
-      showToast("error", json?.msg || "Something went wrong");
+      showToast("error", e?.message || "Something went wrong");
     } finally {
       await cartData();
     }
@@ -1114,7 +1155,12 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
 
                                 {item?.applied_offer_id != null && (
                                   <span className="applied-offer-tag">
-                                    {appliedOfferDetails?.offer_name} Offer Applied
+                                    {appliedOffers.find(
+                                      (offer) =>
+                                        String(offer?.id) ===
+                                        String(item.applied_offer_id)
+                                    )?.offer_name || "Offer"}{" "}
+                                    Applied
                                   </span>
                                 )}
                                 </div>
@@ -1608,21 +1654,22 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
                   Total Payable: <span>₹ {twoDecimal(finalTotalPayable)}</span>
                 </div>
               </div>
-              {offerApplied != 0 ? (
+              {appliedOffers.map((offer) => (
                 <button
+                  key={offer.id}
                   className="checkout-btn Remove-btn"
-                  onClick={() => removeAppliedOffer(appliedOfferDetails?.id)}
+                  onClick={() => removeAppliedOffer(offer.id)}
                 >
-                  Remove Offer {appliedOfferDetails?.offer_name}
+                  Remove Offer {offer.offer_name}
                 </button>
-              ) : (
-                <button
-                  className="checkout-btn Offer-btn"
-                  onClick={() => setOfferModalOpen(true)}
-                >
-                  Apply Offer
-                </button>
-              )}
+              ))}
+
+              <button
+                className="checkout-btn Offer-btn"
+                onClick={() => setOfferModalOpen(true)}
+              >
+                Apply Offer
+              </button>
 
               <button className="checkout-btn" onClick={handleCheckout}>
                 Checkout

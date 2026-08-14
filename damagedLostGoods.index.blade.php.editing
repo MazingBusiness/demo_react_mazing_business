@@ -1,0 +1,419 @@
+@extends('backend.layouts.app')
+
+@section('content')
+@php
+    $selectedCategoryGroups = (array) request('category_group_id', []);
+    $selectedCategories = (array) request('category_id', []);
+    $selectedBrands = (array) request('brand_id', []);
+    $selectedWarehouses = (array) request('warehouse_id', []);
+    $selectedTypes = (array) request('type', []);
+@endphp
+
+<div class="aiz-titlebar text-left mt-2 mb-3">
+    <div class="d-flex align-items-center justify-content-between">
+        <h1 class="h3 mb-0">{{ translate('Damaged / Lost Goods') }}</h1>
+        <div>
+            <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addDamagedLostGoodsModal">
+                <i class="las la-plus"></i> {{ translate('Add Product') }}
+            </button>
+            <a href="{{ route('products.exportDamagedLostGoods', request()->query()) }}" class="btn btn-info">
+                <i class="las la-download"></i> {{ translate('Export') }}
+            </a>
+        </div>
+    </div>
+</div>
+
+@if(session('success'))
+    <div class="alert alert-success">{{ session('success') }}</div>
+@endif
+
+@if($errors->any())
+    <div class="alert alert-danger">
+        <ul class="mb-0">
+            @foreach($errors->all() as $error)
+                <li>{{ $error }}</li>
+            @endforeach
+        </ul>
+    </div>
+@endif
+
+<div class="card">
+    <form action="" method="GET">
+        <div class="card-header row gutters-5">
+            <div class="col-md-2">
+                <select class="form-control form-control-sm aiz-selectpicker" name="category_group_id[]"
+                        id="cat_group_drop" multiple data-live-search="true"
+                        title="{{ translate('Category Group') }}">
+                    @foreach($category_group as $value)
+                        <option value="{{ $value->id }}" {{ in_array($value->id, $selectedCategoryGroups) ? 'selected' : '' }}>
+                            {{ $value->name }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+
+            <div class="col-md-2">
+                <select class="form-control form-control-sm aiz-selectpicker" name="category_id[]"
+                        multiple data-live-search="true" data-actions-box="true"
+                        title="{{ translate('Category') }}">
+                    @foreach($categories as $value)
+                        <option value="{{ $value->id }}" {{ in_array($value->id, $selectedCategories) ? 'selected' : '' }}>
+                            {{ $value->name }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+
+            <div class="col-md-2">
+                <select class="form-control form-control-sm aiz-selectpicker" name="brand_id[]"
+                        multiple data-live-search="true" data-actions-box="true"
+                        title="{{ translate('Brand') }}">
+                    @foreach($brands as $value)
+                        <option value="{{ $value->id }}" {{ in_array($value->id, $selectedBrands) ? 'selected' : '' }}>
+                            {{ $value->name }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+
+            <div class="col-md-2">
+                <select class="form-control form-control-sm aiz-selectpicker" name="warehouse_id[]"
+                        multiple data-live-search="true" data-actions-box="true"
+                        title="{{ translate('Warehouse') }}">
+                    @foreach($warehouses as $warehouse)
+                        <option value="{{ $warehouse->id }}" {{ in_array($warehouse->id, $selectedWarehouses) ? 'selected' : '' }}>
+                            {{ $warehouse->name }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+
+            <div class="col-md-2">
+                <select class="form-control form-control-sm aiz-selectpicker" name="type[]"
+                        multiple data-live-search="true" data-actions-box="true"
+                        title="{{ translate('Type') }}">
+                    @foreach($availableTypes as $type)
+                        <option value="{{ $type }}" {{ in_array($type, $selectedTypes) ? 'selected' : '' }}>
+                            {{ ucfirst(str_replace('_', ' ', $type)) }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+
+            <div class="col-md-2">
+                <input type="text" name="search_text" value="{{ $search_text }}"
+                       placeholder="{{ translate('Part number or item name') }}"
+                       class="form-control form-control-sm">
+            </div>
+
+            <div class="col-auto">
+                <button type="submit" class="btn btn-primary btn-sm">{{ translate('Filter') }}</button>
+                <a href="{{ url()->current() }}" class="btn btn-light btn-sm">{{ translate('Reset') }}</a>
+            </div>
+        </div>
+    </form>
+
+        <div class="card-body overflow-auto">
+            <table class="table table-bordered mb-0">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>{{ translate('Part No') }}</th>
+                        <th>{{ translate('Item Name') }}</th>
+                        <th>{{ translate('Type') }}</th>
+                        <th>{{ translate('Category Group') }}</th>
+                        <th>{{ translate('Category') }}</th>
+                        <th>{{ translate('Brand') }}</th>
+                        @foreach($warehouses as $warehouse)
+                            <th class="text-right">{{ $warehouse->name }}</th>
+                        @endforeach
+                        <th class="text-right">{{ translate('Total Quantity') }}</th>
+                        <th>{{ translate('Action') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($products as $key => $row)
+                        <tr>
+                            <td>{{ $key + 1 + ($products->currentPage() - 1) * $products->perPage() }}</td>
+                            <td><strong>{{ $row->part_number ?: optional($row->product)->part_no }}</strong></td>
+                            <td>{{ optional($row->product)->name ?? '-' }}</td>
+                            <td>{{ ucfirst(str_replace('_', ' ', $row->type)) }}</td>
+                            <td>{{ optional(optional($row->product)->categoryGroup)->name ?? '-' }}</td>
+                            <td>{{ optional(optional($row->product)->category)->name ?? '-' }}</td>
+                            <td>{{ optional(optional($row->product)->brand)->name ?? '-' }}</td>
+                            @foreach($warehouses as $warehouse)
+                                <td class="text-right">
+                                    {{ $row->warehouse_quantities->get($warehouse->id, 0) }}
+                                </td>
+                            @endforeach
+                            <td class="text-right"><strong>{{ $row->total_quantity }}</strong></td>
+                            <td class="text-nowrap">
+                                @foreach($warehouses as $warehouse)
+                                    @php($warehouseQuantity = (float) $row->warehouse_quantities->get($warehouse->id, 0))
+                                    @if($warehouseQuantity != 0)
+                                        <button type="button"
+                                                class="btn btn-soft-primary btn-icon btn-circle btn-sm edit-damaged-lost"
+                                                title="{{ translate('Edit') }} - {{ $warehouse->name }}"
+                                                data-product-id="{{ $row->product_id }}"
+                                                data-type="{{ $row->type }}"
+                                                data-warehouse-id="{{ $warehouse->id }}"
+                                                data-quantity="{{ $warehouseQuantity }}">
+                                            <i class="las la-edit"></i>
+                                        </button>
+
+                                        <form method="POST" action="{{ route('products.editDamagedLostGoods') }}"
+                                              class="d-inline delete-damaged-lost-form">
+                                            @csrf
+                                            <input type="hidden" name="original_product_id" value="{{ $row->product_id }}">
+                                            <input type="hidden" name="original_type" value="{{ $row->type }}">
+                                            <input type="hidden" name="original_warehouse_id" value="{{ $warehouse->id }}">
+                                            <input type="hidden" name="action" value="delete">
+                                            <button type="submit" class="btn btn-soft-danger btn-icon btn-circle btn-sm"
+                                                    title="{{ translate('Delete') }} - {{ $warehouse->name }}">
+                                                <i class="las la-trash"></i>
+                                            </button>
+                                        </form>
+                                    @endif
+                                @endforeach
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="{{ 9 + $warehouses->count() }}" class="text-center">
+                                {{ translate('No damaged or lost goods found') }}
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+
+            <div class="aiz-pagination mt-3">
+                {{ $products->appends(request()->query())->links() }}
+            </div>
+        </div>
+</div>
+
+<div class="modal fade" id="editDamagedLostGoodsModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <form method="POST" action="{{ route('products.editDamagedLostGoods') }}">
+                @csrf
+                <input type="hidden" name="original_product_id" id="edit_original_product_id">
+                <input type="hidden" name="original_type" id="edit_original_type">
+                <input type="hidden" name="original_warehouse_id" id="edit_original_warehouse_id">
+                <input type="hidden" name="action" value="update">
+
+                <div class="modal-header">
+                    <h5 class="modal-title">{{ translate('Edit Damaged / Lost Product') }}</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>{{ translate('Select Product') }} <span class="text-danger">*</span></label>
+                        <select name="product_id" id="edit_product_id" class="form-control aiz-selectpicker"
+                                data-live-search="true" required>
+                            @foreach($allProducts as $product)
+                                <option value="{{ $product->id }}">
+                                    {{ $product->name }}{{ $product->part_no ? ' - ' . $product->part_no : '' }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>{{ translate('Select Type') }} <span class="text-danger">*</span></label>
+                        <select name="type" id="edit_type" class="form-control aiz-selectpicker" required>
+                            <option value="damage">{{ translate('Damage') }}</option>
+                            <option value="lost">{{ translate('Lost') }}</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>{{ translate('Warehouse') }} <span class="text-danger">*</span></label>
+                        <select name="warehouse_id" id="edit_warehouse_id" class="form-control aiz-selectpicker"
+                                data-live-search="true" required>
+                            @foreach($formWarehouses as $warehouse)
+                                <option value="{{ $warehouse->id }}">{{ $warehouse->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>{{ translate('Quantity') }} <span class="text-danger">*</span></label>
+                        <input type="number" name="quantity" id="edit_quantity" min="0" step="0.01"
+                               class="form-control" required>
+                        <small id="edit_available_stock" class="form-text text-info"></small>
+                        <small class="form-text text-muted">{{ translate('Set quantity to 0 to delete this record.') }}</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-dismiss="modal">{{ translate('Cancel') }}</button>
+                    <button type="submit" class="btn btn-primary">{{ translate('Update') }}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="addDamagedLostGoodsModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <form method="POST" action="{{ route('products.submitDamagedLostGoods') }}">
+                @csrf
+                <div class="modal-header">
+                    <h5 class="modal-title">{{ translate('Add Damaged / Lost Product') }}</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>{{ translate('Select Product') }} <span class="text-danger">*</span></label>
+                        <select name="product_id" id="add_product_id" class="form-control aiz-selectpicker" data-live-search="true" required>
+                            <option value="">{{ translate('Select Product') }}</option>
+                            @foreach($allProducts as $product)
+                                <option value="{{ $product->id }}" {{ old('product_id') == $product->id ? 'selected' : '' }}>
+                                    {{ $product->name }}{{ $product->part_no ? ' - ' . $product->part_no : '' }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>{{ translate('Select Type') }} <span class="text-danger">*</span></label>
+                        <select name="type" class="form-control aiz-selectpicker" required>
+                            <option value="damage" {{ old('type') === 'damage' ? 'selected' : '' }}>{{ translate('Damage') }}</option>
+                            <option value="lost" {{ old('type') === 'lost' ? 'selected' : '' }}>{{ translate('Lost') }}</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>{{ translate('Warehouse') }} <span class="text-danger">*</span></label>
+                        <select name="warehouse_id" id="add_warehouse_id" class="form-control aiz-selectpicker" data-live-search="true" required>
+                            <option value="">{{ translate('Select Warehouse') }}</option>
+                            @foreach($formWarehouses as $warehouse)
+                                <option value="{{ $warehouse->id }}" {{ old('warehouse_id') == $warehouse->id ? 'selected' : '' }}>
+                                    {{ $warehouse->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>{{ translate('Quantity') }} <span class="text-danger">*</span></label>
+                        <input type="number" name="quantity" id="add_quantity" value="{{ old('quantity') }}" min="0.01" step="0.01"
+                               class="form-control" required>
+                        <small id="add_available_stock" class="form-text text-info"></small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-dismiss="modal">{{ translate('Cancel') }}</button>
+                    <button type="submit" class="btn btn-primary">{{ translate('Save') }}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@if($errors->any() && old('action') !== 'update')
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            $('#addDamagedLostGoodsModal').modal('show');
+        });
+    </script>
+@endif
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const stockUrl = @json(route('products.getProductStockByWarehouse'));
+
+        function loadWarehouseStock(productSelector, warehouseSelector, quantitySelector, messageSelector) {
+            const productId = $(productSelector).val();
+            const warehouseId = $(warehouseSelector).val();
+            const $quantity = $(quantitySelector);
+            const $message = $(messageSelector);
+
+            $quantity.removeAttr('max').get(0).setCustomValidity('');
+            $message.text('');
+
+            if (!productId || !warehouseId) {
+                return;
+            }
+
+            $message.text(@json(translate('Loading available stock...')));
+
+            $.get(stockUrl, { product_id: productId, warehouse_id: warehouseId })
+                .done(function (response) {
+                    const stock = Math.max(0, Number(response.stock_quantity || 0));
+                    $quantity.attr('max', stock);
+                    $message.text(@json(translate('Available stock')) + ': ' + stock);
+
+                    if (Number($quantity.val() || 0) > stock) {
+                        $quantity.get(0).setCustomValidity(
+                            @json(translate('Quantity cannot be greater than available stock.'))
+                        );
+                    }
+                })
+                .fail(function () {
+                    $message.text(@json(translate('Unable to load available stock.')));
+                });
+        }
+
+        function validateQuantity(quantitySelector) {
+            const input = $(quantitySelector).get(0);
+            const quantity = Number(input.value || 0);
+            const max = Number(input.max);
+            input.setCustomValidity(input.max !== '' && quantity > max
+                ? @json(translate('Quantity cannot be greater than available stock.'))
+                : '');
+        }
+
+        $('#add_product_id, #add_warehouse_id').on('change', function () {
+            loadWarehouseStock('#add_product_id', '#add_warehouse_id', '#add_quantity', '#add_available_stock');
+        });
+        $('#edit_product_id, #edit_warehouse_id').on('change', function () {
+            loadWarehouseStock('#edit_product_id', '#edit_warehouse_id', '#edit_quantity', '#edit_available_stock');
+        });
+        $('#add_quantity').on('input', function () { validateQuantity('#add_quantity'); });
+        $('#edit_quantity').on('input', function () { validateQuantity('#edit_quantity'); });
+
+        $('.edit-damaged-lost').on('click', function () {
+            const productId = $(this).data('product-id');
+            const type = $(this).data('type');
+            const warehouseId = $(this).data('warehouse-id');
+
+            $('#edit_original_product_id').val(productId);
+            $('#edit_original_type').val(type);
+            $('#edit_original_warehouse_id').val(warehouseId);
+            $('#edit_product_id').val(productId).selectpicker('refresh');
+            $('#edit_type').val(type).selectpicker('refresh');
+            $('#edit_warehouse_id').val(warehouseId).selectpicker('refresh');
+            $('#edit_quantity').val($(this).data('quantity'));
+            $('#editDamagedLostGoodsModal').modal('show');
+            loadWarehouseStock('#edit_product_id', '#edit_warehouse_id', '#edit_quantity', '#edit_available_stock');
+        });
+
+        $('.delete-damaged-lost-form').on('submit', function (event) {
+            if (!window.confirm(@json(translate('Are you sure you want to delete this record?')))) {
+                event.preventDefault();
+            }
+        });
+
+        @if($errors->any() && old('action') === 'update')
+            $('#edit_original_product_id').val(@json(old('original_product_id')));
+            $('#edit_original_type').val(@json(old('original_type')));
+            $('#edit_original_warehouse_id').val(@json(old('original_warehouse_id')));
+            $('#edit_product_id').val(@json(old('product_id'))).selectpicker('refresh');
+            $('#edit_type').val(@json(old('type'))).selectpicker('refresh');
+            $('#edit_warehouse_id').val(@json(old('warehouse_id'))).selectpicker('refresh');
+            $('#edit_quantity').val(@json(old('quantity')));
+            $('#editDamagedLostGoodsModal').modal('show');
+            loadWarehouseStock('#edit_product_id', '#edit_warehouse_id', '#edit_quantity', '#edit_available_stock');
+        @endif
+
+        loadWarehouseStock('#add_product_id', '#add_warehouse_id', '#add_quantity', '#add_available_stock');
+    });
+</script>
+@endsection

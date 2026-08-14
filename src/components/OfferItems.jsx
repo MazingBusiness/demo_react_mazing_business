@@ -334,9 +334,9 @@ const OfferItems = () => {
           <div className="section-header">
             <div className="section-headerLft">
               <h2>Offer Price Items</h2>
-              {/* <Link to="/" className="all-link">
+              <Link to="/offers" className="all-link">
                 All Offer <FiChevronRight />
-              </Link> */}
+              </Link>
             </div>
 
             <div className="section-headerRgt">

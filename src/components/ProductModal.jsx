@@ -13,7 +13,7 @@ import CartIconPlus from "../assets/icons/cartIconplus.svg";
 import { GoDotFill } from "react-icons/go";
 import Swal from "sweetalert2";
 
-import { getProductDetails, getGenericProducts, getMasterProducts, addToCart, updateProductQty, downloadGenericProductList, addToWishlist, removeFromWishlist } from "../api/apiRequest";
+import { getProductDetails, getGenericProducts, getMasterProducts, addToCart, updateProductQty, downloadGenericProductList, addToWishlist, removeFromWishlist, applyOffer } from "../api/apiRequest";
 import { getLoggedInUser } from "../utils/authUtils";
 
 const firstValidId = (...values) =>
@@ -422,6 +422,7 @@ const ProductModal = ({ product, isOpen, onClose }) => {
   const [checkingPrice, setCheckingPrice] = useState(false);
   const [loadingProduct, setLoadingProduct] = useState(false);
   const [wishlistLoading, setWishlistLoading] = useState(false);
+  const [applyingOffer, setApplyingOffer] = useState(false);
 
   const [genericModalOpen, setGenericModalOpen] = useState(false);
   const [selectedGenericLink, setSelectedGenericLink] = useState(null);
@@ -907,6 +908,27 @@ const ProductModal = ({ product, isOpen, onClose }) => {
     };
   }, [isOpen]);
 
+  const offerList = Array.isArray(productDetails?.offer) ? productDetails.offer : [];
+  const now = new Date();
+  const activeOffer = offerList.find((offerItem) => {
+    const start = offerItem?.offer_validity_start
+      ? new Date(String(offerItem.offer_validity_start).replace(" ", "T"))
+      : null;
+    const end = offerItem?.offer_validity_end
+      ? new Date(String(offerItem.offer_validity_end).replace(" ", "T"))
+      : null;
+
+    return Boolean(
+      start &&
+      end &&
+      !Number.isNaN(start.getTime()) &&
+      !Number.isNaN(end.getTime()) &&
+      now >= start &&
+      now <= end
+    );
+  });
+  const hasActiveOffer = Boolean(activeOffer);
+
   const handleAddToCart = async () => {
     try {
       const pid = productDetails?.id;
@@ -925,6 +947,31 @@ const ProductModal = ({ product, isOpen, onClose }) => {
     } catch (err) {
       console.error(err);
       alert(err?.message || "Failed to add to cart");
+    }
+  };
+
+  const handleApply = async () => {
+    const offerId = activeOffer?.id;
+    if (!offerId || applyingOffer) return;
+
+    setApplyingOffer(true);
+    try {
+      const response = await applyOffer(offerId);
+      const result = await response.json();
+
+      if (!response.ok || result?.res === false) {
+        alert(result?.msg || "Offer apply failed");
+        return;
+      }
+
+      window.dispatchEvent(new Event("cart-updated"));
+      alert(result?.msg || "Offer applied.");
+      onClose();
+    } catch (error) {
+      console.error("Apply offer error:", error);
+      alert(error?.message || "Something went wrong");
+    } finally {
+      setApplyingOffer(false);
     }
   };
 
@@ -1279,6 +1326,18 @@ const ProductModal = ({ product, isOpen, onClose }) => {
                         <img src={CartbtnIcon} alt="cartbtnIcon" className="cartbtnIcon" /> Add to
                         Cart
                       </button>
+
+                      {hasActiveOffer && (
+                        <button
+                          className="add-to-cart"
+                          onClick={handleApply}
+                          type="button"
+                          disabled={applyingOffer || !activeOffer?.id}
+                          style={{ backgroundColor: "#099525", color: "#ffffff" }}
+                        >
+                          {applyingOffer ? "Applying..." : "Apply Offer"}
+                        </button>
+                      )}
                       
                       <button
                         type="button"

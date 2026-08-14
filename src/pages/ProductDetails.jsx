@@ -24,6 +24,7 @@ import {
   getGenericProducts,
   getMasterProducts,
   productDetails,
+  applyOffer,
 } from "../api/apiRequest";
 import ProductModal, { GenericProductsModal as ProductCompatibleProductsModal } from "../components/ProductModal";
 
@@ -313,6 +314,7 @@ const ProductDetails = () => {
     comment: "",
   });
   const [reviewSubmitting, setReviewSubmitting] = useState(false);
+  const [applyingOffer, setApplyingOffer] = useState(false);
 
   const [genericModalOpen, setGenericModalOpen] = useState(false);
   const [selectedGenericLink, setSelectedGenericLink] = useState(null);
@@ -492,7 +494,7 @@ const ProductDetails = () => {
   const offerList = Array.isArray(product?.offer) ? product.offer : [];
   const now = new Date();
 
-  const hasActiveOffer = offerList.some((offerItem) => {
+  const activeOffer = offerList.find((offerItem) => {
     const start = offerItem?.offer_validity_start
       ? new Date(String(offerItem.offer_validity_start).replace(" ", "T"))
       : null;
@@ -507,6 +509,7 @@ const ProductDetails = () => {
 
     return now >= start && now <= end;
   });
+  const hasActiveOffer = Boolean(activeOffer);
 
   const isNoCreditItem = Number(product?.cash_and_carry_item || 0) === 1;
 
@@ -825,6 +828,30 @@ const ProductDetails = () => {
     setIsModalOpen(true);
   };
 
+  const handleApply = async () => {
+    const offerId = activeOffer?.id;
+    if (!offerId || applyingOffer) return;
+
+    setApplyingOffer(true);
+    try {
+      const response = await applyOffer(offerId);
+      const result = await response.json();
+
+      if (!response.ok || result?.res === false) {
+        toast.error(result?.msg || "Offer apply failed");
+        return;
+      }
+
+      toast.success(result?.msg || "Offer applied.");
+      window.dispatchEvent(new Event("cart-updated"));
+    } catch (error) {
+      console.error("Apply offer error:", error);
+      toast.error(error?.message || "Something went wrong");
+    } finally {
+      setApplyingOffer(false);
+    }
+  };
+
   const handleRegisterToCheckPrices = () => {
     navigate("/login");
   };
@@ -984,7 +1011,17 @@ const ProductDetails = () => {
                       <span className="old-price">{formattedMrp}</span>
                       <span className="new-price">{formattedDisplayedPrice}</span>
                       <span className="unit">{unitLabel}</span>
-
+                      {hasActiveOffer && (
+                        <button
+                          type="button"
+                          onClick={handleApply}
+                          disabled={applyingOffer || !activeOffer?.id}
+                          className="add-to-cart-btn-product-details"
+                          style={{ backgroundColor: "#099525", color: "#ffffff" }}
+                        >
+                          {applyingOffer ? "Applying..." : "Apply Offer"}
+                        </button>
+                      )}
                       <button
                         type="button"
                         onClick={handleAddToCart}

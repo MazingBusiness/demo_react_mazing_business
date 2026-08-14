@@ -40,6 +40,8 @@ import WarrentyClaimFull from "../pages/WarrentyClaimFull";
 import ScrollToTop from "../components/ScrollToTop";
 import PageContent from "../pages/PageContent";
 import BrandPage from "../components/BrandPage"
+import OfferList from "../pages/OfferList";
+import CategorySlide from "../components/CategorySlide";
 import { getAllPageShug } from "../api/apiRequest";
 
 const AppRoutes = () => {
@@ -83,6 +85,7 @@ const AppRoutes = () => {
       <Route path="/quick-order" element={<QuickOrder />} />
       <Route path="/about" element={<About />} />
       <Route path="/contact" element={<Contact />} />
+      <Route path="/offers" element={<PrivateRoute><OfferList /></PrivateRoute>} />
 
       {/* Warranty */}
       <Route path="/warranty-claim" element={<WarrantyClaim />} />
@@ -120,7 +123,8 @@ const AppRoutes = () => {
       <Route path="/ticket-details" element={<PrivateRoute><TicketDetails /></PrivateRoute>} />
       <Route path="/pre-arrival" element={<PrivateRoute><PreArrival /></PrivateRoute>} />
       <Route path="/brands" element={<BrandPage/>}/>
-      
+      <Route path="/all-categories" element={<CategorySlide/>}/>
+
     </Routes>
   </HashRouter>
   );

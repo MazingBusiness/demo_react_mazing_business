@@ -707,10 +707,12 @@ export const addProductReview = async ({ product_id, rating, comment }) => {
 
 // Get All Category Group
 export const getAllCategoryGroups = async () => {
+  const header = getHeader();
   const url = `${API_BASE_URL}product/cetrgory-groups`;
   const response = await fetch(url, {
     method: "GET",
     headers: {
+      ...(header?.headers || {}),
       "Content-Type": "application/json",
     },
   });
@@ -720,15 +722,19 @@ export const getAllCategoryGroups = async () => {
 
 // Get All Brands
 export const getAllBrands = async (category_group_id, category_id) => {
+  const user = getLoggedInUser();
+  const header = getHeader();
   const queryParams = new URLSearchParams();
   if (category_group_id) queryParams.append("category_group_id", category_group_id);
   if (category_id) queryParams.append("category_id", category_id);
+  if (user?.id) queryParams.append("user_id", user.id);
 
   const url = `${API_BASE_URL}product/all-brands?${queryParams.toString()}`;
 
   const response = await fetch(url, {
     method: "GET",
     headers: {
+      ...(header?.headers || {}),
       "Content-Type": "application/json",
     },
   });
@@ -1036,6 +1042,47 @@ export const validOffers = async () => {
     method: "GET",
     headers: { Accept: "application/json", ...(header.headers || {}) },
   });
+  return response;
+};
+
+// Offers page data. Only `offers` is paginated by the API; the banner and
+// filter lists are returned in full on every request.
+export const getValidOffersForPage = async ({
+  page = 1,
+  category_id,
+  brand_id,
+} = {}) => {
+  const header = getHeader();
+  const queryParams = new URLSearchParams();
+
+  queryParams.append("page", String(page));
+  if (category_id) queryParams.append("category_id", String(category_id));
+  if (brand_id) queryParams.append("brand_id", String(brand_id));
+
+  const response = await fetch(
+    `${API_BASE_URL}product/get-valid-offers?${queryParams.toString()}`,
+    {
+      method: "GET",
+      headers: {
+        Accept: "application/json",
+        ...(header?.headers || {}),
+      },
+    },
+  );
+
+  return response;
+};
+
+export const offerDownloadPdf = async () => {
+  const header = getHeader();
+  const response = await fetch(`${API_BASE_URL}product/offer-banners-pdf`, {
+    method: "GET",
+    headers: {
+      Accept: "application/pdf",
+      ...(header?.headers || {}),
+    },
+  });
+
   return response;
 };
 

@@ -868,6 +868,11 @@ const QuickOrder = () => {
     setInputMax(clampedMax);
   };
 
+  // Get this code from junior
+  useEffect(() => {
+    console.log("Selected Parent:", selectedCatGIds);
+  }, [selectedCatGIds]);
+
   return (
     <MainLayout>
       <div className="maincontainer">

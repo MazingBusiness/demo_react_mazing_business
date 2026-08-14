@@ -26,6 +26,7 @@ import { getLoggedInUser } from "../utils/authUtils.js";
 const QuickOrderGrid = ({ filters, onPriceRangeUpdate }) => {
   const navigate = useNavigate();
   const loaderRef = useRef(null);
+  const latestProductRequestRef = useRef(0);
   const user = getLoggedInUser();
 
   const showToast = (icon, title) => {
@@ -129,6 +130,8 @@ const QuickOrderGrid = ({ filters, onPriceRangeUpdate }) => {
   };
 
   const getQuickOrderProductRecord = async (page = 1) => {
+    const requestId = ++latestProductRequestRef.current;
+
     try {
       setLoading(true);
 
@@ -148,6 +151,10 @@ const QuickOrderGrid = ({ filters, onPriceRangeUpdate }) => {
       );
 
       const responseData = await apiRes.json();
+
+      if (requestId !== latestProductRequestRef.current) {
+        return;
+      }
 
       if (responseData?.res) {
         const productList = responseData?.data?.data || [];
@@ -251,6 +258,10 @@ const QuickOrderGrid = ({ filters, onPriceRangeUpdate }) => {
         setHasMore(false);
       }
     } catch (error) {
+      if (requestId !== latestProductRequestRef.current) {
+        return;
+      }
+
       console.error("Fetch error:", error);
       if (page === 1) {
         setProducts([]);
@@ -258,7 +269,9 @@ const QuickOrderGrid = ({ filters, onPriceRangeUpdate }) => {
       }
       setHasMore(false);
     } finally {
-      setLoading(false);
+      if (requestId === latestProductRequestRef.current) {
+        setLoading(false);
+      }
     }
   };
 
