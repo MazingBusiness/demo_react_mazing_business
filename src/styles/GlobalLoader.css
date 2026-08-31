@@ -1,0 +1,14 @@
+.global-loader {
+  width: 100%;
+  min-height: calc(100vh - 250px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #F5F5F5;
+}
+
+.loading-gif {
+  width: 120px;
+  height: 120px;
+  object-fit: contain;
+}

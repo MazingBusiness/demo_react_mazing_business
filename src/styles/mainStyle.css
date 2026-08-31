@@ -11843,6 +11843,19 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   max-width: 380px;
 }
 
+.loading-gif {
+  width: 125px;
+  height: 125px;
+  object-fit: contain;
+
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+
+  z-index: 9999;
+}
+
 .cart-super-price-feedback {
   margin-top: 7px;
   padding: 8px 10px;

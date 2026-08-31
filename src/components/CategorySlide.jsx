@@ -1,49 +1,173 @@
-import React, { useEffect, useRef, useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { Link,  useNavigate } from "react-router-dom";
 
 import { getAllCategoryGroups } from "../api/apiRequest";
-import quickButton from "../assets/icons/QuickButton.svg";
 import searchIcon from "../assets/icons/SearchIcon.svg";
 import noImage from "../assets/images/no-image.png";
-import Footer from "../layouts/Footer";
-import Header from "../layouts/Header";
+
 import "../styles/CategorySlide.css";
+import MainLayout from "../layouts/MainLayout";
+// import loadingGif from "../assets/images/transperent-loader.gif";
+import { useLoading } from "../context/LoadingContext";
+
+
+
+
 
 const CategorySlide = () => {
-  const location = useLocation();
+  const { startLoading, stopLoading } = useLoading();
   const navigate = useNavigate();
   const childListRef = useRef(null);
-
   const [category, setCategory] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [searchText] = useState("");
+ ;
+
+  
   const [selectedParent, setSelectedParent] = useState(null);
-  const [parentHeight, setParentHeight] = useState("auto");
+  
   const [childSearchText, setChildSearchText] = useState("");
-  const [expandedChild, setExpandedChild] = useState(null);
+ 
+ 
 
-  const isQuickOrderPage = location.pathname === "/quick-order";
+  const [categoryLoading, setCategoryLoading] = useState(true);
+  
+  const[categoryError,setCategoryError]=useState("");
 
-  useEffect(() => {
-    const getCategory = async () => {
-      try {
-        const response = await getAllCategoryGroups();
-        const result = await response.json();
 
-        if (!response.ok || result?.res === false) {
-          throw new Error(result?.msg || "Unable to load category groups");
-        }
+// useEffect(() => {
+//   let isMounted = true;
 
-        setCategory(Array.isArray(result?.data) ? result.data : []);
-      } catch (error) {
-        console.log(error);
-      } finally {
-        setLoading(false);
-      }
-    };
+//   const getCategory = async () => {
+//     setCategoryLoading(true);
+//     setCategoryError("");
 
-    getCategory();
-  }, []);
+//     try {
+//       const response = await getAllCategoryGroups();
+//       if(response.status===429){
+//       if (isMounted) {
+//           setCategoryError(
+//             "Too many requests. Please wait a moment and try again."
+//           );
+//           setCategory([]);
+//         }
+//         return;
+//       }
+
+//       if (!response.ok) {
+//         throw new Error(`API Error: ${response.status}`);
+//       }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//       const result = await response.json();
+
+//       if (!response.ok || result?.res === false) {
+//         throw new Error(
+//           result?.msg || "Unable to load category groups"
+//         );
+//       }
+
+//       if (isMounted) {
+//         setCategory(
+//           Array.isArray(result?.data)
+//             ? result.data
+//             : []
+//         );
+//       }
+//     } catch (error) {
+//       if (isMounted) {
+//         console.error("Category API Error:", error);
+//         setCategory([]);
+//       }
+//     } finally {
+//       if (isMounted) {
+//         setCategoryLoading(false);
+//       }
+//     }
+//   };
+
+//   getCategory();
+
+//   return () => {
+//     isMounted = false;
+//   };
+// }, []);
+
+const getCategory = async () => {
+  setCategoryLoading(true);
+  startLoading();
+  setCategoryError("");
+
+  try {
+    const response = await getAllCategoryGroups();
+
+    if (response.status === 429) {
+      setCategoryError(
+        "Too many requests. Please try again after 5 seconds."
+      );
+      setCategory([]);
+      return;
+    }
+
+    if (!response.ok) {
+      throw new Error(`API Error: ${response.status}`);
+    }
+
+    const result = await response.json();
+
+    if (Array.isArray(result?.data)) {
+      setCategory(result.data);
+    } else {
+      setCategory([]);
+      setCategoryError("Unable to load product categories. Please try again after 5 seconds");
+    }
+
+  } catch (error) {
+    console.error("Category API Error:", error);
+    setCategory([]);
+    setCategoryError(
+      "Unable to load product categories. Please try again."
+    );
+  } finally {
+    setCategoryLoading(false);
+    stopLoading();
+  }
+};
+
+useEffect(() => {
+  getCategory();
+}, []);
+
+
+
+
+useEffect(() => {
+  if (categoryLoading) {
+    document.body.style.overflow = "hidden";
+  } else {
+    document.body.style.overflow = "";
+  }
+
+  return () => {
+    document.body.style.overflow = "";
+  };
+}, [categoryLoading]);
+
+
+
+
+
+
 
   useEffect(() => {
     if (category.length > 0 && selectedParent === null) {
@@ -51,98 +175,85 @@ const CategorySlide = () => {
     }
   }, [category, selectedParent]);
 
-  useEffect(() => {
-    const search = searchText.toLowerCase().trim();
-
-    if (!search) {
-      if (category.length > 0) {
-        setSelectedParent(category[0].id);
-      }
-      return;
-    }
-
-    const matchingParent = category.find((item) => {
-      const parentMatches = item.name?.toLowerCase().includes(search);
-      const childMatches = (item.child_category || []).some((child) =>
-        child.name?.toLowerCase().includes(search),
-      );
-
-      return parentMatches || childMatches;
-    });
-
-    if (matchingParent) {
-      setSelectedParent(matchingParent.id);
-    }
-  }, [searchText, category]);
 
   const selectedCategory = category.find(
     (item) => item.id === selectedParent,
   );
 
-  useEffect(() => {
-    if (!childListRef.current) return undefined;
-
-    const updateParentHeight = () => {
-      setParentHeight(childListRef.current.scrollHeight);
-    };
-
-    updateParentHeight();
-    window.addEventListener("resize", updateParentHeight);
-
-    return () => {
-      window.removeEventListener("resize", updateParentHeight);
-    };
-  }, [selectedCategory]);
+  
 
   useEffect(() => {
     setChildSearchText("");
   }, [selectedParent]);
 
-  const normalizedSearch = searchText.toLowerCase().trim();
-  const filteredCategories = category
-    .map((item) => {
-      if (!normalizedSearch) return item;
 
-      const parentMatches = item.name
-        ?.toLowerCase()
-        .includes(normalizedSearch);
-      const matchingChildren = (item.child_category || []).filter((child) =>
-        child.name?.toLowerCase().includes(normalizedSearch),
-      );
 
-      if (!parentMatches && matchingChildren.length === 0) return null;
-
-      return {
-        ...item,
-        child_category: parentMatches
-          ? item.child_category
-          : matchingChildren,
-      };
-    })
-    .filter(Boolean);
+  const filteredCategories=category;
 
   const normalizedChildSearch = childSearchText.toLowerCase().trim();
   const filteredChildren = (selectedCategory?.child_category || []).filter(
     (child) => child.name?.toLowerCase().includes(normalizedChildSearch),
   );
 
-  if (loading) {
-    return <h3 className="loader">Loading......</h3>;
-  }
 
-  return (
-    <>
-      <Header />
+useEffect(() => {
+  if (categoryLoading||selectedParent === null) return;
 
+  const timer = setTimeout(() => {
+    const childList = childListRef.current;
+
+    if (!childList) return;
+
+    const headerHeight = 150; // change according to your MainLayout header
+
+    const position =
+      childList.getBoundingClientRect().top +
+      window.scrollY -
+      headerHeight;
+
+    window.scrollTo({
+      top: position,
+      behavior: "smooth",
+    });
+  }, 100);
+
+  return () => clearTimeout(timer);
+}, [selectedParent,categoryLoading]);
+
+
+
+return (
+
+      <MainLayout hideFloatingButtons={categoryLoading}>
+  
+ <div className='wrapper'
+ 
+ >
+         { categoryLoading? null :categoryError ?(
+   <div className="category-error">
+    <h2>Unable to load categories</h2>
+
+    <p>{categoryError}</p>
+
+    <button onClick={getCategory}>
+      Try Again
+    </button>
+  </div>
+):(
       <div className="category-container">
-        <div className="parent-list" style={{ height: parentHeight }}>
+        <div className="parent-list" >
           {filteredCategories.map((item) => (
             <div
               key={item.id}
+              
               className={`parent-category ${
                 selectedParent === item.id ? "selected" : ""
               }`}
-              onClick={() => setSelectedParent(item.id)}
+              onClick={(e) =>{
+                 setSelectedParent(item.id);
+   
+
+              }}
             >
               <div className="category-info">
                 <img
@@ -158,6 +269,7 @@ const CategorySlide = () => {
             </div>
           ))}
         </div>
+    
 
         <div className="child-list" ref={childListRef}>
           <div className="child-content">
@@ -191,9 +303,9 @@ const CategorySlide = () => {
               </div>
             </div>
           </div>
-
-          {filteredChildren.length > 0 ? (
+   {filteredChildren.length > 0 ? (
             <div className="child-cards">
+              
               {filteredChildren.map((child) => (
                 <div
                   key={child.id}
@@ -217,14 +329,7 @@ const CategorySlide = () => {
                   />
 
                   <span
-                    className={`child-name ${
-                      expandedChild === child.id ? "expanded" : ""
-                    }`}
-                    onClick={() => {
-                      setExpandedChild(
-                        expandedChild === child.id ? null : child.id,
-                      );
-                    }}
+                    className="child-name"
                   >
                     {child.name}
                   </span>
@@ -236,20 +341,14 @@ const CategorySlide = () => {
               <p>No Product Category is available...</p>
             </div>
           )}
-        </div>
-      </div>
-
-      <Footer />
-
-      <div className="floating-buttons">
-        {!isQuickOrderPage && (
-          <Link to="/quick-order" className="quick-order-btn">
-            <img src={quickButton} alt="Quick Order" />
-          </Link>
-        )}
-      </div>
-    </>
+            </div>
+            </div>
+)}
+  </div>
+      
+     </MainLayout>
+  
   );
-};
+}
 
 export default CategorySlide;

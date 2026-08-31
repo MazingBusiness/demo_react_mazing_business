@@ -7,6 +7,8 @@ import "./styles/global.css";
 import "./styles/mainStyle.css";
 import "./styles/BrandPage.css";
 import "./styles/responsive.css";
+import { LoadingProvider } from "./context/LoadingContext";
+import GlobalLoader from "./components/GlobalLoader";
 // console.log("✅ main.jsx loaded", window.location.href);
 // alert("main.jsx loaded");
 
@@ -25,10 +27,13 @@ import "./styles/responsive.css";
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
   <React.StrictMode>
+    <LoadingProvider>
       <Toaster
         position="top-right"
         containerStyle={{ zIndex: 1000000 }}
       />
+      <GlobalLoader />
       <AppRoutes />
+    </LoadingProvider>
   </React.StrictMode>
 );
