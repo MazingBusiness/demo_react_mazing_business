@@ -5,9 +5,7 @@ import MainLayout from "../layouts/MainLayout";
 import noImage from "../assets/images/no-image.png";
 import { applyOffer, getValidOffersForPage, offerDownloadPdf } from "../api/apiRequest";
 import "../styles/OfferList.css";
-import { useLoading } from "../context/LoadingContext";
 
-import GlobalLoader from "../components/GlobalLoader";
 const getBannerImage = (offer) =>
   offer?.offer_banner ||
   offer?.offer_products?.[0]?.product_details?.images?.[0]?.file_name ||
@@ -52,114 +50,55 @@ const OfferList = () => {
   const [page, setPage] = useState(1);
   const [lastPage, setLastPage] = useState(1);
   const [total, setTotal] = useState(0);
-  // const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [applyingId, setApplyingId] = useState(null);
   const [downloadingPdf, setDownloadingPdf] = useState(false);
   const [activeBanner, setActiveBanner] = useState(0);
-  const { startLoading, stopLoading } = useLoading();
-  const [initialLoading, setInitialLoading] = useState(true);
-  
-useEffect(() => {
-  let active = true;
 
-  const load = async () => {
-    const isMore = page > 1;
+  useEffect(() => {
+    let active = true;
+    const load = async () => {
+      const isMore = page > 1;
+      isMore ? setLoadingMore(true) : setLoading(true);
+      try {
+        const response = await getValidOffersForPage({
+          page,
+          category_id: selectedCategory,
+          brand_id: selectedBrand,
+        });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok || result?.res === false) {
+          throw new Error(result?.msg || "Unable to load offers.");
+        }
+        if (!active) return;
 
-    if (isMore) {
-      setLoadingMore(true);
-    } else {
-      startLoading();
-    }
-
-    try {
-      const response = await getValidOffersForPage({
-        page,
-        category_id: selectedCategory,
-        brand_id: selectedBrand,
-      });
-
-      const result = await response.json().catch(() => ({}));
-
-      if (!response.ok || result?.res === false) {
-        throw new Error(
-          result?.msg || "Unable to load offers."
-        );
+        const paginator = result?.offers || {};
+        const rows = Array.isArray(paginator?.data)
+          ? paginator.data
+          : Array.isArray(result?.offers)
+            ? result.offers
+            : [];
+        setOffers((current) => (isMore ? [...current, ...rows] : rows));
+        setLastPage(Number(paginator?.last_page || 1));
+        setTotal(Number(paginator?.total ?? rows.length));
+        setBanners(Array.isArray(result?.showInBanner) ? result.showInBanner : []);
+        setCategories(Array.isArray(result?.categories) ? result.categories : []);
+        setBrands(Array.isArray(result?.brands) ? result.brands : []);
+      } catch (error) {
+        if (!active) return;
+        if (!isMore) setOffers([]);
+        toast.error(error?.message || "Unable to load offers.");
+      } finally {
+        if (active) {
+          setLoading(false);
+          setLoadingMore(false);
+        }
       }
-
-      if (!active) return;
-
-      const paginator = result?.offers || {};
-
-      const rows = Array.isArray(paginator?.data)
-        ? paginator.data
-        : Array.isArray(result?.offers)
-          ? result.offers
-          : [];
-
-      setOffers((current) =>
-        isMore ? [...current, ...rows] : rows
-      );
-
-      setLastPage(
-        Number(paginator?.last_page || 1)
-      );
-
-      setTotal(
-        Number(paginator?.total ?? rows.length)
-      );
-
-      setBanners(
-        Array.isArray(result?.showInBanner)
-          ? result.showInBanner
-          : []
-      );
-
-      setCategories(
-        Array.isArray(result?.categories)
-          ? result.categories
-          : []
-      );
-
-      setBrands(
-        Array.isArray(result?.brands)
-          ? result.brands
-          : []
-      );
-
-    } catch (error) {
-      if (!active) return;
-
-      if (!isMore) {
-        setOffers([]);
-      }
-
-      toast.error(
-        error?.message || "Unable to load offers."
-      );
-
-    }
-    finally {
-  if (isMore) {
-    if (active) {
-      setLoadingMore(false);
-    }
-  } else {
-    stopLoading();// not to give offeritems===0 when loading happens
-    if(active){//
-    setInitialLoading(false);//
-    }
-  }
-}
-  };
-
-  load();
-
-  return () => {
-    active = false;
-  };
-
-}, [page, selectedCategory, selectedBrand]);
+    };
+    load();
+    return () => { active = false; };
+  }, [page, selectedCategory, selectedBrand]);
 
   useEffect(() => {
     if (banners.length < 2) return undefined;
@@ -241,7 +180,6 @@ useEffect(() => {
 
   return (
     <MainLayout>
-      <GlobalLoader/>
       <main className="offer-list-page">
         <div className="maincontainer">
           {visibleBanner && (
@@ -270,11 +208,8 @@ useEffect(() => {
               )}
             </section>
           )}
-          
-          <section className="offer-filters" aria-label="Offer filters"
-          style={{visibility:initialLoading ? "hidden":"visible"}}>
-           
 
+          <section className="offer-filters" aria-label="Offer filters">
             <div className="offer-filter-group">
               <h2><FiBox /> Sub-category</h2>
               <div className="offer-filter-options">
@@ -284,7 +219,6 @@ useEffect(() => {
                     {category.name} <span>{category.product_count}</span>
                   </button>
                 ))}
-                
               </div>
             </div>
 
@@ -300,23 +234,18 @@ useEffect(() => {
               </div>
             </div>
           </section>
-             
-          <section className="offer-results">
-          
 
-            <div className="offer-results-heading"
-             style={{visibility:initialLoading ? "hidden":"visible"}}
-            >
+          <section className="offer-results">
+            <div className="offer-results-heading">
               <h1>All Active Offers ({total})</h1>
               <button type="button" className="offer-download-pdf" disabled={downloadingPdf} onClick={handleDownloadPdf}>
                 <FiDownload /> {downloadingPdf ? "Downloading..." : "Download PDF"}
               </button>
-              
             </div>
-          
-          {initialLoading ? (
-            <div className="offer-grid-placeholder"></div>
-          ):offers.length===0 ?(
+
+            {loading ? (
+              <div className="offer-status">Loading offers...</div>
+            ) : offers.length === 0 ? (
               <div className="offer-status">No active offers found for these filters.</div>
             ) : (
               <div className="offer-grid">
@@ -341,8 +270,8 @@ useEffect(() => {
                   </article>
                 ))}
               </div>
-            )}{/*//////////////change loading to initial loading*/}
-          
+            )}
+
             {page < lastPage && (
               <button type="button" className="offer-load-more" disabled={loadingMore} onClick={() => setPage((current) => current + 1)}>
                 {loadingMore ? "Loading..." : "Load More Offer"}
@@ -351,7 +280,6 @@ useEffect(() => {
           </section>
         </div>
       </main>
-
     </MainLayout>
   );
 };

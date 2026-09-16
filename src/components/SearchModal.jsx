@@ -322,6 +322,19 @@ const SearchModal = ({
     navigate(PRODUCT_DETAILS_PATH(p));
   };
 
+  const handleSearchKeyDown = (event) => {
+    if (event.key !== "Enter" || event.nativeEvent.isComposing) return;
+    event.preventDefault();
+
+    const query = String(searchText || "").trim();
+    if (query.length < minimumSearchLength) return;
+
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    requestSequenceRef.current += 1;
+    onClose?.();
+    navigate("/quick-order", { state: { search_text: query } });
+  };
+
   const onCategorySuggestionClick = (category) => {
     onClose?.();
     navigate("/quick-order", {
@@ -365,6 +378,8 @@ const SearchModal = ({
             placeholder="Search for products"
             value={searchText}
             onChange={onChange}
+            onKeyDown={handleSearchKeyDown}
+            enterKeyHint="search"
             autoFocus
           />
           <button

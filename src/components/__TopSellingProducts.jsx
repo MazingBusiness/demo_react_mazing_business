@@ -8,8 +8,6 @@ import fastDeliveryIcon from "../assets/icons/fast-delivery.svg";
 import noImage from "../assets/images/no-image.png";
 import { getLoggedInUser } from "../utils/authUtils";
 import ProductModal from "./ProductModal";
-import { useLoading } from "../context/LoadingContext";
-
 
 const renderRating = (rating) => {
   const numericRating = Math.min(5, Math.max(0, Number(rating || 0)));
@@ -42,13 +40,11 @@ const TopSellingProducts = () => {
   const pausedRef = useRef(false);
   const draggingRef = useRef(false);
   const hasDraggedRef = useRef(false);
-  const loadingStartedRef = useRef(false);// TO AVOID INFINITE LOADER
   const lastPointerYRef = useRef(0);
   const [products, setProducts] = useState([]);
-  // const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
   const [selectedProduct, setSelectedProduct] = useState(null);
-  
-  const{startLoading,stopLoading}=useLoading();
+
   const openProductModal = (product) => {
     if (!product?.id) return;
     pausedRef.current = true;
@@ -60,64 +56,38 @@ const TopSellingProducts = () => {
     pausedRef.current = false;
   };
 
-//   useEffect(() => {
-//     let ignore = false;
+  useEffect(() => {
+    let ignore = false;
 
-//     const loadProducts = async () => {
-// startLoading();
-//       try {
-//         const response = await getBestSellerProducts();
-//         const payload = await response.json();
-//         const productList = Array.isArray(payload?.data) ? payload.data : [];
+    const loadProducts = async () => {
+      setLoading(true);
 
-//         if (!ignore) {
-//           setProducts(productList);
-//           stopLoading();     
-//            }
-//       } catch (error) {
-//         console.error("Top selling products fetch error:", error);
-//         if (!ignore) {
-//           setProducts([]);
-//            stopLoading();
-        
-//         }
-//       }
-//     };
+      try {
+        const response = await getBestSellerProducts();
+        const payload = await response.json();
+        const productList = Array.isArray(payload?.data) ? payload.data : [];
 
-//     loadProducts();
+        if (!ignore) {
+          setProducts(productList);
+        }
+      } catch (error) {
+        console.error("Top selling products fetch error:", error);
+        if (!ignore) {
+          setProducts([]);
+        }
+      } finally {
+        if (!ignore) {
+          setLoading(false);
+        }
+      }
+    };
 
-//     return () => {
-//       ignore = true;
-//     };
-//   }, []);
+    loadProducts();
 
-useEffect(() => {
-  if (loadingStartedRef.current) return;
-
-  loadingStartedRef.current = true;
-
-  const loadProducts = async () => {
-    startLoading();
-
-    try {
-      const response = await getBestSellerProducts();
-      const payload = await response.json();
-
-      const productList = Array.isArray(payload?.data)
-        ? payload.data
-        : [];
-
-      setProducts(productList);
-    } catch (error) {
-      console.error("Top selling products fetch error:", error);
-      setProducts([]);
-    } finally {
-      stopLoading();
-    }
-  };
-
-  loadProducts();
-}, []);
+    return () => {
+      ignore = true;
+    };
+  }, []);
 
   useEffect(() => {
     let animationFrameId = 0;
@@ -225,15 +195,20 @@ useEffect(() => {
           onClickCapture={handleClickCapture}
         >
           <div className="product-grid top-selling-product-grid">
+            {loading && (
+              <div className="top-selling-status">
+                Loading top selling products...
+              </div>
+            )}
 
-            {products.length === 0 ? ( // remove loading &&
+            {!loading && products.length === 0 && (
               <div className="top-selling-status">
                 No top selling products found.
               </div>
-            ):(
+            )}
 
-            
-              products.map((product) => {// remove loading && 
+            {!loading &&
+              products.map((product) => {
                 const image =
                   product?.thumb_img?.file_name ||
                   product?.images?.[0]?.file_name ||
@@ -347,15 +322,13 @@ useEffect(() => {
                                 loading="lazy"
                               />
                             </div>
-                          
                           )}
                         </div>
                       </div>
                     </div>
                   </article>
                 );
-              })
-              )}
+              })}
           </div>
         </div>
       </aside>
@@ -370,9 +343,7 @@ useEffect(() => {
         onRequestClose={closeProductModal}
       />
     </>
-
   );
 };
 
 export default TopSellingProducts;
-

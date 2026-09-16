@@ -8,15 +8,13 @@ import warrantyIcon from "../../assets/icons/warranty.jpeg";
 import DeleteIcon from "../../assets/icons/Delete2.svg";
 import Swal from "sweetalert2";
 import { getWishList, removeFromWishlist } from "../../api/apiRequest";
-import { useLoading } from "../../context/LoadingContext";
+
 const ProfileWishlist = () => {
   const [products, setProducts] = useState([]);
-  
+  const [loading, setLoading] = useState(true);
   const [removingIds, setRemovingIds] = useState([]);
   const [selectedProduct, setSelectedProduct] = useState(null);
-   
-  const { startLoading, stopLoading } = useLoading();
-const [wishlistLoading, setWishlistLoading] = useState(true);
+
   const showToast = (icon, title) => {
     Swal.fire({
       target: document.body,
@@ -61,8 +59,7 @@ const [wishlistLoading, setWishlistLoading] = useState(true);
   };
 
   const loadWishlist = async () => {
-    startLoading();//// for global loader
-    setWishlistLoading(true);/////for checking wishlist items print or not
+    setLoading(true);
     try {
       const response = await getWishList();
       const list = response?.data?.data
@@ -77,8 +74,7 @@ const [wishlistLoading, setWishlistLoading] = useState(true);
       setProducts([]);
       showToast("error", error?.message || "Unable to load wishlist products.");
     } finally {
-    stopLoading();//// to stop global loader
-    setWishlistLoading(false);//////// after items print remove loader
+      setLoading(false);
     }
   };
 
@@ -144,13 +140,13 @@ const [wishlistLoading, setWishlistLoading] = useState(true);
         </div>
 
         <div className="product-grid Quick-grid">
-          {/* {loading && <div className="loader">Loading products…</div>} */}
+          {loading && <div className="loader">Loading products…</div>}
 
-          { !wishlistLoading && products.length === 0 && (
+          {!loading && products.length === 0 && (
             <p className="Nofound">No wishlist items found.</p>
           )}
 
-          {!wishlistLoading &&products.map((product) => (
+          {!loading && products.map((product) => (
             <div
               key={product.id}
               className="product-box"
@@ -257,4 +253,3 @@ const [wishlistLoading, setWishlistLoading] = useState(true);
 };
 
 export default ProfileWishlist;
-

@@ -4,8 +4,6 @@ import { IoIosArrowBack } from "react-icons/io";
 import { FaFilter, FaCube } from "react-icons/fa";
 import { useLocation, Link } from "react-router-dom";
 
-import loadingGif from "../../assets/images/transperent-loader.gif";
-
 import calendarIcon from "../../assets/icons/calendar-icon.svg";
 import {
   getMCoinStatement,
@@ -65,22 +63,7 @@ const FlashMessage = ({ type = "success", message, onClose }) => {
   );
 };
 
-
-
-
-
-
-
-
 const MCoinStatement = () => {
-const McoinLocalLoader = () => {
-  return (
-    <div className="mcoin-local-loader">
-      <img src={loadingGif} alt="Loading..." />
-    </div>
-  );
-};/// loader only for mcoin statement and rewards
-
   const location = useLocation();
 
   const initialPartyCode =
@@ -114,12 +97,11 @@ const McoinLocalLoader = () => {
   const fromInputRef = useRef(null);
   const toInputRef = useRef(null);
   const rewardLoaderRef = useRef(null);
-const [statementLoading, setStatementLoading] = useState(false);
 
   const fetchData = async (opts = {}) => {
-    
+    setLoading(true);
     setError("");
-    setStatementLoading(true);////////////for loader to start
+
     try {
       const payload = {
         from_date: opts.from_date ?? fromDate,
@@ -147,8 +129,7 @@ const [statementLoading, setStatementLoading] = useState(false);
       setRows([]);
       setError(e?.message || "Something went wrong.");
     } finally {
-     
-      setStatementLoading(false);/// loader stop after loading api data
+      setLoading(false);
     }
   };
 
@@ -160,7 +141,7 @@ const [statementLoading, setStatementLoading] = useState(false);
   } = {}) => {
     if (rewardLoading) return;
 
-    setRewardLoading(true);// reward loader
+    setRewardLoading(true);
     setRewardError("");
     setRedeemMsg("");
 
@@ -246,7 +227,7 @@ const [statementLoading, setStatementLoading] = useState(false);
   };
 
   useEffect(() => {
-    // fetchData({ from_date: "", to_date: "" });
+    fetchData({ from_date: "", to_date: "" });
     fetchRewardProducts({
       page: 1,
       searchText: "",
@@ -405,7 +386,6 @@ const [statementLoading, setStatementLoading] = useState(false);
   return (
     <UserProfileLayout>
       <div className="mcoin-page">
-        
         <style>{`
           .custom-toast {
             position: fixed;
@@ -488,56 +468,8 @@ const [statementLoading, setStatementLoading] = useState(false);
             to {
               opacity: 0;
               transform: translateX(60px);
-              
             }
-        }
-           .reward-products-section {
-    position: relative;
-    min-height: 300px;
-  }
-
-  .mcoin-local-loader {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    z-index: 10;
-  }
-
-  .mcoin-local-loader img {
-    width: 70px;
-    height: 70px;
-    object-fit: contain;
-  } 
-
-   .statement-loader-area {
-  position: relative;
-  min-height: 50px;
-}
-
-.statement-loader-area .mcoin-local-loader {
-  position: absolute;
-  inset: 0;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  z-index: 5;
-}
-
-.statement-loader-area .mcoin-local-loader img {
-  width: 70px;
-  height: 70px;
-  object-fit: contain;
-}
-}
+          }
         `}</style>
 
         <FlashMessage
@@ -576,21 +508,14 @@ const [statementLoading, setStatementLoading] = useState(false);
           </button>
 
           <button
-  type="button"
-  className={`mcoin-tab-btn ${
-    activeTab === "statement" ? "active" : ""
-  }`}
-  onClick={() => {
-    setActiveTab("statement");
-
-    fetchData({
-      from_date: "",
-      to_date: "",
-    });
-  }}
->
-  Statement
-</button>
+            type="button"
+            className={`mcoin-tab-btn ${
+              activeTab === "statement" ? "active" : ""
+            }`}
+            onClick={() => setActiveTab("statement")}
+          >
+            Statement
+          </button>
         </div>
 
         {activeTab === "rewards" && (
@@ -600,7 +525,7 @@ const [statementLoading, setStatementLoading] = useState(false);
                 <h2>Rewards</h2>
                 <p>Exclusive products curated for high-performing merchants.</p>
               </div>
-              
+
               <div className="mcoin-rewards-actions">
                 <input
                   type="text"
@@ -636,14 +561,12 @@ const [statementLoading, setStatementLoading] = useState(false);
                 </select>
               </div>
             </div>
-<div className="reward-products-section">
- {rewardLoading && rewardPage === 1 ? (
-    <McoinLocalLoader />// for loader related to reward section
-  ) :rewardProducts.length === 0 ? (
-    <div className="mcoin-empty">
-      No reward products found
-    </div>
-  ) : (
+
+            {rewardLoading && rewardProducts.length === 0 ? (
+              <div className="mcoin-empty">Loading reward products...</div>
+            ) : rewardProducts.length === 0 ? (
+              <div className="mcoin-empty">No reward products found</div>
+            ) : (
               <>
                 <div className="mcoin-products-grid">
                   {rewardProducts.map((product) => {
@@ -698,7 +621,6 @@ const [statementLoading, setStatementLoading] = useState(false);
                   })}
                 </div>
 
-
                 <div ref={rewardLoaderRef} className="mcoin-scroll-loader">
                   {rewardLoading && rewardPage > 1
                     ? "Loading more products..."
@@ -710,7 +632,6 @@ const [statementLoading, setStatementLoading] = useState(false);
                 </div>
               </>
             )}
-            </div>
           </div>
         )}
 
@@ -798,14 +719,8 @@ const [statementLoading, setStatementLoading] = useState(false);
               </div>
 
               {error ? <div className="alert alert-danger">{error}</div> : null}
-              <div className="statement-loader-area">
-              {statementLoading ? (
-             <McoinLocalLoader />// loader related top statement section
-                ) : (
 
               <div className="order-table-container statement-table-container">
-   
-
                 <table className="order-table statement-table">
                   <thead>
                     <tr>
@@ -820,7 +735,13 @@ const [statementLoading, setStatementLoading] = useState(false);
                   </thead>
 
                   <tbody>
-                    { statementRows.length === 0 ? (
+                    {loading ? (
+                      <tr>
+                        <td colSpan="7" style={{ textAlign: "center" }}>
+                          Loading...
+                        </td>
+                      </tr>
+                    ) : statementRows.length === 0 ? (
                       <tr>
                         <td colSpan="7" style={{ textAlign: "center" }}>
                           No records found
@@ -919,9 +840,7 @@ const [statementLoading, setStatementLoading] = useState(false);
                   </tbody>
                 </table>
               </div>
-)}
             </div>
-          </div>
           </div>
         )}
       </div>

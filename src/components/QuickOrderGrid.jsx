@@ -6,7 +6,7 @@ import fastDeliveryIcon from "../assets/icons/fast-delivery.svg";
 import CartIcon from "../assets/icons/CartIcon.svg";
 import warrantyIcon from "../assets/icons/warranty.jpeg";
 
-import { FiHeart } from "react-icons/fi";
+import { FiHeart, FiSearch } from "react-icons/fi";
 import Swal from "sweetalert2";
 
 import ProductModal from "./ProductModal.jsx";
@@ -27,6 +27,8 @@ const QuickOrderGrid = ({ filters, onPriceRangeUpdate }) => {
   const navigate = useNavigate();
   const loaderRef = useRef(null);
   const latestProductRequestRef = useRef(0);
+  const productRequestPendingRef = useRef(false);
+  const activeProductQueryRef = useRef(null);
   const user = getLoggedInUser();
 
   const showToast = (icon, title) => {
@@ -68,6 +70,35 @@ const QuickOrderGrid = ({ filters, onPriceRangeUpdate }) => {
   const [hasMore, setHasMore] = useState(true);
 
   const [price_sort, setPriceSort] = useState("popularity");
+  const [searchInput, setSearchInput] = useState(filters?.search_text || "");
+  const [submittedSearch, setSubmittedSearch] = useState(null);
+  const [searchRevision, setSearchRevision] = useState(0);
+  const searchText = submittedSearch?.source === (filters?.search_text || "")
+    ? submittedSearch.text
+    : filters?.search_text || "";
+
+  useEffect(() => {
+    setSearchInput(filters?.search_text || "");
+    setSubmittedSearch(null);
+  }, [filters?.search_text]);
+
+  const handleSearchSubmit = (event) => {
+    event.preventDefault();
+    const text = searchInput.trim();
+    setSubmittedSearch({ source: filters?.search_text || "", text });
+    setSearchRevision((revision) => revision + 1);
+  };
+
+  const handleSearchChange = (event) => {
+    const text = event.target.value;
+    setSearchInput(text);
+
+    // The native search clear button fires a change with an empty value.
+    if (text === "") {
+      setSubmittedSearch({ source: filters?.search_text || "", text: "" });
+      setSearchRevision((revision) => revision + 1);
+    }
+  };
 
   const [selectedProduct, setSelectedProduct] = useState(null);
   const openModal = (product) => setSelectedProduct(product);
@@ -93,9 +124,6 @@ const QuickOrderGrid = ({ filters, onPriceRangeUpdate }) => {
 
   const handleSortChange = (value) => {
     setPriceSort(value);
-    setCurrentPage(1);
-    setProducts([]);
-    setHasMore(true);
   };
 
   const toCsv = (value) => {
@@ -130,17 +158,21 @@ const QuickOrderGrid = ({ filters, onPriceRangeUpdate }) => {
   };
 
   const getQuickOrderProductRecord = async (page = 1) => {
+    // Lock synchronously: scroll callbacks can run before React commits loading.
+    if (page > 1 && productRequestPendingRef.current) return;
+    productRequestPendingRef.current = true;
     const requestId = ++latestProductRequestRef.current;
 
     try {
       setLoading(true);
+      setCurrentPage(page);
 
       const apiRes = await getQuickOrderProduct(
         filters?.cat_groups || [],
         filters?.categories || [],
         filters?.brands || [],
         filters?.m_coin_rates || [],
-        filters?.search_text || "",
+        searchText,
         filters?.min_price || "",
         filters?.max_price || "",
         filters?.location_id || "",
@@ -270,6 +302,7 @@ const QuickOrderGrid = ({ filters, onPriceRangeUpdate }) => {
       setHasMore(false);
     } finally {
       if (requestId === latestProductRequestRef.current) {
+        productRequestPendingRef.current = false;
         setLoading(false);
       }
     }
@@ -349,7 +382,7 @@ const QuickOrderGrid = ({ filters, onPriceRangeUpdate }) => {
         toCsv(filters?.categories),
         toCsv(filters?.brands),
         toCsv(filters?.m_coin_rates),
-        filters?.search_text || "",
+        searchText,
         filters?.min_price || "",
         filters?.max_price || "",
         filters?.location_id || "",
@@ -411,7 +444,7 @@ const QuickOrderGrid = ({ filters, onPriceRangeUpdate }) => {
         toCsv(filters?.categories),
         toCsv(filters?.brands),
         toCsv(filters?.m_coin_rates),
-        filters?.search_text || "",
+        searchText,
         filters?.min_price || "",
         filters?.max_price || "",
         filters?.location_id || "",
@@ -539,62 +572,85 @@ const QuickOrderGrid = ({ filters, onPriceRangeUpdate }) => {
     );
   };
 
+  // Compare values rather than array identities when the parent rerenders.
+  const productQueryKey = JSON.stringify([
+    filters?.cat_groups || [],
+    filters?.categories || [],
+    filters?.brands || [],
+    filters?.m_coin_rates || [],
+    searchText,
+    filters?.min_price,
+    filters?.max_price,
+    filters?.location_id,
+    filters?.inhouse_product,
+    filters?.delivery,
+    price_sort,
+    searchRevision,
+  ]);
+
   useEffect(() => {
-    setCurrentPage(1);
+    if (activeProductQueryRef.current === productQueryKey) return;
+    activeProductQueryRef.current = productQueryKey;
     setProducts([]);
     setHasMore(true);
-  }, [
-    filters?.cat_groups,
-    filters?.categories,
-    filters?.brands,
-    filters?.m_coin_rates,
-    filters?.search_text,
-    filters?.min_price,
-    filters?.max_price,
-    filters?.location_id,
-    filters?.inhouse_product,
-    filters?.delivery,
-    price_sort,
-  ]);
+    // New filters always start at page 1, never the previous query's page.
+    getQuickOrderProductRecord(1);
+  }, [productQueryKey]);
 
   useEffect(() => {
-    getQuickOrderProductRecord(currentPage);
-  }, [
-    currentPage,
-    filters?.cat_groups,
-    filters?.categories,
-    filters?.brands,
-    filters?.m_coin_rates,
-    filters?.search_text,
-    filters?.min_price,
-    filters?.max_price,
-    filters?.location_id,
-    filters?.inhouse_product,
-    filters?.delivery,
-    price_sort,
-  ]);
+    if (!loaderRef.current || loading || !hasMore || products.length === 0) return;
 
-  useEffect(() => {
-    if (!loaderRef.current) return;
+    let nearEnd = false;
+    let scrolled = false;
+    let disposed = false;
+    let requested = false;
+    const loadNextPage = () => {
+      if (disposed || requested || !scrolled || !nearEnd || productRequestPendingRef.current) return;
+      requested = true;
+      getQuickOrderProductRecord(currentPage + 1);
+    };
+    const handleScroll = (event) => {
+      // Ignore scrolling within unrelated controls such as the filter sidebar.
+      if (event.target !== document && !event.target?.contains?.(loaderRef.current)) return;
+      scrolled = true;
+      loadNextPage();
+    };
 
     const observer = new IntersectionObserver(
-      (entries) => {
-        const first = entries[0];
-        if (first.isIntersecting && hasMore && !loading) {
-          setCurrentPage((prev) => prev + 1);
-        }
+      ([entry]) => {
+        nearEnd = entry.isIntersecting;
+        loadNextPage();
       },
       { root: null, rootMargin: "200px", threshold: 0.1 }
     );
 
     observer.observe(loaderRef.current);
+    window.addEventListener("scroll", handleScroll, { capture: true, passive: true });
 
-    return () => observer.disconnect();
-  }, [hasMore, loading]);
+    return () => {
+      disposed = true;
+      observer.disconnect();
+      window.removeEventListener("scroll", handleScroll, true);
+    };
+  }, [hasMore, loading, products.length, currentPage, productQueryKey]);
 
   return (
     <div className="product-section-wrapper">
-      <div className="product-header">
+      <div className="product-header quick-order-product-header">
+        <form className="quick-order-search" role="search" onSubmit={handleSearchSubmit}>
+          <div className="quick-order-search-field">
+            <FiSearch aria-hidden="true" />
+            <input
+              id="quick-order-search-text"
+              name="search_text"
+              type="search"
+              enterKeyHint="search"
+              placeholder="Search by part no, product name, category or brand for quick order"
+              value={searchInput}
+              onChange={handleSearchChange}
+            />
+          </div>
+        </form>
         <div className="product-header-left">
           <div className="sort-by">
             <span>Sort By:</span>

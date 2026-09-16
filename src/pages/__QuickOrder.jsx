@@ -4,7 +4,7 @@ import MainLayout from "../layouts/MainLayout";
 
 import { FaAngleDown, FaAngleUp, FaFilter } from "react-icons/fa";
 import QuickOrderGrid from "../components/QuickOrderGrid.jsx";
-import { useLoading } from "../context/LoadingContext";
+
 // Api Call
 import { getAllBrands, getAllCategoryGroups, getAllMCoinRate } from "../api/apiRequest";
 
@@ -13,10 +13,8 @@ const deliveryOptions = [
   { value: 0, label: "Delivery in 6 - 7 Days" },
 ];
 
-const QuickOrderContent = () => {
-  const { startLoading, stopLoading } = useLoading();
+const QuickOrder = () => {
   const location = useLocation();
-  
   const incomingState = location.state || null;
 
   const incomingCatId = incomingState?.cat_id ? Number(incomingState.cat_id) : null;
@@ -29,9 +27,7 @@ const QuickOrderContent = () => {
   const [selectedBrands, setSelectedBrands] = useState([]);
   const [selectedMCoinRates, setSelectedMCoinRates] = useState([]);
   const [selectedDelivery, setSelectedDelivery] = useState(null);
-  const [search_text, setSearchText] = useState(() =>
-    String(incomingState?.search_text || "").trim()
-  );
+  const [search_text, setSearchText] = useState("");
   const [location_id, setLocationId] = useState(null);
   const [inhouse_product, setInhouseProduct] = useState(null);
   const [price_sort, setPriceSort] = useState(null);
@@ -191,7 +187,7 @@ const QuickOrderContent = () => {
 
   const getAllCategoryGroupsFromAPI = async () => {
     try {
-      startLoading();
+      setLoading(true);
       const apiRes = await getAllCategoryGroups();
       const responseData = await apiRes.json();
 
@@ -204,13 +200,13 @@ const QuickOrderContent = () => {
       console.error(e);
       setAllCategoryGroups([]);
     } finally {
-      stopLoading();
+      setLoading(false);
     }
   };
 
   const getAllBrandsFromAPI = async () => {
     try {
-      startLoading();
+      setLoading(true);
       const apiRes = await getAllBrands(selectedCatGIds, selectedChildCatIds);
       const responseData = await apiRes.json();
 
@@ -230,13 +226,13 @@ const QuickOrderContent = () => {
       console.error("Fetch error:", error);
       setAllBrands([]);
     } finally {
-      stopLoading();
+      setLoading(false);
     }
   };
 
   const getAllMCoinRateFromAPI = async () => {
     try {
-      startLoading();
+      setLoading(true);
 
       const apiRes = await getAllMCoinRate();
       const responseData = await apiRes.json();
@@ -265,7 +261,7 @@ const QuickOrderContent = () => {
       console.error("Fetch error:", error);
       setAllMCoinRate([]);
     } finally {
-      stopLoading();
+      setLoading(false);
     }
   };
 
@@ -346,8 +342,6 @@ const QuickOrderContent = () => {
   useEffect(() => {
     if (!groupsWithSortedChildren.length) return;
     if (!incomingState) return;
-    // Header searches already initialize the query; category loading must not clear it.
-    if (typeof incomingState.search_text === "string") return;
 
     let nextGroupIds = [];
     let nextChildIds = [];
@@ -1392,18 +1386,6 @@ const QuickOrderContent = () => {
       </div>
     </MainLayout>
   );
-};
-
-const QuickOrder = () => {
-  const location = useLocation();
-
-  // Each header submission starts fresh, including searches from Quick Order itself.
-  // This clears previous sidebar filters and local grid searches before the first fetch.
-  const searchKey = typeof location.state?.search_text === "string"
-    ? location.key
-    : "quick-order";
-
-  return <QuickOrderContent key={searchKey} />;
 };
 
 export default QuickOrder;

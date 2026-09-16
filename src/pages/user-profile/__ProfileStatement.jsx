@@ -3,8 +3,7 @@ import UserProfileLayout from "../../layouts/UserProfileLayout";
 import View from "../../assets/icons/View.svg";
 import { useNavigate, Link } from "react-router-dom";
 import { getStatementList } from "../../api/apiRequest";
-import { useLoading } from "../../context/LoadingContext";
-import GlobalLoader from "../../components/GlobalLoader";
+
 const formatINR = (value) => {
   const n = Number(value || 0);
   if (Number.isNaN(n)) return "₹ 0";
@@ -30,14 +29,12 @@ const ProfileStatement = () => {
   const [dueAmount, setDueAmount] = useState(0);
   const [overdueAmount, setOverdueAmount] = useState(0);
 
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  
-  const [statementLoading,setStatementLoading]=useState(true);// for loader
 
   const fetchStatements = async () => {
-    // startLoading();
+    setLoading(true);
     setError("");
-    setStatementLoading(true);/// for global loader 
     try {
       const res = await getStatementList();
 
@@ -58,8 +55,7 @@ const ProfileStatement = () => {
       setDueAmount(0);
       setOverdueAmount(0);
     } finally {
-      // stopLoading();
-       setStatementLoading(false);// to stop global loader
+      setLoading(false);
     }
   };
 
@@ -102,12 +98,8 @@ const ProfileStatement = () => {
             </div>
           </div>
 
-          <div className="order-table-container statement-table-container" style={{position:"relative"}}>
+          <div className="order-table-container statement-table-container">
             <table className="order-table">
-              {/* to give different css to global loader according to section*/ }
-                {statementLoading && (
-    <GlobalLoader section show={statementLoading} />
-  )}
               <thead>
                 <tr>
                   {/* <th>Name</th> */}
@@ -120,36 +112,31 @@ const ProfileStatement = () => {
               </thead>
 
               <tbody>
-
-                {/* {loading && (
+                {loading && (
                   <tr>
                     <td colSpan="6" style={{ textAlign: "center" }}>
                       Loading...
                     </td>
                   </tr>
-                )} */}
+                )}
 
-                {!statementLoading && error && (// change loading to statementLoading
+                {!loading && error && (
                   <tr>
-                    <td colSpan="6" style={{ textAlign: "center", color: "red",
-                    }}>
-                      
+                    <td colSpan="6" style={{ textAlign: "center", color: "red" }}>
                       {error}
-
                     </td>
                   </tr>
                 )}
 
-                {!statementLoading && !error && rows.length === 0 && (//// change loading to statementLoading
+                {!loading && !error && rows.length === 0 && (
                   <tr>
                     <td colSpan="6" style={{ textAlign: "center" }}>
                       No statements found.
                     </td>
                   </tr>
                 )}
-               
 
-                {!statementLoading &&
+                {!loading &&
                   !error &&
                   rows.map((item) => (
                     <tr key={item.id}>

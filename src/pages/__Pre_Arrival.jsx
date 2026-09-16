@@ -9,8 +9,6 @@ import {
   userDetails,
 } from "../api/apiRequest";
 import no_image from "../assets/images/no-image.png";
-import { useLoading } from "../context/LoadingContext";
-import GlobalLoader from "../components/GlobalLoader";
 
 const ALL = "all";
 
@@ -105,7 +103,7 @@ const PreArrival = () => {
   const [selectedCategory, setSelectedCategory] = useState(ALL);
   const [quantities, setQuantities] = useState({});
   const [initialQuantities, setInitialQuantities] = useState({});
-  // const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
   const [saving, setSaving] = useState(false);
   const [loadingAddresses, setLoadingAddresses] = useState(false);
@@ -121,7 +119,6 @@ const PreArrival = () => {
   const contentRef = useRef(null);
   const saveBarRef = useRef(null);
   const allowNavigationRef = useRef(false);
- const {loading,startLoading,stopLoading}=useLoading();
 
   useEffect(() => {
     const sentinel = headerSentinelRef.current;
@@ -159,11 +156,11 @@ const PreArrival = () => {
       resizeObserver.disconnect();
       window.removeEventListener("resize", alignSaveBar);
     };
-  }, [loading]);
+  }, []);
 
   useEffect(() => {
     let active = true;
-  startLoading();
+
     Promise.all([getPreArrivalItems(), getAllCategoryGroups().then((response) => response.json())])
       .then(([preArrivalResponse, categoryResponse]) => {
         if (!active) return;
@@ -193,7 +190,7 @@ const PreArrival = () => {
         if (active) setError(requestError.message || "Unable to load pre-arrival items.");
       })
       .finally(() => {
-     stopLoading();
+        if (active) setLoading(false);
       });
 
     return () => {
@@ -563,7 +560,6 @@ const PreArrival = () => {
         <header className={`pre-arrival-header ${!headerInView && stickyHeaderOpen ? "is-sticky-open" : ""}`}>
           <div className="pre-arrival-title-row">
             <h1>Pre Arrival</h1>
-            {!loading &&  (
             <button
               type="button"
               className="pre-arrival-export-btn"
@@ -573,10 +569,8 @@ const PreArrival = () => {
               <FiDownload aria-hidden="true" />
               {exporting ? "EXPORTING..." : "EXPORT LIST"}
             </button>
-            )}
           </div>
-{!loading && (
-  <>
+
           <div className="pre-arrival-filter-row">
             <div className="pre-arrival-filter-label">
               <FiCalendar aria-hidden="true" />
@@ -606,27 +600,15 @@ const PreArrival = () => {
               ))}
             </div>
           </div>
-          </>
-)}
         </header>
         <div ref={headerSentinelRef} className="pre-arrival-header-sentinel" />
 
         <div className="pre-arrival-content" ref={contentRef}>
+          {loading && <div className="pre-arrival-status">Loading pre-arrival items...</div>}
+          {!loading && error && <div className="pre-arrival-status pre-arrival-error">{error}</div>}
+          {!loading && !error && visibleProducts.length === 0 && <div className="pre-arrival-status">No pre-arrival products found.</div>}
 
-
-         <GlobalLoader />
-{!loading && (
-  <>
-  {error ? (
-    <div className="pre-arrival-status pre-arrival-error">
-      {error}
-    </div>
-  ) : visibleProducts.length === 0 ? (
-    <div className="pre-arrival-status">
-      No pre-arrival products found.
-    </div>
-  ) : (
-         
+          {!loading && !error && visibleProducts.length > 0 && (
             <div className="pre-arrival-eta-sections">
               {visibleEtaSections.map((section) => (
                 <section className="pre-arrival-eta-section" key={section.etaDate || "date-pending"}>
@@ -682,19 +664,14 @@ const PreArrival = () => {
                 </section>
               ))}
             </div>
-            
           )}
-          </>
-)}
-{!loading && (
+
           <div className="pre-arrival-save-bar" ref={saveBarRef}>
-            <button type="button" onClick={handleOpenAddressModal} disabled={loadingAddresses || saving }>
+            <button type="button" onClick={handleOpenAddressModal} disabled={loadingAddresses || saving || loading}>
               {saving ? "SAVING ORDER..." : loadingAddresses ? "LOADING ADDRESSES..." : "SAVE ORDER"}
             </button>
           </div>
-)}
         </div>
-
       </section>
 
       {addressModalOpen && (

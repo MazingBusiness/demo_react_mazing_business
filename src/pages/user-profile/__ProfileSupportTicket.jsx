@@ -10,9 +10,6 @@ import Bigtick from "../../assets/icons/Bigtick.svg";
 import Modal from "../../components/Modal";
 import { addSuportTickets, getSupportTickets } from "../../api/apiRequest";
 
-import { useLoading } from "../../context/LoadingContext";
-import GlobalLoader from "../../components/GlobalLoader";
-
 const ProfileSupportTicket = () => {
   const [fileName, setFileName] = useState("");
   const [ticketPhoto, setTicketPhoto] = useState(null);
@@ -33,7 +30,7 @@ const ProfileSupportTicket = () => {
 
   useEffect(() => {
     const loadTickets = async () => {
-    setLoadingTickets(true);/// after the api data does not load set loading to  true
+      setLoadingTickets(true);
       setTicketError("");
 
       try {
@@ -47,7 +44,7 @@ const ProfileSupportTicket = () => {
         setTickets([]);
         setTicketError(error?.message || "Unable to load support tickets.");
       } finally {
-      setLoadingTickets(false);/// after the api data load set loading to false
+        setLoadingTickets(false);
       }
     };
 
@@ -167,10 +164,7 @@ const ProfileSupportTicket = () => {
             </div>
           </div>
 
-          <div className="order-table-container" style={{position:"relative"}}>
-          {/* added for global loader*/}  {loadingTickets && (
-    <GlobalLoader section show={loadingTickets} />
-  )}  {/* end code*/}
+          <div className="order-table-container">
             <table className="order-table">
               <thead>
                 <tr>
@@ -182,16 +176,16 @@ const ProfileSupportTicket = () => {
                 </tr>
               </thead>
               <tbody>
-                {/* {loadingTickets && (
+                {loadingTickets && (
                   <tr><td colSpan="5">Loading tickets…</td></tr>
-                )} */}
-                {ticketError && (
+                )}
+                {!loadingTickets && ticketError && (
                   <tr><td colSpan="5">{ticketError}</td></tr>
                 )}
-                { !ticketError && tickets.length === 0 && (
+                {!loadingTickets && !ticketError && tickets.length === 0 && (
                   <tr><td colSpan="5">No support tickets found.</td></tr>
                 )}
-                {!ticketError && tickets.map((ticket) => {
+                {!loadingTickets && !ticketError && tickets.map((ticket) => {
                   const status = getStatus(ticket.status);
                   return (
                     <tr key={ticket.id}>

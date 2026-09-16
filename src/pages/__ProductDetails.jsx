@@ -34,8 +34,6 @@ import RelatedProductsSlider from "../components/RelatedProductsSlider";
 import RecentlyViewedSlider from "../components/RecentlyViewedSlider";
 import SimilerCategoryProducts from "../components/SimilerCategoryProducts";
 import Modal from "../components/Modal";
-import { useLoading } from "../context/LoadingContext";
-import GlobalLoader from "../components/GlobalLoader";
 
 const allowedDescriptionTags = new Set([
   "P",
@@ -78,7 +76,6 @@ const GenericProductsModal = ({ isOpen, onClose, genericLink }) => {
   const [quantities, setQuantities] = useState({});
   const [bulkDiscountApplied, setBulkDiscountApplied] = useState({});
   const [addingId, setAddingId] = useState(null);
-
 
   if (!isOpen || !genericLink) return null;
 
@@ -321,7 +318,7 @@ const ProductDetails = () => {
 
   const [genericModalOpen, setGenericModalOpen] = useState(false);
   const [selectedGenericLink, setSelectedGenericLink] = useState(null);
-const { startLoading, stopLoading } = useLoading();
+
   const renderRating = (rating) => {
     const r = Number(rating || 0);
     const stars = [];
@@ -688,7 +685,6 @@ const { startLoading, stopLoading } = useLoading();
 
   const fetchProduct = async () => {
     setLoading(true);
-    startLoading();
     setErr("");
     setProduct(null);
     setApiAttributes([]);
@@ -714,7 +710,6 @@ const { startLoading, stopLoading } = useLoading();
       if (!p) throw new Error("Product not found in payload.data[0]");
 
       setProduct(p);
-      stopLoading();
       setApiAttributes(Array.isArray(payload?.attributes) ? payload.attributes : []);
       setProductVariations(
         Array.isArray(payload?.product_variations) ? payload.product_variations : []
@@ -730,7 +725,6 @@ const { startLoading, stopLoading } = useLoading();
     } catch (e) {
       setErr(e?.message || "Failed to load product");
     } finally {
-      stopLoading();
       setLoading(false);
     }
   };
@@ -865,9 +859,7 @@ const { startLoading, stopLoading } = useLoading();
   const closeModal = () => setIsModalOpen(false);
 
   return (
-  <>
     <MainLayout>
-      <GlobalLoader/>
       <div className="maincontainer">
         <div className="product-details-conte">
           <div className="product-details">
@@ -884,14 +876,11 @@ const { startLoading, stopLoading } = useLoading();
                 <span className="current">{productName}</span>
               </div>
 
-              {/* {err? (
-                <div className="product-details-loading">{err}
-                
-                </div>
-              ) : err ? ( */}
-               {err ? (
+              {loading ? (
+                <div className="product-details-loading">Loading...</div>
+              ) : err ? (
                 <div className="product-details-error">{err}</div>
-              ) : loading ? null  : (
+              ) : (
                 <>
                   {productImages.length > 0 ? (
                     <div className="product-modal-carousel product-details-carousel">
@@ -983,7 +972,7 @@ const { startLoading, stopLoading } = useLoading();
             <div className="product-details-right">
               <div className="product-modal-info-top">
                 <div className="product-modal-info-top-lft">
-                  <h2>{productName}</h2>
+                  <h2>{loading ? "Loading..." : productName}</h2>
 
                   <div className="product-rating">
                     {renderRating(computedRating)}
@@ -1213,9 +1202,9 @@ const { startLoading, stopLoading } = useLoading();
               {activeTab === "specs" ? (
                 <div className="specs-table">
                   <div className="specs-grid">
-                    {/* {loading ? (
+                    {loading ? (
                       <div className="product-details-loading-sm">Loading...</div>
-                    ) : ( */}
+                    ) : (
                       <>
                         {specs.map((row, idx) => (
                           <div className="spec-row" key={idx}>
@@ -1243,14 +1232,14 @@ const { startLoading, stopLoading } = useLoading();
                           </div>
                         )}
                       </>
+                    )}
                   </div>
                 </div>
               ) : activeTab === "desc" ? (
                 <div className="desc-section">
-                  {/* {loading ? (
+                  {loading ? (
                     <div className="product-details-loading-sm">Loading...</div>
-                  ) : ( */}
-                  { descriptionHtml ? (
+                  ) : descriptionHtml ? (
                     <div
                       className="description-content"
                       dangerouslySetInnerHTML={{ __html: descriptionHtml }}
@@ -1493,7 +1482,6 @@ const { startLoading, stopLoading } = useLoading();
       </Modal>
 
     </MainLayout>
-    </>
   );
 };
 

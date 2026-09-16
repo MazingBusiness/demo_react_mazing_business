@@ -2,21 +2,11 @@ import React, { useState, useRef, useEffect } from "react";
 import UserProfileLayout from "../../layouts/UserProfileLayout";
 import { FiChevronDown, FiCheck, FiEdit } from "react-icons/fi";
 import Edit from "../../assets/icons/EditIcon.svg";
-import {
-  addAddress,
-  getStateList,
-  updateAddress,
-  updateBasicInfo,
-  updateEmail,
-  updatePassword,
-  updateSetDefaultAddress,
-  userDetails,
-} from "../../api/apiRequest";
+import { addAddress, getStateList, updateAddress, updateBasicInfo, updateEmail, updatePassword, updateSetDefaultAddress, userDetails } from "../../api/apiRequest";
 import { verifyGstinForRegistration } from "../../api/apiRequestChild";
 import Swal from "sweetalert2";
 
 import { useNavigate, Link } from "react-router-dom";
-import GlobalLoader from "../../components/GlobalLoader";
 
 const ManageProfile = () => {
   const formatCompanyPhone = (value) => {
@@ -29,8 +19,7 @@ const ManageProfile = () => {
   const [isUpdatingBasicInfo, setIsUpdatingBasicInfo] = useState(false);
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
   const [isUpdatingEmail, setIsUpdatingEmail] = useState(false);
-  const [isUpdatingDefaultAddress, setIsUpdatingDefaultAddress] =
-    useState(false);
+  const [isUpdatingDefaultAddress, setIsUpdatingDefaultAddress] = useState(false);
   const [isUpdatingAddress, setIsUpdatingAddress] = useState(false);
   const [states, setStates] = useState([]);
   const [isAddingAddress, setIsAddingAddress] = useState(false);
@@ -49,58 +38,51 @@ const ManageProfile = () => {
     phoneNumber: "",
     gstin: "",
   });
-  const [profileLoading, setProfileLoading] = useState(true); // for loader
+
   useEffect(() => {
     const fetchUserDetails = async () => {
-      setProfileLoading(true); // for profile loading
       try {
         const response = await userDetails();
-        const user =
-          response?.data?.userDetails ??
-          response?.data?.user ??
-          response?.userDetails ??
-          response?.user ??
-          response?.data ??
-          response;
+        const user = response?.data?.userDetails
+          ?? response?.data?.user
+          ?? response?.userDetails
+          ?? response?.user
+          ?? response?.data
+          ?? response;
 
         setBasicInfo({
           fullName: user?.name ?? user?.full_name ?? "",
           companyName: user?.company_name ?? user?.companyName ?? "",
           aadharNumber:
-            user?.aadhar_card ??
-            user?.aadhar_number ??
-            user?.aadhaar_number ??
-            "",
+            user?.aadhar_card ?? user?.aadhar_number ?? user?.aadhaar_number ?? "",
           phoneNumber: user?.phone ?? user?.phone_number ?? user?.mobile ?? "",
           gstin: user?.gstin ?? user?.gst_no ?? "",
         });
         setNewCompany((current) => ({
           ...current,
           phone: formatCompanyPhone(
-            user?.phone ?? user?.phone_number ?? user?.mobile ?? "",
+            user?.phone ?? user?.phone_number ?? user?.mobile ?? ""
           ),
         }));
         setEmail(user?.email ?? "");
 
-        const savedPhoto =
-          user?.avatar_original ??
-          user?.photo ??
-          user?.profile_photo ??
-          user?.image;
+        const savedPhoto = user?.avatar_original
+          ?? user?.photo
+          ?? user?.profile_photo
+          ?? user?.image;
         if (savedPhoto) {
           setFileName(String(savedPhoto).replace(/\\/g, "/").split("/").pop());
         }
 
-        const addresses =
-          response?.get_addresses ??
-          response?.data?.get_addresses ??
-          user?.get_addresses ??
-          [];
+        const addresses = response?.get_addresses
+          ?? response?.data?.get_addresses
+          ?? user?.get_addresses
+          ?? [];
 
         const addressValue = (value) =>
           typeof value === "object" && value !== null
-            ? (value.name ?? "")
-            : (value ?? "");
+            ? value.name ?? ""
+            : value ?? "";
 
         const mappedCompanies = (Array.isArray(addresses) ? addresses : []).map(
           (address) => ({
@@ -117,24 +99,19 @@ const ManageProfile = () => {
             state: addressValue(address?.state),
             country: addressValue(address?.country) || "India",
             phone: address?.phone ?? "",
-          }),
+          })
         );
 
         setCompanies(mappedCompanies);
-        const defaultAddressIndex = (
-          Array.isArray(addresses) ? addresses : []
-        ).findIndex((address) => Number(address?.set_default) === 1);
+        const defaultAddressIndex = (Array.isArray(addresses) ? addresses : [])
+          .findIndex((address) => Number(address?.set_default) === 1);
         setSelectedIndex(
           mappedCompanies.length > 0
-            ? defaultAddressIndex >= 0
-              ? defaultAddressIndex
-              : 0
-            : null,
+            ? defaultAddressIndex >= 0 ? defaultAddressIndex : 0
+            : null
         );
       } catch (error) {
         console.error("Failed to load user details:", error);
-      } finally {
-        setProfileLoading(false); // to remove global loader
       }
     };
 
@@ -211,20 +188,14 @@ const ManageProfile = () => {
         });
 
         window.dispatchEvent(
-          new CustomEvent("user-profile-updated", { detail: updatedUser }),
+          new CustomEvent("user-profile-updated", { detail: updatedUser })
         );
       }
 
       setPhoto(null);
-      showToast(
-        "success",
-        response?.msg || "Basic information updated successfully.",
-      );
+      showToast("success", response?.msg || "Basic information updated successfully.");
     } catch (error) {
-      showToast(
-        "error",
-        error?.message || "Failed to update basic information.",
-      );
+      showToast("error", error?.message || "Failed to update basic information.");
     } finally {
       setIsUpdatingBasicInfo(false);
     }
@@ -288,7 +259,7 @@ const ManageProfile = () => {
 
       if (updatedUser) {
         window.dispatchEvent(
-          new CustomEvent("user-profile-updated", { detail: updatedUser }),
+          new CustomEvent("user-profile-updated", { detail: updatedUser })
         );
       }
 
@@ -328,12 +299,8 @@ const ManageProfile = () => {
 
     if (states.length === 0) {
       getStateList()
-        .then((response) =>
-          setStates(Array.isArray(response?.state) ? response.state : []),
-        )
-        .catch((error) =>
-          showToast("error", error?.message || "Failed to load states."),
-        );
+        .then((response) => setStates(Array.isArray(response?.state) ? response.state : []))
+        .catch((error) => showToast("error", error?.message || "Failed to load states."));
     }
   };
 
@@ -358,13 +325,10 @@ const ManageProfile = () => {
         current.map((item, itemIndex) => ({
           ...item,
           setDefault: itemIndex === index,
-        })),
+        }))
       );
 
-      showToast(
-        "success",
-        response?.msg || "Default address updated successfully.",
-      );
+      showToast("success", response?.msg || "Default address updated successfully.");
     } catch (error) {
       setSelectedIndex(previousIndex);
       showToast("error", error?.message || "Failed to update default address.");
@@ -380,14 +344,9 @@ const ManageProfile = () => {
   const saveEdit = async (event) => {
     event.preventDefault();
 
-    if (
-      !editData.companyName?.trim() ||
-      !editData.address?.trim() ||
-      !editData.postalCode?.trim() ||
-      !editData.city?.trim() ||
-      !editData.stateId ||
-      !editData.phone?.trim()
-    ) {
+    if (!editData.companyName?.trim() || !editData.address?.trim()
+      || !editData.postalCode?.trim() || !editData.city?.trim()
+      || !editData.stateId || !editData.phone?.trim()) {
       showToast("error", "Please fill in all required address fields.");
       return;
     }
@@ -396,18 +355,16 @@ const ManageProfile = () => {
     try {
       const response = await updateAddress(editData);
       const selectedState = states.find(
-        (state) => String(state.id) === String(editData.stateId),
+        (state) => String(state.id) === String(editData.stateId)
       );
       const updatedAddress = {
         ...editData,
         state: response?.data?.state ?? selectedState?.name ?? editData.state,
         country: "India",
       };
-      setCompanies((current) =>
-        current.map((company, index) =>
-          index === editIndex ? updatedAddress : company,
-        ),
-      );
+      setCompanies((current) => current.map(
+        (company, index) => index === editIndex ? updatedAddress : company
+      ));
       setShowEditModal(false);
       showToast("success", response?.msg || "Address updated successfully.");
     } catch (error) {
@@ -423,12 +380,8 @@ const ManageProfile = () => {
     }
 
     getStateList()
-      .then((response) =>
-        setStates(Array.isArray(response?.state) ? response.state : []),
-      )
-      .catch((error) =>
-        showToast("error", error?.message || "Failed to load states."),
-      );
+      .then((response) => setStates(Array.isArray(response?.state) ? response.state : []))
+      .catch((error) => showToast("error", error?.message || "Failed to load states."));
   };
 
   const openAddModal = () => {
@@ -454,19 +407,14 @@ const ManageProfile = () => {
   };
 
   const handleGstinCheck = async () => {
-    console.log("STEP 1: GST FUNCTION CALLED");
     const gstin = newCompany.gstin.trim().toUpperCase();
-    console.log("GSTIN:", gstin);
     if (!gstin) {
       setGstinMessage({ type: "", text: "" });
       return;
     }
 
     if (gstin.length !== 15) {
-      setGstinMessage({
-        type: "error",
-        text: "GSTIN must be exactly 15 characters.",
-      });
+      setGstinMessage({ type: "error", text: "GSTIN must be exactly 15 characters." });
       return;
     }
 
@@ -474,41 +422,32 @@ const ManageProfile = () => {
     setGstinMessage({ type: "", text: "Checking GSTIN..." });
     try {
       const result = await (await verifyGstinForRegistration(gstin)).json();
-      console.log("GST API RESULT:", result);
       let availableStates = states;
       if (result?.res !== false && availableStates.length === 0) {
         const stateResponse = await getStateList();
-        availableStates = Array.isArray(stateResponse?.state)
-          ? stateResponse.state
-          : [];
+        availableStates = Array.isArray(stateResponse?.state) ? stateResponse.state : [];
         setStates(availableStates);
       }
 
       if (result?.res !== false) {
-        const taxpayerInfo =
-          result?.data?.gst_data?.taxpayerInfo ??
-          result?.gst_data?.taxpayerInfo ??
-          result?.data?.taxpayerInfo ??
-          result?.taxpayerInfo;
-        const gstData =
-          result?.data?.name || result?.data?.address ? result.data : result;
-        const returnedState = String(gstData?.state ?? "")
-          .trim()
-          .toLowerCase();
+        const taxpayerInfo = result?.data?.gst_data?.taxpayerInfo
+          ?? result?.gst_data?.taxpayerInfo
+          ?? result?.data?.taxpayerInfo
+          ?? result?.taxpayerInfo;
+        const gstData = result?.data?.name || result?.data?.address
+          ? result.data
+          : result;
+        const returnedState = String(gstData?.state ?? "").trim().toLowerCase();
         const matchedState = availableStates.find(
-          (state) =>
-            String(state?.name ?? "")
-              .trim()
-              .toLowerCase() === returnedState,
+          (state) => String(state?.name ?? "").trim().toLowerCase() === returnedState
         );
 
         setNewCompany((current) => ({
           ...current,
-          companyName:
-            taxpayerInfo?.tradeNam ??
-            gstData?.tradeNam ??
-            gstData?.name ??
-            current.companyName,
+          companyName: taxpayerInfo?.tradeNam
+            ?? gstData?.tradeNam
+            ?? gstData?.name
+            ?? current.companyName,
           address: gstData?.address ?? current.address,
           address2: gstData?.address2 ?? current.address2,
           postalCode: gstData?.postal_code ?? current.postalCode,
@@ -519,17 +458,10 @@ const ManageProfile = () => {
 
       setGstinMessage({
         type: result?.res === false ? "error" : "success",
-        text:
-          result?.msg ||
-          (result?.res === false
-            ? "GSTIN verification failed."
-            : "GSTIN verified successfully."),
+        text: result?.msg || (result?.res === false ? "GSTIN verification failed." : "GSTIN verified successfully."),
       });
     } catch (error) {
-      setGstinMessage({
-        type: "error",
-        text: "Error verifying GSTIN. Try again.",
-      });
+      setGstinMessage({ type: "error", text: "Error verifying GSTIN. Try again." });
     } finally {
       setIsCheckingGstin(false);
     }
@@ -538,22 +470,14 @@ const ManageProfile = () => {
   const handleAddNew = async (event) => {
     event.preventDefault();
     const phonePattern = /^\+91\d{10}$/;
-    if (
-      !newCompany.companyName.trim() ||
-      !newCompany.address.trim() ||
-      !newCompany.postalCode.trim() ||
-      !newCompany.city.trim() ||
-      !newCompany.stateId ||
-      !newCompany.phone.trim()
-    ) {
+    if (!newCompany.companyName.trim() || !newCompany.address.trim()
+      || !newCompany.postalCode.trim() || !newCompany.city.trim()
+      || !newCompany.stateId || !newCompany.phone.trim()) {
       showToast("error", "Please fill in all required address fields.");
       return;
     }
     if (!phonePattern.test(newCompany.phone.trim())) {
-      showToast(
-        "error",
-        "Phone number must start with +91 followed by 10 digits.",
-      );
+      showToast("error", "Phone number must start with +91 followed by 10 digits.");
       return;
     }
 
@@ -561,28 +485,17 @@ const ManageProfile = () => {
     try {
       const response = await addAddress(newCompany);
       const selectedState = states.find(
-        (state) => String(state.id) === String(newCompany.stateId),
+        (state) => String(state.id) === String(newCompany.stateId)
       );
-      setCompanies((current) => [
-        ...current,
-        {
-          ...newCompany,
-          id: response?.data?.id,
-          state: response?.data?.state ?? selectedState?.name ?? "",
-          setDefault: false,
-        },
-      ]);
+      setCompanies((current) => [...current, {
+        ...newCompany,
+        id: response?.data?.id,
+        state: response?.data?.state ?? selectedState?.name ?? "",
+        setDefault: false,
+      }]);
       setNewCompany({
-        gstin: "",
-        aadharCard: "",
-        companyName: "",
-        address: "",
-        address2: "",
-        postalCode: "",
-        city: "",
-        stateId: "",
-        country: "India",
-        phone: "",
+        gstin: "", aadharCard: "", companyName: "", address: "", address2: "",
+        postalCode: "", city: "", stateId: "", country: "India", phone: "",
       });
       setGstinMessage({ type: "", text: "" });
       setShowAddModal(false);
@@ -595,24 +508,14 @@ const ManageProfile = () => {
   };
 
   return (
-    <UserProfileLayout loading={profileLoading}>
-      <div
-        className="manage-profile-container"
-        style={{ position: "relative" }}
-      >
-        {profileLoading && (
-          <GlobalLoader section show={profileLoading} /> // Shows the global loader while profile data is loading.
-        )}
-
+    <UserProfileLayout>
+      <div className="manage-profile-container">
         <div className="manageProfileFrm">
           <div className="manageProfileFrmBoxHr">
             <h3>Basic Info</h3>
           </div>
           <div className="manageProfileFrmBoxInner">
-            <form
-              className="manage-profile-form"
-              onSubmit={handleBasicInfoSubmit}
-            >
+            <form className="manage-profile-form" onSubmit={handleBasicInfoSubmit}>
               <div className="form-row">
                 <div className="form-group">
                   <label>Full Name</label>
@@ -713,10 +616,7 @@ const ManageProfile = () => {
             <h3>Change Password</h3>
           </div>
           <div className="manageProfileFrmBoxInner">
-            <form
-              className="manage-profile-form"
-              onSubmit={handlePasswordSubmit}
-            >
+            <form className="manage-profile-form" onSubmit={handlePasswordSubmit}>
               <div className="form-row">
                 <div className="form-group">
                   <label>Your Password</label>
@@ -766,9 +666,7 @@ const ManageProfile = () => {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                     />
-                    <button type="button" onClick={handleVerify}>
-                      Verify
-                    </button>
+                    <button type="button" onClick={handleVerify}>Verify</button>
                   </div>
                 </div>
                 <div className="form-group">
@@ -944,82 +842,26 @@ const ManageProfile = () => {
               <div className="modal-overlay">
                 <form className="modal-box" onSubmit={saveEdit}>
                   <h3>Edit Company Details</h3>
-                  <input
-                    name="gstin"
-                    value={editData.gstin ?? ""}
-                    placeholder="GSTIN"
-                    disabled
-                  />
-                  <input
-                    name="aadharCard"
-                    value={editData.aadharCard ?? ""}
-                    onChange={handleEditChange}
-                    placeholder="Aadhaar Card"
-                  />
-                  <input
-                    name="companyName"
-                    value={editData.companyName ?? ""}
-                    onChange={handleEditChange}
-                    placeholder="Company Name"
-                    required
-                  />
-                  <input
-                    name="address"
-                    value={editData.address ?? ""}
-                    onChange={handleEditChange}
-                    placeholder="Address"
-                    required
-                  />
-                  <input
-                    name="address2"
-                    value={editData.address2 ?? ""}
-                    onChange={handleEditChange}
-                    placeholder="Address 2"
-                  />
-                  <input
-                    name="postalCode"
-                    value={editData.postalCode ?? ""}
-                    onChange={handleEditChange}
-                    placeholder="Postal Code"
-                    required
-                  />
-                  <input
-                    name="city"
-                    value={editData.city ?? ""}
-                    onChange={handleEditChange}
-                    placeholder="City"
-                    required
-                  />
-                  <select
-                    name="stateId"
-                    value={editData.stateId ?? ""}
-                    onChange={handleEditChange}
-                    required
-                  >
+                  <input name="gstin" value={editData.gstin ?? ""} placeholder="GSTIN" disabled />
+                  <input name="aadharCard" value={editData.aadharCard ?? ""} onChange={handleEditChange} placeholder="Aadhaar Card" />
+                  <input name="companyName" value={editData.companyName ?? ""} onChange={handleEditChange} placeholder="Company Name" required />
+                  <input name="address" value={editData.address ?? ""} onChange={handleEditChange} placeholder="Address" required />
+                  <input name="address2" value={editData.address2 ?? ""} onChange={handleEditChange} placeholder="Address 2" />
+                  <input name="postalCode" value={editData.postalCode ?? ""} onChange={handleEditChange} placeholder="Postal Code" required />
+                  <input name="city" value={editData.city ?? ""} onChange={handleEditChange} placeholder="City" required />
+                  <select name="stateId" value={editData.stateId ?? ""} onChange={handleEditChange} required>
                     <option value="">Select State</option>
                     {states.map((state) => (
-                      <option key={state.id} value={state.id}>
-                        {state.name}
-                      </option>
+                      <option key={state.id} value={state.id}>{state.name}</option>
                     ))}
                   </select>
                   <input name="country" value="India" readOnly />
-                  <input
-                    name="phone"
-                    value={editData.phone ?? ""}
-                    onChange={handleEditChange}
-                    placeholder="Phone"
-                    required
-                  />
+                  <input name="phone" value={editData.phone ?? ""} onChange={handleEditChange} placeholder="Phone" required />
                   <div className="modal-actions">
                     <button type="submit" disabled={isUpdatingAddress}>
                       {isUpdatingAddress ? "Saving..." : "Save"}
                     </button>
-                    <button
-                      type="button"
-                      onClick={() => setShowEditModal(false)}
-                      disabled={isUpdatingAddress}
-                    >
+                    <button type="button" onClick={() => setShowEditModal(false)} disabled={isUpdatingAddress}>
                       Cancel
                     </button>
                   </div>
@@ -1033,105 +875,29 @@ const ManageProfile = () => {
                 <form className="modal-box" onSubmit={handleAddNew}>
                   <h3>Add New Company</h3>
                   <div className="gstin-check-field">
-                    <input
-                      name="gstin"
-                      value={newCompany.gstin}
-                      onChange={handleNewCompanyChange}
-                      placeholder="GSTIN (optional)"
-                      maxLength={15}
-                      disabled={isCheckingGstin}
-                    />
-                    <button
-                      type="button"
-                      onClick={handleGstinCheck}
-                      disabled={isCheckingGstin || !newCompany.gstin.trim()}
-                    >
+                    <input name="gstin" value={newCompany.gstin} onChange={handleNewCompanyChange} placeholder="GSTIN (optional)" maxLength={15} disabled={isCheckingGstin} />
+                    <button type="button" onClick={handleGstinCheck} disabled={isCheckingGstin || !newCompany.gstin.trim()}>
                       {isCheckingGstin ? "Checking..." : "Check GST"}
                     </button>
                   </div>
-                  {gstinMessage.text && (
-                    <p className={`gstin-message ${gstinMessage.type}`}>
-                      {gstinMessage.text}
-                    </p>
-                  )}
-                  <fieldset
-                    disabled={isCheckingGstin}
-                    className="address-fields"
-                  >
-                    <input
-                      name="aadharCard"
-                      value={newCompany.aadharCard}
-                      onChange={handleNewCompanyChange}
-                      placeholder="Aadhaar Card"
-                    />
-                    <input
-                      name="companyName"
-                      value={newCompany.companyName}
-                      onChange={handleNewCompanyChange}
-                      placeholder="Company Name *"
-                      required
-                    />
-                    <input
-                      name="address"
-                      value={newCompany.address}
-                      onChange={handleNewCompanyChange}
-                      placeholder="Address *"
-                      required
-                    />
-                    <input
-                      name="address2"
-                      value={newCompany.address2}
-                      onChange={handleNewCompanyChange}
-                      placeholder="Address 2"
-                    />
-                    <input
-                      name="postalCode"
-                      value={newCompany.postalCode}
-                      onChange={handleNewCompanyChange}
-                      placeholder="Postal Code *"
-                      required
-                    />
-                    <input
-                      name="city"
-                      value={newCompany.city}
-                      onChange={handleNewCompanyChange}
-                      placeholder="City *"
-                      required
-                    />
-                    <select
-                      name="stateId"
-                      value={newCompany.stateId}
-                      onChange={handleNewCompanyChange}
-                      required
-                    >
+                  {gstinMessage.text && <p className={`gstin-message ${gstinMessage.type}`}>{gstinMessage.text}</p>}
+                  <fieldset disabled={isCheckingGstin} className="address-fields">
+                    <input name="aadharCard" value={newCompany.aadharCard} onChange={handleNewCompanyChange} placeholder="Aadhaar Card" />
+                    <input name="companyName" value={newCompany.companyName} onChange={handleNewCompanyChange} placeholder="Company Name *" required />
+                    <input name="address" value={newCompany.address} onChange={handleNewCompanyChange} placeholder="Address *" required />
+                    <input name="address2" value={newCompany.address2} onChange={handleNewCompanyChange} placeholder="Address 2" />
+                    <input name="postalCode" value={newCompany.postalCode} onChange={handleNewCompanyChange} placeholder="Postal Code *" required />
+                    <input name="city" value={newCompany.city} onChange={handleNewCompanyChange} placeholder="City *" required />
+                    <select name="stateId" value={newCompany.stateId} onChange={handleNewCompanyChange} required>
                       <option value="">Select State *</option>
-                      {states.map((state) => (
-                        <option key={state.id} value={state.id}>
-                          {state.name}
-                        </option>
-                      ))}
+                      {states.map((state) => <option key={state.id} value={state.id}>{state.name}</option>)}
                     </select>
                     <input name="country" value="India" readOnly />
-                    <input
-                      name="phone"
-                      value={newCompany.phone}
-                      onChange={handleNewCompanyChange}
-                      placeholder="+91XXXXXXXXXX *"
-                      required
-                    />
+                    <input name="phone" value={newCompany.phone} onChange={handleNewCompanyChange} placeholder="+91XXXXXXXXXX *" required />
                   </fieldset>
                   <div className="modal-actions">
-                    <button
-                      type="submit"
-                      disabled={isAddingAddress || isCheckingGstin}
-                    >
-                      {isAddingAddress ? "Adding..." : "Add"}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setShowAddModal(false)}
-                      disabled={isAddingAddress || isCheckingGstin}
-                    >
+                    <button type="submit" disabled={isAddingAddress || isCheckingGstin}>{isAddingAddress ? "Adding..." : "Add"}</button>
+                    <button type="button" onClick={() => setShowAddModal(false)} disabled={isAddingAddress || isCheckingGstin}>
                       Cancel
                     </button>
                   </div>
