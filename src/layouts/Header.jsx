@@ -13,9 +13,12 @@ import MenuIcon3 from "../assets/icons/MenuIcon3.svg";
 import MenuIcon4 from "../assets/icons/MenuIcon4.svg";
 import MenuIcon5 from "../assets/icons/MenuIcon5.svg";
 import MenuIcon6 from "../assets/icons/MenuIcon6.svg";
+import preArrivalIcon from "../assets/icons/pre-arrival-items-icon.svg";
 import flagEN from "../assets/icons/flag-icon/gb.svg";
 import flagFR from "../assets/icons/flag-icon/fr.svg";
 import Logo from "../assets/images/Logo.svg";
+
+import { BiSolidOffer } from "react-icons/bi";
 
 import MegaMenu from "./MegaMenu";
 import SearchModal from "../components/SearchModal";
@@ -394,6 +397,28 @@ const Header = () => {
                   View All Categories
                 </Link>
               )}
+
+              <button
+                className="special-header-btn offers-btn"
+                onClick={() => navigate("/offers")}
+                type="button"
+              >
+                <BiSolidOffer className="offer-icon" />
+                Offers
+              </button>
+
+              <button
+                className="special-header-btn pre-arrival-btn"
+                onClick={() => navigate("/pre-arrival")}
+                type="button"
+              >
+                <img
+                  src={preArrivalIcon}
+                  alt="Pre-Arrival"
+                  className="pre-arrival-icon"
+                />
+                Pre-Arrival
+              </button>
             </div>
           )}
 
