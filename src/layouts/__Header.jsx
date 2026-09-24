@@ -13,12 +13,9 @@ import MenuIcon3 from "../assets/icons/MenuIcon3.svg";
 import MenuIcon4 from "../assets/icons/MenuIcon4.svg";
 import MenuIcon5 from "../assets/icons/MenuIcon5.svg";
 import MenuIcon6 from "../assets/icons/MenuIcon6.svg";
-import preArrivalIcon from "../assets/icons/pre-arrival-items-icon.svg";
 import flagEN from "../assets/icons/flag-icon/gb.svg";
 import flagFR from "../assets/icons/flag-icon/fr.svg";
 import Logo from "../assets/images/Logo.svg";
-
-import { BiSolidOffer } from "react-icons/bi";
 
 import MegaMenu from "./MegaMenu";
 import SearchModal from "../components/SearchModal";
@@ -27,9 +24,6 @@ import CartSlide from "../components/CartSlide";
 import { cart, getWishList } from "../api/apiRequest";
 import { API_BASE_URL } from "../app_url";
 // import { NotificationManager } from "react-notifications"; // if you're using it
-import preArrivalIcon from "../assets/icons/pre-arrival-items-icon.svg";
-import { BiSolidOffer } from "react-icons/bi";
-import BrandsIcon from "../assets/icons/BrandsIcon.png"
 
 // ✅ helper: read staff id safely from localStorage
 function getStoredStaffId() {
@@ -122,7 +116,7 @@ const Header = () => {
   const switchBackHref = useMemo(() => {
     if (!staffId) return "";
     return `https://mazingbusiness.com/mazing_laravel/switch_back_from_react/${encodeURIComponent(
-      staffId,
+      staffId
     )}`;
   }, [staffId]);
 
@@ -163,12 +157,11 @@ const Header = () => {
     try {
       const responseData = await getWishList();
       const paginator = responseData?.data;
-      const list =
-        paginator?.data ??
-        paginator?.products ??
-        responseData?.products ??
-        responseData?.wishlist ??
-        (Array.isArray(paginator) ? paginator : []);
+      const list = paginator?.data
+        ?? paginator?.products
+        ?? responseData?.products
+        ?? responseData?.wishlist
+        ?? (Array.isArray(paginator) ? paginator : []);
       const total = paginator?.total ?? responseData?.count ?? list.length;
       setWishlistCount(Number(total) || 0);
     } catch (error) {
@@ -181,7 +174,7 @@ const Header = () => {
   const handleLogout = async () => {
     try {
       const loginInfo = JSON.parse(
-        localStorage.getItem("mazingBusinessLoginInfo") || "{}",
+        localStorage.getItem("mazingBusinessLoginInfo") || "{}"
       );
       const token = loginInfo?.authorisation?.token || loginInfo?.token || "";
 
@@ -330,14 +323,7 @@ const Header = () => {
             <div className="header-icons">
               {/* ✅ Switch Back: show only if staffId exists */}
               {staffId ? (
-                <a
-                  href="#"
-                  className="switchBackLink"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    handleSwitchBack();
-                  }}
-                >
+                <a href="#" className="switchBackLink" onClick={(e) => { e.preventDefault(); handleSwitchBack(); }} >
                   Switch Back
                 </a>
               ) : null}
@@ -374,9 +360,10 @@ const Header = () => {
       </div>
 
       <div
-        className={`nav-bar ${isCategorySlidePage ? "category-slide-nav" : ""}`}
+        className={`nav-bar ${
+          isCategorySlidePage ? "category-slide-nav" : ""
+        }`}
       >
-        {/*Shop by Category*/}
         <div className="maincontainer">
           {!isCategorySlidePage && (
             <div className="category-nav-actions">
@@ -393,6 +380,7 @@ const Header = () => {
               >
                 <img src={MenuBarIcon} alt="MenuBarIcon" /> Shop by Category
               </button>
+
               {showViewAll && (
                 <Link
                   to="/all-categories"
@@ -406,63 +394,6 @@ const Header = () => {
                   View All Categories
                 </Link>
               )}
-<<<<<<< HEAD
-
-              <button
-                className="special-header-btn offers-btn"
-                onClick={() => navigate("/offers")}
-                type="button"
-              >
-                <BiSolidOffer className="offer-icon" />
-                Offers
-              </button>
-
-              <button
-                className="special-header-btn pre-arrival-btn"
-                onClick={() => navigate("/pre-arrival")}
-                type="button"
-              >
-                <img
-                  src={preArrivalIcon}
-                  alt="Pre-Arrival"
-                  className="pre-arrival-icon"
-                />
-                Pre-Arrival
-              </button>
-=======
-               {/* adding a offer button*/}
-              <button
-                className="special-header-btn offers-btn"
-                onClick={() => navigate("/offers")}
-              >
-                <BiSolidOffer 
-                className="offer-icon"
-                />
-                Offers
-              </button>
-                {/* adding a Pre-arrival button*/}
-              <button
-                className="special-header-btn pre-arrival-btn"
-                onClick={() => navigate("/pre-arrival")}
-              >
-                <img
-                src={preArrivalIcon}
-                alt="Pre-Arrival"
-                className="pre-arrival-icon"/>
-                Pre-Arrival
-              </button>
-               {/* Adding a Brand Page Button*/}
-                <button
-                className="special-header-btn brands-btn"
-                onClick={() => navigate("/brands")}
-              >
-                <img
-                src={BrandsIcon}
-                alt="Brands"
-                className="brands-icon"/>
-                Brands
-              </button>
->>>>>>> a206a80 (Last Update from junior)
             </div>
           )}
 
@@ -501,41 +432,41 @@ const Header = () => {
           </ul>
 
           {!isCategorySlidePage && (
-            <div className="language-selector" ref={langDropdownRef}>
-              <button
-                className="language-toggle"
-                onClick={() => setIsLangOpen(!isLangOpen)}
-                type="button"
-              >
-                <img
-                  src={selectedLang.flag}
-                  alt={selectedLang.name}
-                  className="flag"
-                />
-                <span className="language-name">{selectedLang.name}</span>
-                <FiChevronDown
-                  className={`arrow-icon ${isLangOpen ? "rotate" : ""}`}
-                />
-              </button>
+          <div className="language-selector" ref={langDropdownRef}>
+            <button
+              className="language-toggle"
+              onClick={() => setIsLangOpen(!isLangOpen)}
+              type="button"
+            >
+              <img
+                src={selectedLang.flag}
+                alt={selectedLang.name}
+                className="flag"
+              />
+              <span className="language-name">{selectedLang.name}</span>
+              <FiChevronDown
+                className={`arrow-icon ${isLangOpen ? "rotate" : ""}`}
+              />
+            </button>
 
-              <div className={`language-dropdown ${isLangOpen ? "open" : ""}`}>
-                {languages.map((lang) => (
-                  <div
-                    key={lang.code}
-                    className={`language-option ${
-                      lang.code === selectedLang.code ? "selected" : ""
-                    }`}
-                    onClick={() => {
-                      setSelectedLang(lang);
-                      setIsLangOpen(false);
-                    }}
-                  >
-                    <img src={lang.flag} alt={lang.name} className="flag" />
-                    <span>{lang.name}</span>
-                  </div>
-                ))}
-              </div>
+            <div className={`language-dropdown ${isLangOpen ? "open" : ""}`}>
+              {languages.map((lang) => (
+                <div
+                  key={lang.code}
+                  className={`language-option ${
+                    lang.code === selectedLang.code ? "selected" : ""
+                  }`}
+                  onClick={() => {
+                    setSelectedLang(lang);
+                    setIsLangOpen(false);
+                  }}
+                >
+                  <img src={lang.flag} alt={lang.name} className="flag" />
+                  <span>{lang.name}</span>
+                </div>
+              ))}
             </div>
+          </div>
           )}
         </div>
       </div>

@@ -173,7 +173,7 @@ const Footer = () => {
         <div className="footer-bottom">
           <p>
             <strong>Ace Tools Pvt. Ltd.</strong> © 2025. All Rights Reserved.
-            {/* Designed by <strong>Arunaksha Sautya</strong> */}
+            Designed by <strong>Arunaksha Sautya</strong>
           </p>
           <div className="social-icons">
             <img src={facebookIcon} alt="Facebook" />
