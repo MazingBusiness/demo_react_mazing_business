@@ -27,8 +27,6 @@ import CartSlide from "../components/CartSlide";
 import { cart, getWishList } from "../api/apiRequest";
 import { API_BASE_URL } from "../app_url";
 // import { NotificationManager } from "react-notifications"; // if you're using it
-import preArrivalIcon from "../assets/icons/pre-arrival-items-icon.svg";
-import { BiSolidOffer } from "react-icons/bi";
 import BrandsIcon from "../assets/icons/BrandsIcon.png"
 
 // ✅ helper: read staff id safely from localStorage
@@ -406,30 +404,6 @@ const Header = () => {
                   View All Categories
                 </Link>
               )}
-<<<<<<< HEAD
-
-              <button
-                className="special-header-btn offers-btn"
-                onClick={() => navigate("/offers")}
-                type="button"
-              >
-                <BiSolidOffer className="offer-icon" />
-                Offers
-              </button>
-
-              <button
-                className="special-header-btn pre-arrival-btn"
-                onClick={() => navigate("/pre-arrival")}
-                type="button"
-              >
-                <img
-                  src={preArrivalIcon}
-                  alt="Pre-Arrival"
-                  className="pre-arrival-icon"
-                />
-                Pre-Arrival
-              </button>
-=======
                {/* adding a offer button*/}
               <button
                 className="special-header-btn offers-btn"
@@ -462,7 +436,6 @@ const Header = () => {
                 className="brands-icon"/>
                 Brands
               </button>
->>>>>>> a206a80 (Last Update from junior)
             </div>
           )}
 

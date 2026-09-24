@@ -101,8 +101,8 @@ const getExistingPreArrivalAddressId = (group) =>
 const PreArrival = () => {
   const [arrivalGroups, setArrivalGroups] = useState([]);
   const [categoryGroups, setCategoryGroups] = useState([]);
-  const [selectedDate, setSelectedDate] = useState([]);
-  const [selectedCategory, setSelectedCategory] = useState([]);
+  const [selectedDate, setSelectedDate] = useState(ALL);
+  const [selectedCategory, setSelectedCategory] = useState(ALL);
   const [quantities, setQuantities] = useState({});
   const [initialQuantities, setInitialQuantities] = useState({});
   // const [loading, setLoading] = useState(true);
@@ -260,7 +260,7 @@ const PreArrival = () => {
     () => arrivalGroups
       .filter((group) => {
         const etaDate = group?.bl_detail?.eta_date || group?.eta_date;
-        return selectedDate.length=== 0|| selectedDate.includes(etaDate);
+        return selectedDate === ALL || etaDate === selectedDate;
       })
       .flatMap((group) => group?.products || []),
     [arrivalGroups, selectedDate]
@@ -287,21 +287,12 @@ const PreArrival = () => {
   }, [categoryGroups, productsForSelectedDate]);
 
   useEffect(() => {
-     if (selectedCategory.length === 0) return;
-
-  const validCategoryIds = subCategories.map((category) =>
-    String(category.id)
-  );
-
-  const validSelectedCategories = selectedCategory.filter((id) =>
-    validCategoryIds.includes(id)
-  );
-
-  if (
-    validSelectedCategories.length !== selectedCategory.length
-  ) {
-    setSelectedCategory(validSelectedCategories);
-  }
+    if (
+      selectedCategory !== ALL &&
+      !subCategories.some((category) => String(category.id) === selectedCategory)
+    ) {
+      setSelectedCategory(ALL);
+    }
   }, [selectedCategory, subCategories]);
 
   useEffect(() => {
@@ -321,15 +312,10 @@ const PreArrival = () => {
   }, [addressModalOpen, saving]);
 
   const visibleProducts = useMemo(
-    () => 
-      productsForSelectedDate.filter(
-      (item) =>{
-      const categoryId= String(item?.product?.category_id);
-        return (
-          selectedCategory.length===0 ||
-          selectedCategory.includes(categoryId)
-        );
-      }),
+    () => productsForSelectedDate.filter(
+      (item) => selectedCategory === ALL ||
+        String(item?.product?.category_id) === selectedCategory
+    ),
     [productsForSelectedDate, selectedCategory]
   );
 
@@ -338,16 +324,12 @@ const PreArrival = () => {
 
     arrivalGroups.forEach((group) => {
       const etaDate = group?.bl_detail?.eta_date || group?.eta_date || "";
-      if (selectedDate.length>0 &&  !selectedDate.includes(etaDate)) return;
+      if (selectedDate !== ALL && etaDate !== selectedDate) return;
 
-      const products = (group?.products || []).filter
-      ((item) =>{
-
-          const categoryId=String(item?.product?.category_id)
-          return (
-            selectedCategory.length===0 || selectedCategory.includes(categoryId)
-          )
-        })
+      const products = (group?.products || []).filter(
+        (item) => selectedCategory === ALL ||
+          String(item?.product?.category_id) === selectedCategory
+      );
       if (products.length === 0) return;
 
       const sectionKey = etaDate || "date-pending";
@@ -384,8 +366,8 @@ const PreArrival = () => {
   const handleExportList = async () => {
     try {
       setExporting(true);
-      const etaDate = selectedDate === ALL ? "" : selectedDate.length === 0 ? "" : selectedDate.map((date) => date.slice(0,10));
-      const categoryId = selectedCategory.length === 0 ? "" : selectedCategory;
+      const etaDate = selectedDate === ALL ? "" : selectedDate.slice(0, 10);
+      const categoryId = selectedCategory === ALL ? "" : selectedCategory;
       const { pdfUrl, fileName } = await downloadPreArrivalProductPdf({
         etaDate,
         categoryId,
@@ -601,16 +583,9 @@ const PreArrival = () => {
               <span>ETA DATE</span>
             </div>
             <div className="pre-arrival-filter-options">
-              <button type="button" className={selectedDate.length === 0 ? "active" : ""} onClick={() => setSelectedDate([])}>All</button>
+              <button type="button" className={selectedDate === ALL ? "active" : ""} onClick={() => setSelectedDate(ALL)}>All</button>
               {etaDates.map((date) => (
-                <button type="button" key={date} className={selectedDate.includes (date) ? "active" : ""} onClick={() => {
-      setSelectedDate((prev) =>
-        prev.includes(date)
-          ? prev.filter((item) => item !== date)
-          : [...prev, date]
-      );
-    }}
-    >
+                <button type="button" key={date} className={selectedDate === date ? "active" : ""} onClick={() => setSelectedDate(date)}>
                   {formatEtaDate(date)}
                 </button>
               ))}
@@ -623,19 +598,9 @@ const PreArrival = () => {
               <span>SUB-CATEGORY</span>
             </div>
             <div className="pre-arrival-filter-options">
-              <button type="button" className={selectedCategory.length === 0 ? "active" : ""} onClick={() => setSelectedCategory([])}>
-                All
-                </button>
-
+              <button type="button" className={selectedCategory === ALL ? "active" : ""} onClick={() => setSelectedCategory(ALL)}>All</button>
               {subCategories.map((category) => (
-                <button type="button" key={category.id} className={selectedCategory.includes (String(category.id)) ? "active" : ""}
-                 onClick={() =>{
-                  const categoryId= String(category.id);
-                  setSelectedCategory((prev)=>
-                    prev.includes(categoryId) ? prev.filter ((item)=> item!==categoryId) : [...prev,categoryId]
-                )
-              }}
-                >
+                <button type="button" key={category.id} className={selectedCategory === String(category.id) ? "active" : ""} onClick={() => setSelectedCategory(String(category.id))}>
                   {category.name}
                 </button>
               ))}
