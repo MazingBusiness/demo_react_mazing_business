@@ -13,9 +13,12 @@ import MenuIcon3 from "../assets/icons/MenuIcon3.svg";
 import MenuIcon4 from "../assets/icons/MenuIcon4.svg";
 import MenuIcon5 from "../assets/icons/MenuIcon5.svg";
 import MenuIcon6 from "../assets/icons/MenuIcon6.svg";
+import preArrivalIcon from "../assets/icons/pre-arrival-items-icon.svg";
 import flagEN from "../assets/icons/flag-icon/gb.svg";
 import flagFR from "../assets/icons/flag-icon/fr.svg";
 import Logo from "../assets/images/Logo.svg";
+
+import { BiSolidOffer } from "react-icons/bi";
 
 import MegaMenu from "./MegaMenu";
 import SearchModal from "../components/SearchModal";
@@ -24,8 +27,6 @@ import CartSlide from "../components/CartSlide";
 import { cart, getWishList } from "../api/apiRequest";
 import { API_BASE_URL } from "../app_url";
 // import { NotificationManager } from "react-notifications"; // if you're using it
-import preArrivalIcon from "../assets/icons/pre-arrival-items-icon.svg";
-import { BiSolidOffer } from "react-icons/bi";
 import BrandsIcon from "../assets/icons/BrandsIcon.png"
 
 // ✅ helper: read staff id safely from localStorage

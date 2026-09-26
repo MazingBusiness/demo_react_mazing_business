@@ -879,16 +879,6 @@ const QuickOrderContent = () => {
     console.log("Selected Parent:", selectedCatGIds);
   }, [selectedCatGIds]);
 
-  useEffect(() => {
-    window.scrollTo({
-      top: 0,
-      left: 0,
-      behavior: "instant",
-    });
-  }, []);
-
-
-
   return (
     <MainLayout>
       <div className="maincontainer">
