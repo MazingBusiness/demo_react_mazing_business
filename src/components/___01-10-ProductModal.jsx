@@ -15,7 +15,6 @@ import Swal from "sweetalert2";
 
 import { getProductDetails, getGenericProducts, getMasterProducts, addToCart, updateProductQty, downloadGenericProductList, addToWishlist, removeFromWishlist, applyOffer } from "../api/apiRequest";
 import { getLoggedInUser } from "../utils/authUtils";
-import GlobalLoader from "./GlobalLoader";
 
 const firstValidId = (...values) =>
   values.find((value) => value !== undefined && value !== null && String(value).trim() !== "");
@@ -1057,8 +1056,11 @@ const ProductModal = ({ product, isOpen, onClose }) => {
 
           <div className="product-modal-grid">
             <div className="product-modal-content">
+              {loadingProduct && (
+                <div className="product-modal-loading">Loading product...</div>
+              )}
 
-              {loadingProduct && <GlobalLoader section show/>}
+              {!loadingProduct && (
                 <>
                   <div className="product-modal-carousel">
                     <div className="breadcrumb">
@@ -1349,6 +1351,7 @@ const ProductModal = ({ product, isOpen, onClose }) => {
                     </div>
                   </div>
                 </>
+              )}
             </div>
           </div>
         </div>

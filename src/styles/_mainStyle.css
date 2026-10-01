@@ -12944,92 +12944,93 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 
 .contact-section {
-  width: 100%;
-  padding: 30px 0 60px;
-  background: #fff;
+width: 100%;
+padding: 30px 0 60px;
+background: #fff;
 }
 
-.contact-container {
-  display: grid;
-  grid-template-columns: 3.2fr 1.5fr;
-  gap: 20px;
-  align-items: stretch;
+.contact-container{
+display: grid;
+grid-template-columns:3.2fr 1.5fr;
+gap: 20px;
+align-items: stretch;
 }
 
-.contact-main-card {
+.contact-main-card{
   width: 100%;
   min-height: 220px;
-  border: 1px solid #d9e8f2;
-  background: #fff;
-  border-radius: 16px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.06);
-  padding: 40px;
-  box-sizing: border-box;
+border: 1px solid #d9e8f2;
+background: #fff;
+border-radius: 16px;
+box-shadow:  0 4px 6px rgba(0, 0, 0, 0.06);
+padding: 40px;
+box-sizing: border-box;
 }
 
-.contact-main-card {
-  padding: 40px;
+.contact-main-card{
+padding: 40px;
 }
 
-.contact-small-title {
-  font-size: 15px;
-  display: block;
-  margin-bottom: 5px;
-  color: #1268d9;
+.contact-small-title{
+font-size: 15px;
+display: block;
+margin-bottom: 5px;
+color: #1268d9;
 }
 
 .contact-description {
-  font-size: 16px;
-  line-height: 1.3;
-  max-width: 700px;
-  margin: 0;
-  font-weight: 300;
+font-size: 16px;
+line-height: 1.3;
+max-width: 700px;
+margin: 0;
+font-weight: 300;
 }
 
-.contact-details {
-  display: grid;
-  grid-template-columns: 1.2fr 1.9fr 1.8fr;
-  width: 100%;
-  margin-top: 35px;
-  align-items: stretch;
+.contact-details{
+    display: grid;
+    grid-template-columns:  1.2fr 1.9fr 1.8fr;
+    width: 100%;
+    margin-top: 35px;
+    align-items: stretch;
 }
 
-.contact-item {
-  display: flex;
-  align-items: flex-start;
+.contact-item{
+   display: flex;
+    align-items: flex-start;
 
-  min-width: 0;
+    min-width: 0;
 
-  padding: 5px 15px;
+    padding: 5px 15px;
 
-  border-right: 1px solid #d8dfe7;
+    border-right: 1px solid #d8dfe7;
 
-  box-sizing: border-box;
+    box-sizing: border-box;
+
 }
 .contact-item:first-child {
-  padding-left: 0;
+    padding-left: 0;
 }
 
-.contact-item:last-child {
-  border-right: none;
-  padding-right: 0;
+.contact-item:last-child{
+border-right: none;
+padding-right: 0;
 }
 
-.contact-icon {
-  height: 50px;
-  width: 50px;
-  min-width: 50px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  font-size: 19px;
-  background: #e1f3ff;
-  color: #1687e8;
-  margin-right: 8px;
+.contact-icon{
+height: 50px;
+width: 50px;
+min-width: 50px;
+display: flex;
+align-items: center;
+justify-content: center;
+border-radius: 50%;
+font-size: 19px;
+background: #e1f3ff;
+color: #1687e8;
+margin-right: 8px;
 }
 
-.contact-details-info {
+.contact-info{
   display: flex;
   flex-direction: column;
   min-width: 0;
@@ -13037,16 +13038,16 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   align-items: flex-start;
 }
 
-.contact-details-info h3 {
-  margin: 0 0 5px;
-  color: #17213d;
-  font-size: 17px;
-  font-weight: 600;
-  white-space: nowrap;
+.contact-info h3{
+margin: 0 0 5px;
+color: #17213d;
+font-size: 17px;
+font-weight: 600;
+white-space: nowrap;
 }
 
-.contact-details-info a {
-  display: block;
+.contact-info a{
+ display: block;
   color: #1474d4;
   font-size: 15px;
   font-weight: 500;
@@ -13058,102 +13059,102 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   line-height: 1.45;
 }
 
-.contact-details-info p {
-  display: block;
+.contact-info p{
+display: block;
 
-  margin: 0;
+    margin: 0;
 
-  color: #1474d4;
+    color: #1474d4;
 
-  font-size: 15px;
-  line-height: 1.45;
+    font-size: 15px;
+    line-height: 1.45;
 
-  white-space: normal;
+    white-space: normal;
 
-  overflow: visible;
-  text-overflow: clip;
+    overflow: visible;
+    text-overflow: clip;
 
-  overflow-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
-.contact-item:last-child .contact-details-info a {
+.contact-item:last-child .contact-info a {
   white-space: normal;
   overflow-wrap: normal;
   word-break: normal;
 }
 
-.social-media-card {
-  width: 100%;
-  min-height: 220px;
-  padding: 25px 20px;
-  border: 1px solid #d9e8f2;
-  border-radius: 15px;
-  background: linear-gradient(135deg, #ffffff, #f4fbff);
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.06);
-  box-sizing: border-box;
-  margin-top: 8px;
+.social-media-card{
+width: 100%;
+min-height: 220px;
+padding: 25px 20px;
+border: 1px solid #d9e8f2;
+border-radius: 15px;
+background: linear-gradient(135deg, #ffffff, #f4fbff);
+box-shadow: 0 4px 6px rgba(0, 0, 0, 0.06);
+box-sizing: border-box;
+margin-top: 8px;
 }
 
-.social-media-card .contact-small-title {
-  font-size: 15px;
-  display: block;
-  margin-bottom: 3px;
-  color: #1268d9;
-  text-transform: uppercase;
+.social-media-card .contact-small-title{
+font-size: 15px;
+display: block;
+margin-bottom: 3px;
+color: #1268d9;
+text-transform: uppercase;
 }
-.social-media-card h3 {
-  margin: 0 0 5px;
-  color: #101735;
-  font-size: 27px;
-  font-weight: 700;
-  line-height: 1.2;
+.social-media-card h3{
+margin: 0 0 5px;
+color: #101735;
+font-size: 27px;
+font-weight: 700;
+line-height: 1.2;
 }
 
-.social-media-card > p {
-  margin: 0 0 14px;
-  color: #53617a;
-  font-size: 14px;
-  line-height: 1.3;
+.social-media-card >p{
+margin: 0 0 14px;
+color: #53617a;
+font-size: 14px;
+line-height: 1.3;
 }
 
 /*social media row*/
 
-.social-media-item {
-  width: 100%;
-  height: 44px;
-  margin-bottom: 7px;
-  padding: 0 10px 14px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  border: 1px solid #dce8ef;
-  border-radius: 10px;
-  background: #fff;
-  text-decoration: none;
-  box-sizing: border-box;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.04);
+.social-media-item{
+width: 100%;
+height: 44px;
+margin-bottom: 7px;
+padding: 0 10px 14px;
+display: flex;
+align-items: center;
+justify-content: space-between;
+border: 1px solid #dce8ef;
+border-radius: 10px;
+background: #fff;
+text-decoration: none;
+box-sizing: border-box;
+box-shadow: 0 2px 5px rgba(0, 0, 0, 0.04);
 }
 
-.social-media-left {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  min-width: 0;
-  flex-wrap: nowrap;
+.social-media-left{
+display: flex;
+align-items: center;
+gap: 12px;
+min-width: 0;
+flex-wrap: nowrap;
 }
 
-.social-media-left span {
-  color: #17213d;
-  font-size: 14px;
-  font-weight: 600;
-  white-space: nowrap;
+.social-media-left span{
+color: #17213d;
+font-size: 14px;
+font-weight: 600;
+white-space: nowrap;
 }
 
 /* Instagram */
 .instagram-icon {
-  color: #e1306c;
-  font-size: 24px;
-  flex-shrink: 0;
+color: #e1306c;
+font-size: 24px;
+flex-shrink: 0;
 }
 /* Facebook */
 .facebook-icon {
@@ -13162,18 +13163,18 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   flex-shrink: 0;
 }
 
-.whatsapp-icon {
-  color: #25d366;
-  font-size: 25px;
-  flex-shrink: 0;
+.whatsapp-icon{
+color:#25d366 ;
+font-size: 25px;
+flex-shrink: 0;
 }
 
-.social-media-left small {
-  margin-left: 5px;
-  padding: 4px 8px;
-  border-radius: 10px;
-  background: #e4f8e9;
-  color: #2ca653;
+.social-media-left small{
+margin-left: 5px;
+padding: 4px 8px;
+border-radius: 10px;
+background: #e4f8e9;
+ color: #2ca653;
 
   font-size: 12px;
   font-weight: 600;
@@ -13217,172 +13218,185 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   margin: 5px 0 0;
 }
 
+
 /*IN DESKTOP MODE*/
-@media (max-width: 992px) {
-  .contact-container {
-    grid-template-columns: 1fr;
-    gap: 20px;
-  }
+@media(max-width:992px){
+.contact-container{
+grid-template-columns: 1fr;
+gap: 20px;
+}
 
-  .contact-main-card {
-    padding: 30px;
-  }
+.contact-main-card{
+padding: 30px;
+}
 
-  .social-media-card {
-    padding: 20px 25px;
-  }
+.social-media-card{
+padding: 20px 25px;
+}
 
-  .contact-details {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 0;
-  }
 
-  .contact-item {
-    min-width: 0;
-    padding: 5px 12px;
-  }
+.contact-details{
+grid-template-columns: repeat(3 , minmax(0,1fr));
+gap: 0;
+}
 
-  .contact-icon {
-    width: 45px;
-    height: 45px;
-    max-width: 45px;
-    font-size: 17px;
-  }
+.contact-item{
+  min-width: 0;
+padding: 5px 12px;
+}
 
-  .contact-details-info {
-    min-width: 0;
-    flex: 1;
-    width: auto;
-  }
+.contact-icon{
+width: 45px;
+height: 45px;
+max-width: 45px;
+font-size: 17px;
+}
 
-  .contact-info h3 {
-    font-size: 16px;
-  }
+.contact-info {
+min-width: 0;
+flex: 1;
+width: auto;
+}
 
-  .contact-details-info a,
-  .contact-details-info p {
+.contact-info h3{
+font-size: 16px;
+}
+
+
+.contact-info a,
+.contact-info p
+{
     max-width: 100%;
     white-space: normal;
     overflow-wrap: anywhere;
     word-break: break-word;
-  }
-
- .contact-details-info h3 {
-    font-size: 16px;
-  }
-
-  .InnerBannerScetion h5 {
-    font-size: 42px;
-  }
 }
 
-@media (max-width: 768px) {
-  .contact-section {
-    padding: 25px 0 40px;
-  }
-  .contact-container {
-    grid-template-columns: 1fr;
-    gap: 18px;
-  }
+.contact-info h3{
+font-size: 16px;
+}
 
-  .contact-description {
-    font-size: 15px;
-  }
-  .contact-main-card {
-    padding: 25px 20px;
-  }
+.InnerBannerScetion h5{
+font-size: 42px;
+}
+}
 
-  .social-media-card {
-    padding: 20px 25px;
-  }
 
-  .contact-details {
-    grid-template-columns: 1fr;
-    gap: 18px;
-    margin-top: 25px;
-  }
 
-  .contact-item {
-    width: 100%;
-    min-width: 0;
-    display: flex;
-    align-items: flex-start;
-    padding: 0 0 18px;
-    border-right: none;
-    box-sizing: border-box;
+@media(max-width:768px){
+  .contact-section{
+  padding: 25px 0 40px;
   }
-  .contact-details-info {
-    min-width: 0;
-    flex: 1;
-    width: auto;
+.contact-container{
+grid-template-columns: 1fr;
+gap: 18px;
+}
+
+.contact-description{
+font-size: 15px;
+}
+.contact-main-card{
+padding: 25px 20px;
+}
+
+.social-media-card{
+padding: 20px 25px;
+}
+
+
+.contact-details{
+grid-template-columns:  1fr;
+gap: 18px;
+margin-top: 25px;
+}
+
+.contact-item{
+width: 100%;
+min-width: 0;
+display: flex;
+align-items: flex-start;
+padding: 0 0 18px;
+border-right: none;
+box-sizing: border-box;
+}
+.contact-info{
+min-width: 0;
+flex: 1;
+width: auto;
     display: flex;
     flex-direction: column;
     align-items: flex-start;
     overflow: visible;
-  }
+}
 
-  .contact-item:last-child {
-    border-bottom: none;
-    padding-bottom: 0;
-  }
-  .contact-icon {
-    width: 45px;
-    height: 45px;
-    min-width: 45px;
-    flex-shrink: 0;
-    margin-right: 10px;
-  }
+.contact-item:last-child{
+border-bottom: none;
+padding-bottom: 0;
+}
+.contact-icon{
+width: 45px;
+height: 45px;
+min-width: 45px;
+flex-shrink: 0;
+margin-right: 10px;
+}
 
-  .contact-details-info h3 {
+.contact-info h3{
     display: block;
     width: auto;
     margin: 0 0 3px;
     white-space: nowrap;
-  }
+}
 
-  .contact-details-info a,
-  .contact-details-info p {
-    display: block;
-    width: auto;
-    max-width: 100%;
-    white-space: normal;
-    overflow: visible;
-    overflow-wrap: anywhere;
-    word-break: break-word;
-  }
 
-  .contact-details-info h3 {
-    white-space: nowrap;
-  }
+.contact-info a,
+.contact-info p
+{
+  display: block;
+  width: auto;
+  max-width: 100%;
+white-space: normal;
+overflow: visible;
+overflow-wrap: anywhere;
+word-break: break-word;
+}
 
-  /*Right Card*/
+.contact-info h3{
+  white-space: nowrap;
+}
 
-  .social-media-card {
-    padding: 25px 20px;
-  }
+/*Right Card*/
 
-  .social-media-card h3 {
-    font-size: 24px;
-  }
+.social-media-card{
+padding: 25px 20px;
+}
 
-  .social-media-card > p {
-    font-size: 13px;
-  }
+.social-media-card h3{
+font-size: 24px;
+}
 
-  .social-media-item {
-    height: 46px;
-    padding: 0 10px;
-  }
+.social-media-card > p{
+font-size: 13px;
+}
 
-  .social-media-left {
-    gap: 9px;
-    min-width: 0;
-  }
 
-  .social-media-left span {
-    font-size: 13px;
-    white-space: nowrap;
-  }
+.social-media-item{
+height: 46px;
+padding: 0 10px;
+}
+
+.social-media-left{
+gap: 9px;
+min-width: 0;
+}
+
+.social-media-left span{
+font-size: 13px;
+white-space: nowrap;
+}
+
+
+
 }
 
 @media (max-width: 768px) {
@@ -13400,7 +13414,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     overflow: visible !important;
   }
 
-  .contact-details-info {
+  .contact-info {
     display: flex !important;
     flex-direction: column !important;
     flex: 1 1 auto !important;
@@ -13410,9 +13424,9 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     overflow: visible !important;
   }
 
-  .contact-details-info h3,
-  .contact-details-info a,
-  .contact-details-info p {
+  .contact-info h3,
+  .contact-info a,
+  .contact-info p {
     display: block !important;
     visibility: visible !important;
     opacity: 1 !important;
@@ -13421,3 +13435,4 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     overflow: visible !important;
   }
 }
+
