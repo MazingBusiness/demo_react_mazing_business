@@ -1,62 +1,64 @@
 import { API_BASE_URL } from "../app_url";
-import axios from "axios";
-import { getLoggedInUser, getAuthToken } from "../utils/authUtils";
+import axios from 'axios';
+import { getLoggedInUser, getAuthToken } from '../utils/authUtils';
+
 
 const getHeader = () => {
-  const token = getAuthToken();
-  // console.log(token);
-  if (token) {
-    return {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    };
-  } else {
-    console.error("Authorization token is missing or null");
-    return null;
-  }
+    const token = getAuthToken();
+    // console.log(token);
+    if (token) {
+        return {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        };
+    } else {
+        console.error("Authorization token is missing or null");
+        return null;
+    }
 };
+
 //Get Banners
 export const getMegaMenu = async () => {
-  const response = await fetch(`${API_BASE_URL}home/get-top-category-groups`, {
-    method: "GET",
-  });
-  return response;
-};
+    const response = await fetch(`${API_BASE_URL}home/get-top-category-groups`, {
+        method: 'GET'
+    });
+    return response;
+}
 
 //Get Banners
 export const getAllSliders = async () => {
-  const response = await fetch(`${API_BASE_URL}home/get-sliders`, {
-    method: "GET",
-  });
-  return response;
-};
+    const response = await fetch(`${API_BASE_URL}home/get-sliders`, {
+        method: 'GET'
+    });
+    return response;
+}
 
 //Get Offer Product
 export const getOfferProducts = async () => {
-  const user = getLoggedInUser();
-  const header = getHeader();
-  const url = `${API_BASE_URL}home/get-offer-products${user ? `?user_id=${user.id}` : ""}`;
-  const response = await fetch(url, {
-    method: "GET",
-    headers: {
-      ...(header?.headers || {}),
-      "Content-Type": "application/json",
-    },
-  });
-  return response;
+    const user = getLoggedInUser();
+    const header = getHeader();
+    const url = `${API_BASE_URL}home/get-offer-products${user ? `?user_id=${user.id}` : ''}`;
+    const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+        ...(header?.headers || {}),
+        'Content-Type': 'application/json',
+        },
+    });
+    return response;
 };
 
 //Get Best Seller Products
 export const getBestSellerProducts = async () => {
   const user = getLoggedInUser();
   const header = getHeader();
-  const url = `${API_BASE_URL}home/get-best-seller-products${user ? `?user_id=${user.id}` : ""}`;
+  const url = `${API_BASE_URL}home/get-best-seller-products${user ? `?user_id=${user.id}` : ''}`;
   const response = await fetch(url, {
-    method: "GET",
+    method: 'GET',
     headers: {
       ...(header?.headers || {}),
-      "Content-Type": "application/json",
+      'Content-Type': 'application/json',
     },
   });
   return response;
@@ -66,12 +68,12 @@ export const getBestSellerProducts = async () => {
 export const getNewArrivalProducts = async () => {
   const user = getLoggedInUser();
   const header = getHeader();
-  const url = `${API_BASE_URL}home/get-new-arrival-products${user ? `?user_id=${user.id}` : ""}`;
+  const url = `${API_BASE_URL}home/get-new-arrival-products${user ? `?user_id=${user.id}` : ''}`;
   const response = await fetch(url, {
-    method: "GET",
+    method: 'GET',
     headers: {
       ...(header?.headers || {}),
-      "Content-Type": "application/json",
+      'Content-Type': 'application/json',
     },
   });
   return response;
@@ -79,41 +81,35 @@ export const getNewArrivalProducts = async () => {
 
 //Get Top Brand
 export const getTopBrand = async (lang) => {
-  const response = await fetch(`${API_BASE_URL}home/get-top-brand`, {
-    method: "GET",
-  });
-  return response;
-};
+    const response = await fetch(`${API_BASE_URL}home/get-top-brand`, {
+        method: 'GET'
+    });
+    return response;
+}
 
 //Get Category by cat group
 export const getCategory = async (id) => {
-  const response = await fetch(
-    `${API_BASE_URL}product/cetrgory-groups?id=${id}`,
-    {
-      method: "GET",
-    },
-  );
-  return response;
-};
+    const response = await fetch(`${API_BASE_URL}product/cetrgory-groups?id=${id}`, {
+        method: 'GET'
+    });
+    return response;
+}
 
 //Get Top Category group
 export const getTopCategoryGroup = async () => {
-  const response = await fetch(`${API_BASE_URL}home/get-top-category-groups`, {
-    method: "GET",
-  });
-  return response;
-};
+    const response = await fetch(`${API_BASE_URL}home/get-top-category-groups`, {
+        method: 'GET'
+    });
+    return response;
+}
 
 // Get Page Content Form Json
 export const getPageContent = async (lang) => {
-  const response = await fetch(
-    `${API_BASE_URL}user/page-content-from-json?lang=${lang}`,
-    {
-      method: "GET",
-    },
-  );
-  return response;
-};
+    const response = await fetch(`${API_BASE_URL}user/page-content-from-json?lang=${lang}`, {
+        method: 'GET'
+    });
+    return response;
+}
 
 // fetching Product list
 export const getCatProduct = async (id, page = 1, brand_id) => {
@@ -121,16 +117,16 @@ export const getCatProduct = async (id, page = 1, brand_id) => {
   const header = getHeader();
   // Build query params
   const queryParams = new URLSearchParams();
-  if (id) queryParams.append("category_id", id);
-  if (brand_id) queryParams.append("brand_id", brand_id);
-  if (user?.id) queryParams.append("user_id", user.id);
-  queryParams.append("page", page); // ✅ add page with default = 1
+  if (id) queryParams.append('category_id', id);
+  if (brand_id) queryParams.append('brand_id', brand_id);
+  if (user?.id) queryParams.append('user_id', user.id);
+  queryParams.append('page', page); // ✅ add page with default = 1
   const url = `${API_BASE_URL}product/cetrgory-products?${queryParams.toString()}`;
   const response = await fetch(url, {
-    method: "GET",
+    method: 'GET',
     headers: {
       ...(header?.headers || {}),
-      "Content-Type": "application/json",
+      'Content-Type': 'application/json',
     },
   });
   return response;
@@ -149,7 +145,7 @@ export const getQuickOrderProduct = async (
   price_sort,
   delivery,
   page = 1,
-  pagination = 16,
+  pagination = 16
 ) => {
   const user = getLoggedInUser();
   const header = getHeader();
@@ -157,30 +153,21 @@ export const getQuickOrderProduct = async (
   const queryParams = new URLSearchParams();
 
   if (cat_groups && String(cat_groups).trim() !== "") {
-    queryParams.append(
-      "cat_groups",
-      Array.isArray(cat_groups) ? cat_groups.join(",") : cat_groups,
-    );
+    queryParams.append("cat_groups", Array.isArray(cat_groups) ? cat_groups.join(",") : cat_groups);
   }
 
   if (categories && String(categories).trim() !== "") {
-    queryParams.append(
-      "categories",
-      Array.isArray(categories) ? categories.join(",") : categories,
-    );
+    queryParams.append("categories", Array.isArray(categories) ? categories.join(",") : categories);
   }
 
   if (brands && String(brands).trim() !== "") {
-    queryParams.append(
-      "brands",
-      Array.isArray(brands) ? brands.join(",") : brands,
-    );
+    queryParams.append("brands", Array.isArray(brands) ? brands.join(",") : brands);
   }
 
   if (m_coin_rates && String(m_coin_rates).trim() !== "") {
     queryParams.append(
       "m_coin_rates",
-      Array.isArray(m_coin_rates) ? m_coin_rates.join(",") : m_coin_rates,
+      Array.isArray(m_coin_rates) ? m_coin_rates.join(",") : m_coin_rates
     );
   }
 
@@ -252,24 +239,17 @@ export const addToWishlist = async (product_id) => {
     params.append("user_id", userId);
   }
 
-  const response = await fetch(
-    `${API_BASE_URL}product/add-to-wishlist?${params.toString()}`,
-    {
-      method: "GET",
-      headers: {
-        ...(header?.headers || {}),
-        Accept: "application/json",
-      },
+  const response = await fetch(`${API_BASE_URL}product/add-to-wishlist?${params.toString()}`, {
+    method: "GET",
+    headers: {
+      ...(header?.headers || {}),
+      Accept: "application/json",
     },
-  );
+  });
 
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
-    throw new Error(
-      data?.msg ||
-        data?.message ||
-        `Wishlist request failed (${response.status}).`,
-    );
+    throw new Error(data?.msg || data?.message || `Wishlist request failed (${response.status}).`);
   }
 
   return data;
@@ -280,24 +260,17 @@ export const removeFromWishlist = async (product_id) => {
   const params = new URLSearchParams();
   params.append("product_id", product_id);
 
-  const response = await fetch(
-    `${API_BASE_URL}product/remove-from-wishlist?${params.toString()}`,
-    {
-      method: "GET",
-      headers: {
-        ...(header?.headers || {}),
-        Accept: "application/json",
-      },
+  const response = await fetch(`${API_BASE_URL}product/remove-from-wishlist?${params.toString()}`, {
+    method: "GET",
+    headers: {
+      ...(header?.headers || {}),
+      Accept: "application/json",
     },
-  );
+  });
 
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
-    throw new Error(
-      data?.msg ||
-        data?.message ||
-        `Wishlist request failed (${response.status}).`,
-    );
+    throw new Error(data?.msg || data?.message || `Wishlist request failed (${response.status}).`);
   }
 
   return data;
@@ -307,22 +280,17 @@ export const getWishList = async () => {
   const header = getHeader();
   if (!header) throw new Error("Authorization token missing");
 
-  const response = await fetch(
-    `${API_BASE_URL}product/wishlist-list-products`,
-    {
-      method: "GET",
-      headers: {
-        ...(header.headers || {}),
-        Accept: "application/json",
-      },
+  const response = await fetch(`${API_BASE_URL}product/wishlist-list-products`, {
+    method: "GET",
+    headers: {
+      ...(header.headers || {}),
+      Accept: "application/json",
     },
-  );
+  });
 
   const data = await response.json().catch(() => ({}));
   if (!response.ok || data?.res === false) {
-    throw new Error(
-      data?.msg || data?.message || "Unable to load wishlist products.",
-    );
+    throw new Error(data?.msg || data?.message || "Unable to load wishlist products.");
   }
 
   return data;
@@ -341,7 +309,7 @@ export const getBetaQuickOrderProduct = async (
   price_sort,
   delivery,
   page = 1,
-  pagination = 16,
+  pagination = 16
 ) => {
   const user = getLoggedInUser();
   const header = getHeader();
@@ -349,30 +317,21 @@ export const getBetaQuickOrderProduct = async (
   const queryParams = new URLSearchParams();
 
   if (cat_groups && String(cat_groups).trim() !== "") {
-    queryParams.append(
-      "cat_groups",
-      Array.isArray(cat_groups) ? cat_groups.join(",") : cat_groups,
-    );
+    queryParams.append("cat_groups", Array.isArray(cat_groups) ? cat_groups.join(",") : cat_groups);
   }
 
   if (categories && String(categories).trim() !== "") {
-    queryParams.append(
-      "categories",
-      Array.isArray(categories) ? categories.join(",") : categories,
-    );
+    queryParams.append("categories", Array.isArray(categories) ? categories.join(",") : categories);
   }
 
   if (brands && String(brands).trim() !== "") {
-    queryParams.append(
-      "brands",
-      Array.isArray(brands) ? brands.join(",") : brands,
-    );
+    queryParams.append("brands", Array.isArray(brands) ? brands.join(",") : brands);
   }
 
   if (m_coin_rates && String(m_coin_rates).trim() !== "") {
     queryParams.append(
       "m_coin_rates",
-      Array.isArray(m_coin_rates) ? m_coin_rates.join(",") : m_coin_rates,
+      Array.isArray(m_coin_rates) ? m_coin_rates.join(",") : m_coin_rates
     );
   }
 
@@ -480,14 +439,14 @@ export const getProductDetails = async (id) => {
   const header = getHeader();
   // Build query params
   const queryParams = new URLSearchParams();
-  if (id) queryParams.append("product_id", id);
-  if (user?.id) queryParams.append("user_id", user.id); // For Loged User
+  if (id) queryParams.append('product_id', id);
+  if (user?.id) queryParams.append('user_id', user.id); // For Loged User
   const url = `${API_BASE_URL}product/product-details?${queryParams.toString()}`;
   const response = await fetch(url, {
-    method: "GET",
+    method: 'GET',
     headers: {
       ...(header?.headers || {}),
-      "Content-Type": "application/json",
+      'Content-Type': 'application/json',
     },
   });
   const data = await response.json();
@@ -526,30 +485,23 @@ export const downloadGenericProductList = async ({
   const queryParams = new URLSearchParams();
 
   if (product_id) queryParams.append("product_id", product_id);
-  if (generic_masters_id)
-    queryParams.append("generic_masters_id", generic_masters_id);
-  if (generic_links_id)
-    queryParams.append("generic_links_id", generic_links_id);
+  if (generic_masters_id) queryParams.append("generic_masters_id", generic_masters_id);
+  if (generic_links_id) queryParams.append("generic_links_id", generic_links_id);
   if (user_id || user?.id) queryParams.append("user_id", user_id || user.id);
   if (download_type) queryParams.append("download_type", download_type);
 
-  const response = await fetch(
-    `${API_BASE_URL}product/download-generic-products?${queryParams.toString()}`,
-    {
-      method: "GET",
-      headers: {
-        ...(header?.headers || {}),
-        Accept: "application/json",
-      },
+  const response = await fetch(`${API_BASE_URL}product/download-generic-products?${queryParams.toString()}`, {
+    method: "GET",
+    headers: {
+      ...(header?.headers || {}),
+      Accept: "application/json",
     },
-  );
+  });
 
   const data = await response.json();
 
   if (!response.ok || data?.res === false) {
-    throw new Error(
-      data?.msg || data?.message || "Generic product PDF download failed",
-    );
+    throw new Error(data?.msg || data?.message || "Generic product PDF download failed");
   }
 
   return data;
@@ -615,28 +567,19 @@ export const sendQuotation = async (user_id) => {
 
   const data = await res.json();
   if (!res.ok || data?.res === false) {
-    const error = new Error(
-      data?.msg || data?.message || "Send quotation failed",
-    );
+    const error = new Error(data?.msg || data?.message || "Send quotation failed");
     error.data = data;
     throw error;
   }
   return data;
 };
 
-export const updateQuantity = async ({
-  id,
-  quantity,
-  product_id,
-  cart_id,
-  staffUserTitle,
-}) => {
+export const updateQuantity = async ({ id, quantity, product_id, cart_id, staffUserTitle }) => {
   const header = getHeader();
   if (!header) throw new Error("Authorization token missing");
 
   const finalId = id ?? cart_id ?? product_id;
-  if (!finalId)
-    throw new Error("Missing id/cart_id/product_id for updateQuantity");
+  if (!finalId) throw new Error("Missing id/cart_id/product_id for updateQuantity");
 
   const res = await fetch(`${API_BASE_URL}cart/update-quantity`, {
     method: "POST",
@@ -691,21 +634,18 @@ export const updateCartItemPriceWithSuperPrice = async ({ id, price }) => {
 
   if (!id) throw new Error("Missing id for update price");
 
-  const res = await fetch(
-    `${API_BASE_URL}cart/update-cart-item-price-with-super-price`,
-    {
-      method: "POST",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-        ...(header.headers || {}),
-      },
-      body: JSON.stringify({
-        id,
-        price: Number(price),
-      }),
+  const res = await fetch(`${API_BASE_URL}cart/update-cart-item-price-with-super-price`, {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+      ...(header.headers || {}),
     },
-  );
+    body: JSON.stringify({
+      id,
+      price: Number(price),
+    }),
+  });
 
   const data = await res.json();
   if (!res.ok || data?.res === false) {
@@ -715,6 +655,7 @@ export const updateCartItemPriceWithSuperPrice = async ({ id, price }) => {
   }
   return data;
 };
+
 
 export const addToCart = async ({ product_id, quantity, type }) => {
   const header = getHeader();
@@ -727,7 +668,7 @@ export const addToCart = async ({ product_id, quantity, type }) => {
       "Content-Type": "application/json",
       ...(header.headers || {}), // Authorization: Bearer xxx
     },
-    body: JSON.stringify({ product_id, quantity, type }),
+    body: JSON.stringify({ product_id, quantity, type, }),
   });
 
   const data = await res.json();
@@ -784,8 +725,7 @@ export const getAllBrands = async (category_group_id, category_id) => {
   const user = getLoggedInUser();
   const header = getHeader();
   const queryParams = new URLSearchParams();
-  if (category_group_id)
-    queryParams.append("category_group_id", category_group_id);
+  if (category_group_id) queryParams.append("category_group_id", category_group_id);
   if (category_id) queryParams.append("category_id", category_id);
   if (user?.id) queryParams.append("user_id", user.id);
 
@@ -828,30 +768,28 @@ export const getPreArrivalItems = async (userId) => {
     throw new Error("Logged-in user ID is missing.");
   }
 
-  const response = await fetch(getPreArrivalApiUrl(resolvedUserId, "items"), {
-    method: "GET",
-    headers: {
-      Accept: "application/json",
-      Authorization: PRE_ARRIVAL_AUTHORIZATION,
-    },
-  });
+  const response = await fetch(
+    getPreArrivalApiUrl(resolvedUserId, "items"),
+    {
+      method: "GET",
+      headers: {
+        Accept: "application/json",
+        Authorization: PRE_ARRIVAL_AUTHORIZATION,
+      },
+    }
+  );
 
   const data = await response.json().catch(() => ({}));
 
   if (!response.ok || data?.success === false) {
-    throw new Error(
-      data?.message || data?.msg || "Unable to load pre-arrival items.",
-    );
+    throw new Error(data?.message || data?.msg || "Unable to load pre-arrival items.");
   }
 
   return data;
 };
 
 // Save one or more pre-arrival orders for the currently logged-in user
-export const savePreArrivalOrder = async (
-  { address_id, order_ids = {}, rows = [] } = {},
-  userId,
-) => {
+export const savePreArrivalOrder = async ({ address_id, order_ids = {}, rows = [] } = {}, userId) => {
   const loggedInUser = getLoggedInUser();
   const resolvedUserId = userId || loggedInUser?.id;
 
@@ -860,9 +798,7 @@ export const savePreArrivalOrder = async (
   }
 
   if (!Array.isArray(rows) || rows.length === 0) {
-    throw new Error(
-      "Enter a quantity greater than 0 for at least one product.",
-    );
+    throw new Error("Enter a quantity greater than 0 for at least one product.");
   }
 
   if (!address_id) {
@@ -879,15 +815,13 @@ export const savePreArrivalOrder = async (
         Authorization: PRE_ARRIVAL_AUTHORIZATION,
       },
       body: JSON.stringify({ address_id, order_ids, rows }),
-    },
+    }
   );
 
   const data = await response.json().catch(() => ({}));
 
   if (!response.ok || data?.success === false) {
-    const error = new Error(
-      data?.message || data?.msg || "Unable to save pre-arrival order.",
-    );
+    const error = new Error(data?.message || data?.msg || "Unable to save pre-arrival order.");
     error.data = data;
     throw error;
   }
@@ -919,15 +853,13 @@ export const downloadPreArrivalProductPdf = async ({
   const data = await response.json().catch(() => ({}));
 
   if (!response.ok || data?.success === false || !data?.pdf_url) {
-    throw new Error(
-      data?.message || data?.msg || "Unable to download pre-arrival PDF.",
-    );
+    throw new Error(data?.message || data?.msg || "Unable to download pre-arrival PDF.");
   }
 
   const pdfUrl = data.pdf_url;
   const fileName = decodeURIComponent(
     new URL(pdfUrl, window.location.origin).pathname.split("/").pop() ||
-      "pre-arrival-products.pdf",
+      "pre-arrival-products.pdf"
   );
 
   return {
@@ -977,7 +909,7 @@ export const saveForLater = async ({ cart_id }) => {
       ...(header.headers || {}),
     },
     body: JSON.stringify({
-      cart_id: finalId,
+      cart_id: finalId
     }),
   });
   const data = await res.json();
@@ -1026,7 +958,7 @@ export const moveToCart = async ({ cart_id }) => {
       ...(header.headers || {}),
     },
     body: JSON.stringify({
-      id: finalId,
+      id: finalId
     }),
   });
   const data = await res.json();
@@ -1063,7 +995,8 @@ export const moveToCartAllSelectedItems = async ({ idsCsv }) => {
   return data;
 };
 
-export const saveAllNoCreditItems = async () => {
+
+export const saveAllNoCreditItems = async () => {  
   const header = getHeader();
   const url = `${API_BASE_URL}cart/save-all-no-credit-item-for-later`;
   const response = await fetch(url, {
@@ -1077,7 +1010,7 @@ export const saveAllNoCreditItems = async () => {
   return response;
 };
 
-export const moveAllNoCreditItems = async () => {
+export const moveAllNoCreditItems = async () => {  
   const header = getHeader();
   const url = `${API_BASE_URL}cart/move-all-no-credit-item-to-cart`;
   const response = await fetch(url, {
@@ -1224,6 +1157,7 @@ export const getAvailableMCoin = async () => {
   return response;
 };
 
+
 export const removeOffer = async (offer_id) => {
   const header = getHeader();
   const queryParams = new URLSearchParams();
@@ -1288,7 +1222,7 @@ export const downloadUserStatement = async ({
     {
       method: "GET",
       headers: { Accept: "application/json", ...(getHeader()?.headers || {}) },
-    },
+    }
   );
 
   return res.json(); // { pdf_url: "https://....pdf" }
@@ -1324,14 +1258,12 @@ export const getSupportTickets = async (page = 1, pagination = 15) => {
         Accept: "application/json",
         ...(header.headers || {}),
       },
-    },
+    }
   );
 
   const data = await response.json().catch(() => ({}));
   if (!response.ok || data?.res === false) {
-    throw new Error(
-      data?.msg || data?.message || "Unable to load support tickets.",
-    );
+    throw new Error(data?.msg || data?.message || "Unable to load support tickets.");
   }
 
   return data;
@@ -1360,12 +1292,7 @@ export const addSuportTickets = async ({ subject, details, photo } = {}) => {
     const validationMessage = data?.errors
       ? Object.values(data.errors).flat()[0]
       : null;
-    throw new Error(
-      validationMessage ||
-        data?.msg ||
-        data?.message ||
-        "Unable to submit support ticket.",
-    );
+    throw new Error(validationMessage || data?.msg || data?.message || "Unable to submit support ticket.");
   }
 
   return data;
@@ -1387,7 +1314,7 @@ export const getTicketDetails = async ({ ticket_id, code } = {}) => {
         Accept: "application/json",
         ...(header.headers || {}),
       },
-    },
+    }
   );
 
   const data = await response.json().catch(() => ({}));
@@ -1426,12 +1353,7 @@ export const addTicketReply = async ({ ticket_id, reply, file } = {}) => {
     const validationMessage = data?.errors
       ? Object.values(data.errors).flat()[0]
       : null;
-    throw new Error(
-      validationMessage ||
-        data?.msg ||
-        data?.message ||
-        "Unable to submit ticket reply.",
-    );
+    throw new Error(validationMessage || data?.msg || data?.message || "Unable to submit ticket reply.");
   }
 
   return data;
@@ -1654,8 +1576,7 @@ export const orderSubmit = async () => {
 export const paymentStatus = async (merchant_tran_id) => {
   const header = getHeader();
   const queryParams = new URLSearchParams();
-  if (merchant_tran_id != null)
-    queryParams.append("merchant_tran_id", String(merchant_tran_id));
+  if (merchant_tran_id != null) queryParams.append("merchant_tran_id", String(merchant_tran_id));
   const url = `${API_BASE_URL}cart/check-payment-status?${queryParams.toString()}`;
   const response = await fetch(url, {
     method: "GET",
@@ -1699,13 +1620,7 @@ export const getMyOrders = async ({ page = 1, per_page = 15 } = {}) => {
         debug: { url, status: response.status, body: text },
       };
     }
-    return (
-      json || {
-        res: false,
-        msg: "Invalid JSON response",
-        debug: { url, body: text },
-      }
-    );
+    return json || { res: false, msg: "Invalid JSON response", debug: { url, body: text } };
   } catch (err) {
     return { res: false, msg: err?.message || "Network error" };
   }
@@ -1713,7 +1628,7 @@ export const getMyOrders = async ({ page = 1, per_page = 15 } = {}) => {
 
 export const getOrderDetails = async (order_id) => {
   const header = getHeader?.() || {};
-  const url = `${API_BASE_URL}user/order-details?order_id=${order_id}`;
+  const url = `${API_BASE_URL}user/order-details?order_id=${order_id}`; 
   // or: `${API_BASE_URL}/user/my-order/${order_id}` depending on your backend
 
   const response = await fetch(url, {
@@ -1755,25 +1670,17 @@ export const getStatementList = async () => {
   return data; // { res, msg, data:[], dueAmount, overdueAmount }
 };
 
-export const getStatementDetails = async ({
-  party_code,
-  data_from = "database",
-  from_date = "",
-  to_date = "",
-}) => {
+export const getStatementDetails = async ({party_code, data_from = "database", from_date = "", to_date = "", }) => {
   const params = new URLSearchParams();
   params.append("party_code", party_code); // ✅ mandatory
   if (data_from) params.append("data_from", data_from);
   if (from_date) params.append("from_date", from_date);
   if (to_date) params.append("to_date", to_date);
 
-  const res = await fetch(
-    `${API_BASE_URL}user/statement-details?${params.toString()}`,
-    {
-      method: "GET",
-      headers: { Accept: "application/json", ...(getHeader()?.headers || {}) },
-    },
-  );
+  const res = await fetch(`${API_BASE_URL}user/statement-details?${params.toString()}`, {
+    method: "GET",
+    headers: { Accept: "application/json", ...(getHeader()?.headers || {}) },
+  });
 
   return res.json();
 };
@@ -1809,28 +1716,20 @@ export const getMCoinStatement = async (payload = {}) => {
   }
 
   if (!response.ok) {
-    throw new Error(
-      data?.msg || `Request failed with status ${response.status}`,
-    );
+    throw new Error(data?.msg || `Request failed with status ${response.status}`);
   }
 
   return data;
 };
 
-export const refreshStatementDetails = async ({
-  party_code,
-  data_from = "live",
-}) => {
+export const refreshStatementDetails = async ({party_code, data_from = "live" }) => {
   const params = new URLSearchParams();
   params.append("party_code", party_code); // ✅ mandatory
   if (data_from) params.append("data_from", data_from);
-  const res = await fetch(
-    `${API_BASE_URL}user/refresh-statement?${params.toString()}`,
-    {
-      method: "GET",
-      headers: { Accept: "application/json", ...(getHeader()?.headers || {}) },
-    },
-  );
+  const res = await fetch(`${API_BASE_URL}user/refresh-statement?${params.toString()}`, {
+    method: "GET",
+    headers: { Accept: "application/json", ...(getHeader()?.headers || {}) },
+  });
   return res.json();
 };
 
@@ -1847,27 +1746,36 @@ export const getTotalOrderCount = async (orderId) => {
 };
 
 export const sendStatementWhatsapp = async () => {
-  const res = await fetch(`${API_BASE_URL}user/send-statement`, {
-    method: "GET",
-    headers: { Accept: "application/json", ...(getHeader()?.headers || {}) },
-  });
-  return res.json();
+  const res = await fetch(
+    `${API_BASE_URL}user/send-statement`,
+    {
+      method: "GET",
+      headers: { Accept: "application/json", ...(getHeader()?.headers || {}) },
+    }
+  );
+  return res.json(); 
 };
 
 export const getAllPendingOrderCount = async () => {
-  const res = await fetch(`${API_BASE_URL}user/get-all-pending-order`, {
-    method: "GET",
-    headers: { Accept: "application/json", ...(getHeader()?.headers || {}) },
-  });
-  return res.json();
+  const res = await fetch(
+    `${API_BASE_URL}user/get-all-pending-order`,
+    {
+      method: "GET",
+      headers: { Accept: "application/json", ...(getHeader()?.headers || {}) },
+    }
+  );
+  return res.json(); 
 };
 
 export const getCurrentOrder = async () => {
-  const res = await fetch(`${API_BASE_URL}user/current-year-order`, {
-    method: "GET",
-    headers: { Accept: "application/json", ...(getHeader()?.headers || {}) },
-  });
-  return res.json();
+  const res = await fetch(
+    `${API_BASE_URL}user/current-year-order`,
+    {
+      method: "GET",
+      headers: { Accept: "application/json", ...(getHeader()?.headers || {}) },
+    }
+  );
+  return res.json(); 
 };
 
 export const updateProductQty = async (product_id, quantity) => {
@@ -1879,37 +1787,29 @@ export const updateProductQty = async (product_id, quantity) => {
     {
       method: "GET",
       headers: { Accept: "application/json", ...(getHeader()?.headers || {}) },
-    },
+    }
   );
-  return res.json();
+  return res.json(); 
 };
 
-const normalizeProductListForQuickOrder = (
-  products = [],
-  mainProduct = null,
-) => {
+const normalizeProductListForQuickOrder = (products = [], mainProduct = null) => {
   return products.map((item) => {
     const discountPrice = Number(
-      String(item?.discount_price ?? item?.unit_price ?? 0).replace(
-        /[^0-9.]/g,
-        "",
-      ),
+      String(item?.discount_price ?? item?.unit_price ?? 0).replace(/[^0-9.]/g, "")
     );
     const cInstockMCoin = Number(
-      item?.c_instock_m_coin ?? mainProduct?.c_instock_m_coin ?? 0,
+      item?.c_instock_m_coin ?? mainProduct?.c_instock_m_coin ?? 0
     );
 
     return {
       ...item,
       cash_and_carry_item:
         item?.cash_and_carry_item ?? mainProduct?.cash_and_carry_item ?? 0,
-      category_group:
-        item?.category_group ?? mainProduct?.category_group ?? null,
+      category_group: item?.category_group ?? mainProduct?.category_group ?? null,
       category: item?.category ?? mainProduct?.category ?? null,
       fast_delivery_tag:
         item?.fast_delivery_tag ?? mainProduct?.fast_delivery_tag ?? 0,
-      inhouse_product:
-        item?.inhouse_product ?? mainProduct?.inhouse_product ?? 0,
+      inhouse_product: item?.inhouse_product ?? mainProduct?.inhouse_product ?? 0,
       is_warranty: item?.is_warranty ?? mainProduct?.is_warranty ?? 0,
       warranty_duration:
         item?.warranty_duration ?? mainProduct?.warranty_duration ?? null,
@@ -1930,10 +1830,7 @@ const normalizeProductDetailsVariantProducts = (payload) => {
     ? payload.all_varient_products
     : [];
 
-  const normalizedVariants = normalizeProductListForQuickOrder(
-    variants,
-    mainProduct,
-  );
+  const normalizedVariants = normalizeProductListForQuickOrder(variants, mainProduct);
 
   return {
     ...payload,
@@ -1972,7 +1869,7 @@ export const getRecentlyViewedProducts = async () => {
         ...(header?.headers || {}),
         "Content-Type": "application/json",
       },
-    },
+    }
   );
 
   return response;
@@ -1991,7 +1888,7 @@ export const getMostOrderCategoryProducts = async (categoryId) => {
         ...(header?.headers || {}),
         "Content-Type": "application/json",
       },
-    },
+    }
   );
 
   return response;
@@ -2029,9 +1926,7 @@ export const getVariationProductBySelectedValues = async ({
   const data = await response.json();
 
   if (!response.ok || data?.res === false) {
-    throw new Error(
-      data?.msg || data?.message || "Variation product API failed",
-    );
+    throw new Error(data?.msg || data?.message || "Variation product API failed");
   }
 
   const mainProduct = Array.isArray(data?.data) ? data.data[0] : null;
@@ -2040,7 +1935,7 @@ export const getVariationProductBySelectedValues = async ({
     : [];
   const normalizedProducts = normalizeProductListForQuickOrder(
     productDetailsList,
-    mainProduct,
+    mainProduct
   );
 
   return {
@@ -2060,13 +1955,10 @@ export const getProductDetailsBySlug = async (slug) => {
   const params = new URLSearchParams();
   params.append("slug", slug);
 
-  const res = await fetch(
-    `${API_BASE_URL}product/details?${params.toString()}`,
-    {
-      method: "GET",
-      ...getHeader(),
-    },
-  );
+  const res = await fetch(`${API_BASE_URL}product/details?${params.toString()}`, {
+    method: "GET",
+    ...getHeader(),
+  });
 
   return res.json();
 };
@@ -2100,7 +1992,7 @@ export const getPdfQuickOrderProduct = async (
   price_sort,
   delivery,
   page = 1,
-  pagination = 16,
+  pagination = 16
 ) => {
   const user = getLoggedInUser();
   const header = getHeader();
@@ -2135,11 +2027,7 @@ export const getPdfQuickOrderProduct = async (
   if (min_price) queryParams.append("min_price", min_price);
   if (max_price) queryParams.append("max_price", max_price);
   if (location_id) queryParams.append("location_id", location_id);
-  if (
-    inhouse_product !== null &&
-    inhouse_product !== undefined &&
-    inhouse_product !== ""
-  ) {
+  if (inhouse_product !== null && inhouse_product !== undefined && inhouse_product !== "") {
     queryParams.append("inhouse_product", inhouse_product);
   }
 
@@ -2223,9 +2111,7 @@ export const deleteDownloadedFile = async (filePath) => {
   const data = await response.json().catch(() => ({}));
 
   if (!response.ok || data?.res === false) {
-    throw new Error(
-      data?.msg || data?.message || "Unable to delete downloaded file.",
-    );
+    throw new Error(data?.msg || data?.message || "Unable to delete downloaded file.");
   }
 
   return data;
@@ -2259,7 +2145,7 @@ export const getExcelQuickOrderProduct = async (
   price_sort,
   delivery,
   page = 1,
-  pagination = 16,
+  pagination = 16
 ) => {
   const user = getLoggedInUser();
   const header = getHeader();
@@ -2274,11 +2160,7 @@ export const getExcelQuickOrderProduct = async (
   if (min_price) queryParams.append("min_price", min_price);
   if (max_price) queryParams.append("max_price", max_price);
   if (location_id) queryParams.append("location_id", location_id);
-  if (
-    inhouse_product !== null &&
-    inhouse_product !== undefined &&
-    inhouse_product !== ""
-  ) {
+  if (inhouse_product !== null && inhouse_product !== undefined && inhouse_product !== "") {
     queryParams.append("inhouse_product", inhouse_product);
   }
 
@@ -2321,9 +2203,11 @@ const getHomeBanner = async (endpoint) => {
   return data;
 };
 
-export const getBannerOne = async () => getHomeBanner("home/get-banner-one");
+export const getBannerOne = async () =>
+  getHomeBanner("home/get-banner-one");
 
-export const getBannerTwo = async () => getHomeBanner("home/get-banner-two");
+export const getBannerTwo = async () =>
+  getHomeBanner("home/get-banner-two");
 
 export const getBannerThree = async () =>
   getHomeBanner("home/get-banner-three");
@@ -2359,24 +2243,4 @@ export const pageContent = async (slug) => {
   }
   return data;
 };
-// get formdata from a customer in landing Page
-export const submitCustomerEnquiry = async (formData) => {
-  const response = await fetch(
-    "https://mazingbusiness.com/mazing_business_react/api/landingpage/customer-request",
-    {
-      method: "POST",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(formData),
-    },
-  )
-    .then(async (response) => {
-      const data = await response.json();
-      if (!response.ok) throw data;
-      return data;
-    })
-    .then((data) => console.log(data))
-    .catch((error) => console.error(error));
-};
+

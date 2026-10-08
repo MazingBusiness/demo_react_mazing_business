@@ -4,58 +4,56 @@ import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 
 // Import local images (create these imports at the top)
-import no_image from "../assets/images/no-image.png";
-import hilti from "../assets/images/hilti.png";
-import multivolt from "../assets/images/multivolt.png";
-import bosch from "../assets/images/bosch.png";
-import dca from "../assets/images/dca.png";
+import no_image from "../../assets/images/no-image.png";
+import hilti from "../../assets/images/hilti.png";
+import multivolt from "../../assets/images/multivolt.png";
+import bosch from "../../assets/images/bosch.png";
+import dca from "../../assets/images/dca.png";
+
 
 import { FaStar, FaRegStar, FaStarHalfAlt } from "react-icons/fa";
 import { FiChevronRight } from "react-icons/fi";
 import { Link } from "react-router-dom";
 
-import {getTopBrand} from "../api/apiRequest";
-import { getLoggedInUser, getAuthToken } from '../utils/authUtils';
 
-const BrandCarousel = ({disabledNavigation=false}) => {
-  const [products, setProducts] = useState([]);  
+import { getAllCategoryGroups } from "../../api/apiRequest";
+import { getLoggedInUser, getAuthToken } from "../../utils/authUtils";
+
+const CategoryCarousel= () => {
+  const [categories, setCategories] = useState([]);  
   const sliderRef = useRef(null); // Properly define the ref at the component level
-  const allBrands = async () => {
-    try {
-      const apiRes = await getTopBrand();
-      const responseData = await apiRes.json();
-      if (responseData.res) {
-        const transformedData = responseData.data.map((item) => {
-          // const details = item || {};
-          const noCredit = item.cash_and_carry_item == 1;
-          const fastDeliveryTag = item.fast_delivery_tag == 1;
-          const rating = item.rating && item.rating !== 0 ? item.rating : 4;
-          const totalRatings = Array.isArray(item.reviews) && item.reviews.length > 0 ? item.reviews.length : 20;
-          return {
-            id: item.id,
-            name: item.name,
-            img: item.banner_image?.file_name || no_image,
-          };
-        });
-        setProducts(transformedData);
-      } else {
-        NotificationManager.error(responseData.msg || "Something went wrong", "", 2000);
-      }
-    } catch (error) {
-      console.error("Fetch error:", error);
-      NotificationManager.error("Failed to load offers", "", 2000);
-    }
-  };
+const allCategories= async()=>{
+try{
+const response= await getAllCategoryGroups();
+const result= await response.json();
 
+if(!response.ok  || result?.res===false){
+  throw new Error(
+      result?.msg ||"Unable to load category groups"
+  );
+}
+
+const transformedData= result.data.map((item)=>{
+return {
+id:item.id,
+name:item.name,
+img:item.photo,
+};
+});
+setCategories(transformedData);
+}
+catch(error){
+    console.error("Category fetch error:", error);
+}
+};
+useEffect(()=>{
+allCategories();
+},[]);
   const [sliderState, setSliderState] = useState({
     currentSlide: 0,
-    slideCount: products.length,
+    slideCount: categories.length,
     isMobile: false,
   });
-
-  useEffect(() => {
-    allBrands();
-  }, []);
 
   const settings = {
     dots: false,
@@ -134,10 +132,10 @@ const BrandCarousel = ({disabledNavigation=false}) => {
         <div className="power-tools-section-inner">
           <div className="section-header">
             <div className="section-headerLft">
-              <h2>Search by Brands</h2>
+              <h2>Search by Category</h2>
 
-              <Link to="/brands" className="all-link" state={{ select_all_brands: true }}>
-                All Brands <FiChevronRight />
+              <Link to="/all-categories" className="all-link" state={{ select_all_brands: true }}>
+                All Categories <FiChevronRight />
               </Link>
             </div>
 
@@ -172,41 +170,23 @@ const BrandCarousel = ({disabledNavigation=false}) => {
           </div>
 
           <Slider ref={sliderRef} {...settings}>
-            {products.map((product) => (
-              disabledNavigation ? (
+            {categories.map((category) => (
               // <Link
-              //   key={product.id}
+              //   key={category.id}
               //   // to="/product-listing"
-              //   to="/quick-order"
-              //   state={{ slug: product.slug, brand_id: product.id }}
+              //   to="/all-categories"
+              //   state={{ slug: category.slug, brand_id: category.id }}
               // >
-                <div key={product.id} className="product-slide">
+                <div key={category.id} className="product-slide">
                   <div className="brand-card">
-                    {renderProductImage(product)}
+                    {renderProductImage(category)}
                     <div className="product-info">
-                      <h3>{product.name}</h3>
-                      <p>{product.count}</p>
+                      <h3>{category.name}</h3>
+                      <p>{category.count}</p>
                     </div>
                   </div>
                 </div>
-                ):(
-                  <Link
-                key={product.id}
-                // to="/product-listing"
-                to="/quick-order"
-                state={{ slug: product.slug, brand_id: product.id }}
-              >
-                 <div className="product-slide">
-        <div className="brand-card">
-          {renderProductImage(product)}
-          <div className="product-info">
-            <h3>{product.name}</h3>
-            <p>{product.count}</p>
-          </div>
-        </div>
-      </div>
-              </Link>
-                )
+             //</Link> 
             ))}
           </Slider>
         </div>
@@ -215,4 +195,5 @@ const BrandCarousel = ({disabledNavigation=false}) => {
   );
 };
 
-export default BrandCarousel;
+export default CategoryCarousel;
+

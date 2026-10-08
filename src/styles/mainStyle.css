@@ -8,7 +8,6 @@
 .loginmenu {
   width: 100%;
 }
-
 .loginmenu ul {
   display: flex;
   gap: 15px;
@@ -13267,7 +13266,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     word-break: break-word;
   }
 
- .contact-details-info h3 {
+  .contact-details-info h3 {
     font-size: 16px;
   }
 
@@ -13420,4 +13419,835 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     max-height: none !important;
     overflow: visible !important;
   }
+}
+
+/* Landing Page*/
+.landing-page {
+  width: 100%;
+  background: #fff;
+  overflow-x: hidden;
+}
+
+/*Header*/
+.landing-header {
+  width: 100%;
+  background: #01468a;
+  padding: 25px 0;
+}
+
+.landing-header-inner {
+  width: 94%;
+  max-width: 1450px;
+  margin: 0 auto;
+}
+
+.landing-logo {
+  width: 360px;
+  height: auto;
+  display: block;
+}
+
+.landing-slider-section {
+  width: 100%;
+  background: #fff5cf;
+  padding: 0 35px;
+  box-sizing: border-box;
+}
+
+/* Offer Section*/
+.offer-sections {
+  width: 100%;
+  background: #fff5cf;
+  padding: 35px 0px 40px;
+  box-sizing: border-box;
+}
+
+/*FORM + BUTTONS*/
+.offer-container {
+  max-width: 1450px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 15px;
+  width: 100%;
+  background: #fff;
+  border-radius: 16px;
+  padding: 30px;
+  box-sizing: border-box;
+}
+/*form-container*/
+.offer-contents {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding-right: 5px 20px 0 30px;
+  border-right: none;
+  border-left: 1px solid #e0e0e0;
+}
+/*FOR ANDROID HEADING*/
+.download-app {
+  width: 100%;
+  margin: 0 0 18px;
+  text-align: center;
+}
+
+.download-app h2 {
+  font-size: 24px;
+  font-weight: 700;
+  color: #01468a;
+  margin: 0 0 8px;
+}
+
+/*for app store and playstore buttons*/
+.store-buttons {
+  display: flex;
+  align-items: flex-start;
+  gap: 30px;
+  margin-top: 0 0 18px;
+}
+
+.store-items {
+  width: 160px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.store-items h3 {
+  width: 100%;
+  margin: 0 0 7px;
+  font-size: 17px;
+  line-height: 1.2;
+  font-weight: 600;
+  color: #333;
+  text-align: center;
+}
+
+.store-items img {
+  width: 160px;
+  height: auto;
+  display: block;
+  object-fit: contain;
+}
+
+.store-item a {
+  display: block;
+  width: 160px;
+}
+.opel-buttons {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+  margin-top: 40px;
+}
+
+.opel-buttons button {
+  height: 48px;
+  padding: 0 25px;
+  border: none;
+  border-radius: 10px;
+  color: #fff;
+  background: #01468a;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.website-text {
+  margin: 30px 0 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: #333;
+  text-align: center;
+}
+.website-text a {
+  color: #01468a;
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
+  display: block;
+}
+
+.website-text a:hover {
+  color: #00366b;
+}
+
+.offer-form {
+  background: #fff;
+  border: 1px solid lightgray;
+  border-radius: 15px;
+  box-shadow: 0 6px 8px rgba(0, 0, 0, 0.09);
+  padding: 35px;
+  text-align: left;
+  margin-bottom: 10px;
+  flex: 0 0 55%;
+  width: auto;
+  box-sizing: border-box;
+}
+
+.offer-form label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+  display: block;
+  margin-bottom: 6px;
+  text-align: left;
+}
+
+.shopkeeper-options {
+  display: flex;
+  gap: 15px;
+  width: 100%;
+  margin-bottom: 20px;
+}
+.offer-form label,
+.offer-form .shopkeeper-label {
+  color: #333 !important;
+  font-size: 15px;
+  font-weight: 600;
+  display: block;
+  margin-bottom: 7px;
+  text-align: left;
+}
+
+.offer-form .radio-button {
+  flex: 1;
+  height: 45px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 12px;
+  border: 1px solid #ddd;
+  border-radius: 7px;
+  font-size: 14px;
+  font-weight: 400;
+  color: #444;
+  cursor: pointer;
+  white-space: nowrap;
+  margin: 0;
+}
+
+.offer-form .radio-button input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  flex-shrink: 0;
+  accent-color: #01468a;
+}
+
+.offer-form .radio-button span {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 400;
+}
+
+.form-groups {
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+.form-groups label {
+  display: block;
+  font-size: 15px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 7px;
+  align-items: left;
+}
+
+.form-groups label span {
+  color: #e53935;
+  margin-left: 3px;
+}
+
+.form-groups input {
+  width: 100%;
+  height: 45px;
+  padding: 0 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 15px;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.offer-form .form-groups label:has(.skip-gstin) {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.offer-form .skip-gstin {
+  color: #777;
+  font-size: 12px;
+  font-weight: 400;
+  margin-left: auto;
+}
+.full-width {
+  width: 100%;
+}
+.form-row {
+  display: flex;
+  gap: 20px;
+}
+
+.phone-inputs {
+  display: flex;
+  height: 48px;
+}
+
+.country-code {
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  background: #f5f5f5;
+  border: 1px solid #ddd;
+  border-right: none;
+  border-radius: 7px 0 0 7px;
+  font-size: 14px;
+  white-space: nowrap;
+  gap: 8px;
+  box-sizing: border-box;
+}
+
+.country-code img {
+  width: 22px;
+  height: 15px;
+  object-fit: contain;
+  display: block;
+}
+
+.phone-inputs input {
+  flex: 1;
+  width: auto;
+  height: 45px;
+  border: 1px solid #ddd;
+  border-radius: 0 8px 8px 0;
+  padding: 0 12px;
+  font-size: 15px;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.form-rows {
+  display: flex;
+  gap: 20px;
+  width: 100%;
+}
+
+.form-rows .form-groups {
+  flex: 1;
+  min-width: 0;
+}
+
+.form-groups select {
+  width: 100%;
+  height: 45px;
+  padding: 0 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 15px;
+  color: #333;
+  background: #fff;
+  outline: none;
+  box-sizing: border-box;
+  cursor: pointer;
+}
+
+/*button*/
+
+.get-offers-button {
+  width: 100%;
+  height: 50px;
+  margin-top: 5px;
+  border: none;
+  border-radius: 7px;
+  background-color: #01468a;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+.get-offers-button:hover {
+  background: #00366b;
+}
+
+/*privacy*/
+
+.privacy-text {
+  margin-top: 15px;
+  text-align: center;
+  font-size: 13px;
+  color: #777;
+}
+.privacy-text .privacy-icon {
+  font-size: 12px;
+  margin-right: 5px;
+}
+
+.category-section {
+  width: 100%;
+  background: #fff5cf;
+  padding: 45px 30px;
+  box-sizing: border-box;
+}
+
+.brands-section,
+.category-section {
+  width: 100%;
+  background: #fff5cf;
+  padding-left: 35px;
+  padding-right: 35px;
+  box-sizing: border-box;
+}
+
+/* Vertical spacing for Category */
+.category-section {
+  padding-top: 25px;
+  padding-bottom: 25px;
+}
+
+.category-section > * {
+  width: 100% !important;
+  max-width: 1450px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  box-sizing: border-box;
+}
+
+/* LandingPage only */
+.landing-page .brands-section .power-tools-section,
+.landing-page .category-section .power-tools-section {
+  width: 100%;
+}
+
+.landing-page .brands-section .power-tools-section-inner,
+.landing-page .category-section .power-tools-section-inner {
+  width: 100%;
+}
+
+/* Landing Page carousel alignment */
+.landing-page .brands-section,
+.landing-page .category-section {
+  width: 100%;
+  padding-left: 0;
+  padding-right: 0;
+  box-sizing: border-box;
+}
+
+.landing-page .brands-section .maincontainer,
+.landing-page .category-section .maincontainer {
+  width: 100%;
+  max-width: 1450px;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+/* Landing Page - show only brand carousel */
+.landing-page .brands-section .section-header {
+  display: none !important;
+}
+
+.landing-page .category-section .section-header {
+  display: none !important;
+}
+
+.landing-page .brands-section {
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+/* Keep Offer section close to Brand carousel */
+.landing-page .offer-sections {
+  padding-top: 15px;
+  padding-bottom: 25px;
+}
+
+@media (min-width: 1200px) {
+  .offer-container {
+    max-width: 1450px;
+  }
+  .offer-form {
+    flex: 0 0 55%;
+  }
+  .offer-contents {
+    flex: 1;
+  }
+}
+
+@media (max-width: 900px) {
+  .landing-header {
+    padding: 20px 0;
+  }
+
+  .landing-header-inner {
+    width: 90%;
+  }
+
+  .landing-logo {
+    width: 270px;
+  }
+
+  /* Offer section  */
+  .offer-container {
+    width: 90%;
+    flex-direction: column;
+    gap: 30px;
+    padding: 25px;
+  }
+  .offer-form {
+    width: 100%;
+    flex: none;
+  }
+
+  .offer-contents {
+    width: 100%;
+    flex: none;
+    padding: 25px 0 0;
+    border-left: none;
+    border-top: 1px solid #e0e0e0;
+  }
+
+  .download-app {
+    margin-bottom: 15px;
+  }
+
+  .store-buttons {
+    justify-content: center;
+  }
+
+  .opel-buttons {
+    margin-top: 35px;
+    flex-wrap: wrap;
+  }
+  .website-text {
+    margin-top: 25px;
+  }
+}
+
+/* Mobile Phones*/
+@media (max-width: 600px) {
+  .landing-header {
+    padding: 15px 0;
+  }
+
+  .landing-header-inner {
+    width: 90%;
+    text-align: center;
+  }
+
+  .landing-logo {
+    width: 220px;
+    margin: 0 auto;
+  }
+
+  /*OFFER SECTION*/
+
+  .offer-sections {
+    padding: 10px 0 20px !important;
+  }
+  .offer-container {
+    width: 94%;
+    padding: 20px 15px;
+    border-radius: 12px;
+    gap: 25px;
+  }
+
+  /*FORM*/
+  .offer-form {
+    padding: 20px 15px;
+    border-radius: 15px;
+  }
+
+  .shopkeeper-options {
+    flex-direction: column;
+    gap: 10px;
+  }
+  .offer-form .radio-button {
+    width: 100%;
+    flex: none;
+  }
+
+  /* All Rows Become Single Column */
+
+  .form-rows {
+    flex-direction: column;
+    gap: 0;
+  }
+  .form-rows .form-groups {
+    width: 100%;
+    flex: none;
+  }
+
+  .form-groups {
+    margin-bottom: 18px;
+  }
+  .form-groups select,
+  .form-groups input {
+    width: 100%;
+  }
+
+  /* Phone */
+
+  .phone-inputs {
+    width: 100%;
+  }
+
+  .country-code {
+    padding: 0 10px;
+  }
+  .get-offers-button {
+    height: 48px;
+    font-size: 15px;
+  }
+
+  .offer-contents {
+    padding: 20px 0 0;
+  }
+
+  .download-app h2 {
+    font-size: 21px;
+  }
+
+  .store-buttons {
+    width: 100%;
+    gap: 15px;
+    justify-content: center;
+  }
+  .store-items {
+    width: 135px;
+  }
+
+  .store-items img {
+    width: 135px;
+  }
+
+  .store-item a {
+    width: 135px;
+  }
+
+  .store-items h3 {
+    font-size: 16px;
+  }
+  .opel-buttons {
+    width: 100%;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 30px;
+  }
+
+  .opel-buttons button {
+    width: 100%;
+    height: 48px;
+    padding: 0 15px;
+    font-size: 14px;
+  }
+  /* Website link */
+
+  .website-text {
+    margin-top: 25px;
+    font-size: 14px;
+    line-height: 1.6;
+    padding: 0 10px;
+  }
+
+  .website-text a {
+    display: inline-block;
+  }
+  .landing-page .brands-section,
+  .landing-page .category-section {
+    width: 100%;
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .category-section {
+    padding-top: 15px;
+    padding-bottom: 15px;
+  }
+}
+
+.offer-modal-overlay {
+  position: fixed;
+  inset: 0;
+  top: 0;
+  left: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 9999;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+}
+
+.offers-modal {
+  background: #ffffff;
+  width: 100%;
+  max-width: 600px;
+  max-height: 90vh;
+  padding: 35px 40px;
+  border-radius: 18px;
+  overflow: hidden;
+  position: relative;
+  box-sizing: border-box;
+}
+
+.offers-modal-close {
+  position: absolute;
+  top: 12px;
+  right: 18px;
+  line-height: 1.1;
+  border: none;
+  background: transparent;
+  font-size: 30px;
+  cursor: pointer;
+  color: #333;
+}
+
+.offers-modal .download-app {
+  text-align: center;
+  margin-bottom: 25px;
+}
+
+.offers-modal .download-app h2 {
+  font-size: 28px;
+  margin: 0;
+}
+.offers-modal .store-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 50px;
+  margin-bottom: 30px;
+}
+
+.offers-modal .store-items {
+  text-align: center;
+}
+
+.offers-modal .store-items h3 {
+  margin-bottom: 10px;
+}
+
+.offers-modal .store-items img {
+  width: 160px;
+  max-width: 100%;
+}
+
+.offers-modal .opel-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-bottom: 25px;
+}
+
+.offers-modal .opel-buttons button {
+  padding: 12px 18px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.offers-modal .website-text {
+  text-align: center;
+  line-height: 1.4;
+  margin: 0;
+}
+
+.offers-modal .website-text a {
+  display: block;
+  margin-top: 5px;
+}
+
+@media (max-width: 600px) {
+  .offer-modal-overlay {
+    padding: 10px;
+    overflow: hidden;
+  }
+  .offers-modal {
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    max-height: 95vh;
+    padding: 35px 16px 20px;
+    border-radius: 14px;
+    overflow: hidden;
+  }
+  .offers-modal .download-app {
+    margin-bottom: 12px;
+  }
+
+  .offers-modal .download-app h2 {
+    font-size: 20px;
+    margin-bottom: 10px;
+  }
+
+  .offers-modal .store-buttons {
+    flex-direction: row;
+    justify-content: space-around;
+    margin-bottom: 15px;
+    gap: 10px;
+  }
+
+  .offers-modal .store-items {
+    width: 50%;
+  }
+
+  .offers-modal .store-items h3 {
+    font-size: 14px;
+    margin-bottom: 6px;
+  }
+
+  .offers-modal .store-items img {
+    width: 110px;
+    max-width: 100%;
+  }
+
+  .offers-modal .opel-buttons {
+    flex-direction: column;
+    gap: 7px;
+    margin-bottom: 12px;
+  }
+  .offers-modal .opel-buttons button {
+    width: 100%;
+    padding: 8px 10px;
+    font-size: 12px;
+  }
+
+  .offers-modal-close {
+    top: 8px;
+    right: 12px;
+    font-size: 20px;
+  }
+
+  .offer-modal .website-text {
+    font-size: 12px;
+    line-height: 1.3;
+  }
+}
+
+
+.form-groups > label{
+display: flex;
+justify-content: space-between;
+align-items: center;
+}
+
+
+.phone-error{
+color: red;
+font-size: 13px;
+font-weight: 500;
+}
+
+.data-text{
+text-align: center;
+margin-bottom: 10px;
 }

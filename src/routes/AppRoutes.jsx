@@ -44,6 +44,7 @@ import OfferList from "../pages/OfferList";
 import CategorySlide from "../components/CategorySlide";
 import { getAllPageShug } from "../api/apiRequest";
 import ContactUs from "../pages/ContactUs";
+import LandingPage from "../pages/LandingPage";
 
 const AppRoutes = () => {
   const [pageSlugs, setPageSlugs] = useState([]);
@@ -88,7 +89,7 @@ const AppRoutes = () => {
       <Route path="/contact" element={<Contact />} />
       <Route path="/offers" element={<PrivateRoute><OfferList /></PrivateRoute>} />
       <Route path="/contact-us" element={<ContactUs/>}/>
-
+      <Route path="/landing-page" element={<LandingPage/>}/>
       {/* Warranty */}
       <Route path="/warranty-claim" element={<WarrantyClaim />} />
       <Route path="/Warrenty-claim-history" element={<WarrentyClaimHistory />} />
