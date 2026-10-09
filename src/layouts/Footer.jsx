@@ -15,7 +15,7 @@ import { Link } from "react-router-dom";
 import Logo from "../assets/images/Logo.svg";
 import playStore from "../assets/images/GooglePlay.png";
 import appstore from "../assets/images/AppStore.png";
-import MazingQR from "../assets/images/MazingQR.svg";
+import MazingQR from "../assets/images/MazingQR.jpeg";
 
 const Footer = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(() => {
