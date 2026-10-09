@@ -13,9 +13,6 @@ import linkedinIcon from "../assets/icons/playIcon.svg";
 import { Link } from "react-router-dom";
 
 import Logo from "../assets/images/Logo.svg";
-import playStore from "../assets/images/GooglePlay.png";
-import appstore from "../assets/images/AppStore.png";
-import MazingQR from "../assets/images/MazingQR.svg";
 
 const Footer = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(() => {
@@ -117,7 +114,7 @@ const Footer = () => {
                   <Link to="/copyright-policy">Copyright Policy </Link>
                 </li>
                 <li>
-                  <Link to="/this-page-does-not-exist">Contact Us </Link>
+                  <Link to="/contact-us">Contact Us </Link>
                 </li>
                 <li>
                   <Link to="/terms">Terms & Conditions </Link>
@@ -166,33 +163,6 @@ const Footer = () => {
               </div>
               <div className="payment-icons">
                 <img src={visaIcon} alt="Visa" />
-              </div>
-              <div className="qr-download-section">
-                <div className="qr-code">
-                  <img src={MazingQR} alt="MAZING QR-CODE" />
-                </div>
-                <div className="qr-content">
-                  <p>
-                    Scan the QR code to download the new
-                    <br /> Mazing Business app
-                  </p>
-                </div>
-              </div>
-              <div className="footer-store-buttons">
-                <div className="footer-store-items">
-                  <a href="https://play.google.com/store/apps/details?id=com.ace.tools&pcampaignid=web_share">
-                    <img src={playStore} alt="Get it on Play Store" />
-                  </a>
-                </div>
-                <div className="footer-store-items">
-                  <a
-                    href="https://apps.apple.com/in/app/mazing-business/id6447095538"
-                    target="blank"
-                    rel="noopener noreferrer"
-                  >
-                    <img src={appstore} alt="Get it On App Store" />
-                  </a>
-                </div>
               </div>
             </div>
           </div>

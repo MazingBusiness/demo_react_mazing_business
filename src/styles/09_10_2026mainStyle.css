@@ -8,7 +8,6 @@
 .loginmenu {
   width: 100%;
 }
-
 .loginmenu ul {
   display: flex;
   gap: 15px;
@@ -14234,109 +14233,21 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   }
 }
 
-.form-groups > label {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
 
-.phone-error {
-  color: red;
-  font-size: 13px;
-  font-weight: 500;
-}
-
-.data-text {
-  text-align: center;
-  margin-bottom: 10px;
-}
-
-
-
-.qr-download-section{
+.form-groups > label{
 display: flex;
-align-items: flex-start;
-gap:12px;
-margin-top: 18px;
-width: 100%;
-}
-
-.qr-code {
-
-  width: 150px;
-  height: 150px;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-sizing: content-box;
-  background-color: #ffffff;
-}
-
-.qr-code img {
-width: 100%;
-height: 100%;
-object-fit: contain;
-display: block;
-border: 2px solid white;
-  background: #ffffff;
-  box-sizing: border-box;
-
-}
-
-.qr-content{
-flex:1;
-min-width: 0;
-}
-
-.qr-content p{
-color: #fff;
-font-size: 16px;
-font-weight: 600;
-margin: 0 0 12px;
-line-height: 1.4;
-overflow-wrap: break-word;
-}
-
-.footer-store-buttons{
-display: flex;
+justify-content: space-between;
 align-items: center;
-gap: 10px;
-width: 100%;
-margin-top: 10px;
 }
 
-.footer-store-buttons img{
-width: 125px;
-height: auto;
-object-fit: contain;
-display: block;
+
+.phone-error{
+color: red;
+font-size: 13px;
+font-weight: 500;
 }
 
-@media (max-width: 768px) {
-  .qr-download-section {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    width: 100%;
-  }
-
-  .qr-code {
-    width: 120px;
-    height: 120px;
-    flex-shrink: 0;
-  }
-
-  .qr-code img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-  }
-
-  /* Text and buttons on the right */
-  .qr-download-section > div:not(.qr-code) {
-    flex: 1;
-    min-width: 0;
-  }
-} 
-
+.data-text{
+text-align: center;
+margin-bottom: 10px;
+}
