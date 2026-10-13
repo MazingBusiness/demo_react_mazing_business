@@ -36,6 +36,12 @@ const formatDateTime = (unixSeconds) => {
 
 const money = (n) => `₹ ${Number(n || 0).toFixed(2)}`;
 
+const moneyOrDash = (value) => {
+  if (value === null || value === undefined || value === "") return "-";
+  const amount = Number(value);
+  return Number.isFinite(amount) ? money(amount) : "-";
+};
+
 const ProfileOrderDetails = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -307,8 +313,10 @@ const ProfileOrderDetails = () => {
                                             const invDate = fd?.invoice_date ? `(${fd.invoice_date})` : "";
                                             const dispatchFrom = fd?.dispatch_from || "-";
                                             const billedQty = fd?.billed_qty ?? "-";
-                                            const rate2 = (fd?.rate / fd?.billed_qty) ?? "-";
-                                            const price2 = fd?.price ?? "-";
+                                            // `rate` is already a unit rate. Pending BTR rows have a
+                                            // null billed quantity, so it must not be used as a divisor.
+                                            const rate2 = fd?.rate;
+                                            const price2 = fd?.price;
                                             const status2 = fd?.status || "-";
 
                                             const invUrl = fd?.invoice_attachments || "";
@@ -320,8 +328,8 @@ const ProfileOrderDetails = () => {
                                             return (
                                               <tr key={`${partNo}-${i2}`}>
                                                 <td>{billedQty}</td>
-                                                <td>{money(rate2)}</td>
-                                                <td>{money(price2)}</td>
+                                                <td>{moneyOrDash(rate2)}</td>
+                                                <td>{moneyOrDash(price2)}</td>
                                                 <td>
                                                   <div style={{ fontWeight: 600 }}>{invNo}</div>
                                                   <div style={{ fontSize: 12, color: "#666" }}>{invDate}</div>
