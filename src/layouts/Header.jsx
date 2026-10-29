@@ -16,12 +16,15 @@ import MenuIcon6 from "../assets/icons/MenuIcon6.svg";
 import flagEN from "../assets/icons/flag-icon/gb.svg";
 import flagFR from "../assets/icons/flag-icon/fr.svg";
 import Logo from "../assets/images/Logo.svg";
+import GoldLogo from "../assets/images/MazingBusinessGold.png";
+import GoldHeaderLeft from "../assets/images/GoldHeaderLeft.png";
+import GoldHeaderRight from "../assets/images/GoldHeaderRight.png";
 
 import MegaMenu from "./MegaMenu";
 import SearchModal from "../components/SearchModal";
 import CartSlide from "../components/CartSlide";
 
-import { cart, getWishList } from "../api/apiRequest";
+import { cart, checkActiveGoldUser, getWishList } from "../api/apiRequest";
 import { API_BASE_URL } from "../app_url";
 // import { NotificationManager } from "react-notifications"; // if you're using it
 import preArrivalIcon from "../assets/icons/pre-arrival-items-icon.svg";
@@ -66,6 +69,9 @@ const Header = () => {
 
   /** store login credentials */
   const [userInfo, setUserInfo] = useState(null);
+  const isActiveGoldUser =
+    userInfo?.is_active_gold_user === true ||
+    Number(userInfo?.is_active_gold_user ?? userInfo?.authorisation?.is_active_gold_user) === 1;
 
   const [isCartVisible, setIsCartVisible] = useState(false);
   const toggleCart = () => setIsCartVisible(!isCartVisible);
@@ -209,6 +215,32 @@ const Header = () => {
         const parsed = JSON.parse(stored);
         if (parsed?.first_name) {
           setUserInfo(parsed);
+
+          checkActiveGoldUser()
+            .then((response) => {
+              if (!response?.res) return;
+
+              const isActiveGoldUser =
+                response?.data?.is_active_gold_user === true ||
+                Number(response?.data?.is_active_gold_user) === 1;
+              const updatedUserInfo = {
+                ...parsed,
+                is_active_gold_user: isActiveGoldUser,
+                authorisation: {
+                  ...(parsed.authorisation || {}),
+                  is_active_gold_user: isActiveGoldUser,
+                },
+              };
+
+              localStorage.setItem(
+                "mazingBusinessLoginInfo",
+                JSON.stringify(updatedUserInfo),
+              );
+              setUserInfo(updatedUserInfo);
+            })
+            .catch((error) => {
+              console.error("Failed to refresh Gold User status:", error);
+            });
         }
       } catch (e) {
         console.error("Invalid login info in localStorage.");
@@ -284,13 +316,13 @@ const Header = () => {
   }, []);
 
   return (
-    <header className="main-header">
+    <header className={`main-header ${isActiveGoldUser ? "gold-user-header" : ""}`}>
       <div className="top-header">
         <div className="maincontainer">
           <div className="top-headerLft">
             <div className="logo">
               <NavLink to="/">
-                <img src={Logo} alt="Logo" />
+                <img src={isActiveGoldUser ? GoldLogo : Logo} alt={isActiveGoldUser ? "Mazing Business Gold" : "Logo"} />
               </NavLink>
             </div>
           </div>

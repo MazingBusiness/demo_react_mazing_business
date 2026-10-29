@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { NavLink, useLocation, useNavigate  } from "react-router-dom";
+import { FaMedal } from "react-icons/fa6";
 import defaultUserImage from "../assets/images/pic2.png";
 import icon1 from "../assets/icons/sidemenuIcon1.svg";
 import icon2 from "../assets/icons/sidemenuIcon2.svg";
@@ -122,15 +123,23 @@ const ProfileSidebar = () => {
   return (
     <aside className="profile-sidebar">
       <div className="profile-card">
-        <img
-          src={profileImage}
-          alt="User"
-          className="user-image"
-          onError={(event) => {
-            event.currentTarget.onerror = null;
-            event.currentTarget.src = defaultUserImage;
-          }}
-        />
+        <div className="user-image-wrap">
+          <img
+            src={profileImage}
+            alt="User"
+            className="user-image"
+            onError={(event) => {
+              event.currentTarget.onerror = null;
+              event.currentTarget.src = defaultUserImage;
+            }}
+          />
+          {(user?.gold_user?.status === true || Number(user?.gold_user?.status) === 1) && (
+            <span className="gold-user-badge">
+              <FaMedal aria-hidden="true" />
+              GOLD
+            </span>
+          )}
+        </div>
         <div className="user-info">
           <h3>{user?.name || user?.first_name || "Guest User"}</h3>
           <p className="party-code">

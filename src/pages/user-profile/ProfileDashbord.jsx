@@ -3,6 +3,7 @@ import UserProfileLayout from "../../layouts/UserProfileLayout";
 import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 import { Link } from "react-router-dom";
+import { FaMedal } from "react-icons/fa6";
 import dIcon1 from "../../assets/icons/dIcon1.svg";
 import dIcon2 from "../../assets/icons/dIcon2.svg";
 import dIcon3 from "../../assets/icons/dIcon3.svg";
@@ -14,6 +15,8 @@ import {
   getTotalOrderCount,
   getAllPendingOrderCount,
   getCurrentOrder,
+  userDetails,
+  sendGoldUserRequest,
 } from "../../api/apiRequest";
 
 import {
@@ -62,6 +65,46 @@ const toNumber = (v) => {
 };
 
 const pad2 = (n) => String(n).padStart(2, "0");
+
+const formatGoldDate = (value) => {
+  if (!value) return "-";
+  const date = String(value).split("T")[0].split(" ")[0];
+  const [year, month, day] = date.split("-");
+  return year && month && day ? `${day}-${month}-${year}` : "-";
+};
+
+const goldNumberToWords = (value) => {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return "-";
+  if (number === 0) return "zero";
+
+  const ones = ["", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen"];
+  const tens = ["", "", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"];
+  const toHundreds = (amount) => {
+    const parts = [];
+    if (amount >= 100) parts.push(`${ones[Math.floor(amount / 100)]} hundred`);
+    const remainder = amount % 100;
+    if (remainder >= 20) parts.push(`${tens[Math.floor(remainder / 10)]}${remainder % 10 ? ` ${ones[remainder % 10]}` : ""}`);
+    else if (remainder) parts.push(ones[remainder]);
+    return parts.join(" ");
+  };
+
+  let whole = Math.floor(Math.abs(number));
+  const parts = [];
+  const crore = Math.floor(whole / 10000000);
+  whole %= 10000000;
+  const lakh = Math.floor(whole / 100000);
+  whole %= 100000;
+  const thousand = Math.floor(whole / 1000);
+  whole %= 1000;
+
+  if (crore) parts.push(`${toHundreds(crore)} crore`);
+  if (lakh) parts.push(`${toHundreds(lakh)} lakh`);
+  if (thousand) parts.push(`${toHundreds(thousand)} thousand`);
+  if (whole) parts.push(toHundreds(whole));
+
+  return `${number < 0 ? "minus " : ""}${parts.join(" ")}`;
+};
 
 const monthShort = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
@@ -164,6 +207,11 @@ const ProfileDashbord = () => {
 
   const [totalOrder, setTotalOrder] = useState(0);
   const [totalPendingOrder, setTotalPendingOrder] = useState(0);
+  const [goldUser, setGoldUser] = useState(null);
+  const [isActiveGoldUser, setIsActiveGoldUser] = useState(false);
+  const [showGoldUserDiv, setShowGoldUserDiv] = useState(false);
+  const [goldUserRequestSent, setGoldUserRequestSent] = useState(false);
+  const [goldUserRequestSubmitting, setGoldUserRequestSubmitting] = useState(false);
 
   // ✅ API orders state (for right side order list)
   const [orders, setOrders] = useState([]);
@@ -239,6 +287,60 @@ const ProfileDashbord = () => {
     }
   };
 
+  const fetchGoldUser = async () => {
+    try {
+      const response = await userDetails();
+      const user = response?.data?.userDetails
+        ?? response?.data?.user
+        ?? response?.userDetails
+        ?? response?.user
+        ?? response?.data
+        ?? response;
+
+      const activeGoldUser =
+        user?.is_active_gold_user === true || Number(user?.is_active_gold_user) === 1;
+
+      setIsActiveGoldUser(activeGoldUser);
+      setGoldUser(activeGoldUser ? user?.gold_user ?? null : null);
+      setShowGoldUserDiv(
+        user?.show_gold_user_div === true || Number(user?.show_gold_user_div) === 1,
+      );
+      setGoldUserRequestSent(
+        user?.send_gold_user_request === true || Number(user?.send_gold_user_request) === 1,
+      );
+    } catch (error) {
+      console.error("Fetch gold user details error:", error);
+      setGoldUser(null);
+      setIsActiveGoldUser(false);
+      setShowGoldUserDiv(false);
+      setGoldUserRequestSent(false);
+    }
+  };
+
+  const handleGoldUserRequest = async () => {
+    if (!window.confirm("Do you want to send a request to become a Gold User?")) {
+      return;
+    }
+
+    setGoldUserRequestSubmitting(true);
+    try {
+      const response = await sendGoldUserRequest();
+
+      if (!response?.res) {
+        window.alert(response?.msg || "Unable to send the Gold User request.");
+        return;
+      }
+
+      setGoldUserRequestSent(true);
+      window.alert(response?.msg || "Gold User request sent successfully.");
+    } catch (error) {
+      console.error("Send gold user request error:", error);
+      window.alert("Unable to send the Gold User request. Please try again.");
+    } finally {
+      setGoldUserRequestSubmitting(false);
+    }
+  };
+
   // ✅ load orders from API (for order list)
   const fetchOrders = async () => {
     setOrdersLoading(true);
@@ -288,6 +390,7 @@ const ProfileDashbord = () => {
     cartData();
     fetchTotalOrderCount();
     pendingOrderCount();
+    fetchGoldUser();
     fetchOrders();
     fetchCurrentYearOrders();
   }, []);
@@ -332,6 +435,7 @@ const ProfileDashbord = () => {
                 <img src={dIcon3} alt="dIcon3" />
               </div>
             </div>
+
           </div>
 
           <div className="chart-section">
@@ -375,6 +479,41 @@ const ProfileDashbord = () => {
 
         <div className="dashboard-container-Rgt">
           <div className="calendar-section">
+            {showGoldUserDiv && (
+              <div className="card gold-user-card">
+              <div className="gold-user-card-heading">
+                <span className="gold-user-card-medal" aria-hidden="true">
+                  <FaMedal />
+                </span>
+                <h5>Gold User</h5>
+              </div>
+              {isActiveGoldUser && goldUser ? (
+                <div className="gold-user-card-details">
+                  <div><span>M Coin</span><strong className="gold-user-amount">{goldNumberToWords(goldUser.token_m_coin)}</strong></div>
+                  <div><span>Sales Target</span><strong className="gold-user-amount">{goldNumberToWords(goldUser.sales_target)}</strong></div>
+                  <div><span>Valid From</span><strong>{formatGoldDate(goldUser.valid_from)}</strong></div>
+                  <div><span>Valid To</span><strong>{formatGoldDate(goldUser.valid_to)}</strong></div>
+                  <div><span>Gold Status</span><strong>{goldUser.status === true || Number(goldUser.status) === 1 ? "Active" : "Inactive"}</strong></div>
+                </div>
+              ) : (
+                <div className="gold-user-request">
+                  {goldUserRequestSent ? (
+                    <p>Already send request for Gold User.</p>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleGoldUserRequest}
+                      disabled={goldUserRequestSubmitting}
+                    >
+                      {goldUserRequestSubmitting
+                        ? "Sending request..."
+                        : "Send request to manage become a Gold User"}
+                    </button>
+                  )}
+                </div>
+              )}
+              </div>
+            )}
             <div className="calendar-header"></div>
             <Calendar onChange={setDate} value={date} />
 

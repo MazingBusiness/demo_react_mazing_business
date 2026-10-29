@@ -1308,6 +1308,36 @@ export const userDetails = async () => {
   return json;
 };
 
+export const checkActiveGoldUser = async () => {
+  const header = getHeader();
+  if (!header) throw new Error("Authorization token missing");
+
+  const res = await fetch(`${API_BASE_URL}user/check-active-gold-user`, {
+    method: "GET",
+    headers: { Accept: "application/json", ...(header.headers || {}) },
+  });
+
+  if (!res.ok) {
+    throw new Error(`HTTP ${res.status}`);
+  }
+
+  return res.json();
+};
+
+export const sendGoldUserRequest = async () => {
+  const header = getHeader();
+  const res = await fetch(`${API_BASE_URL}user/send-gold-user-request`, {
+    method: "POST",
+    headers: { Accept: "application/json", ...(header?.headers || {}) },
+  });
+
+  if (!res.ok) {
+    throw new Error(`HTTP ${res.status}`);
+  }
+
+  return res.json();
+};
+
 export const getSupportTickets = async (page = 1, pagination = 15) => {
   const header = getHeader();
   if (!header) throw new Error("Authorization token missing");
