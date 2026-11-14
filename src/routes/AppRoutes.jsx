@@ -11,6 +11,7 @@ import LoginFromAdmin from "../pages/LoginFromAdmin";
 import ForgotPassword from "../pages/ForgotPassword";
 import Register from "../pages/Register";
 import ProfileDashbord from "../pages/user-profile/ProfileDashbord";
+import GoldUserDashboard from "../pages/user-profile/GoldUserDashboard";
 import ProfileOrder from "../pages/user-profile/ProfileOrder";
 import ProfileOrderDetails from "../pages/user-profile/ProfileOrderDetails";
 import ManageProfile from "../pages/user-profile/ManageProfile";
@@ -113,6 +114,7 @@ const AppRoutes = () => {
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/register" element={<Register />} /> 
       <Route path="/profile-dashbord" element={<PrivateRoute><ProfileDashbord /></PrivateRoute>} />
+      <Route path="/gold-user-dashboard" element={<PrivateRoute><GoldUserDashboard /></PrivateRoute>} />
       <Route path="/profile-order" element={<PrivateRoute><ProfileOrder /></PrivateRoute>} />
       <Route path="/profile-order-details" element={<PrivateRoute><ProfileOrderDetails /></PrivateRoute>} />
       <Route path="/manage-profile" element={<PrivateRoute><ManageProfile /></PrivateRoute>} />

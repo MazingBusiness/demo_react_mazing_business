@@ -17,6 +17,7 @@ import {
 } from "../api/apiRequest";
 import "../styles/OfferList.css";
 import { useLoading } from "../context/LoadingContext";
+import { getLoggedInUser } from "../utils/authUtils";
 
 import GlobalLoader from "../components/GlobalLoader";
 const getBannerImage = (offer) =>
@@ -54,7 +55,12 @@ const getOfferRequirement = (offer) => {
 const getOfferCode = (offer) =>
   offer?.offer_code || offer?.code || offer?.offer_id || "";
 
+const isActiveGoldUser = (user) =>
+  user?.is_active_gold_user === true ||
+  Number(user?.is_active_gold_user ?? user?.authorisation?.is_active_gold_user) === 1;
+
 const OfferList = () => {
+  const isGoldUser = isActiveGoldUser(getLoggedInUser());
   const [offers, setOffers] = useState([]);
   const [banners, setBanners] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -105,11 +111,14 @@ console.log("API Result:", result);
 
         const paginator = result?.offers || {};
 
-        const rows = Array.isArray(paginator?.data)
+        const rawRows = Array.isArray(paginator?.data)
           ? paginator.data
           : Array.isArray(result?.offers)
             ? result.offers
             : [];
+        const rows = rawRows.filter(
+          (offer) => Number(offer?.gold_user_offer) === (isGoldUser ? 1 : 0),
+        );
 
         setOffers((current) => (isMore ? [...current, ...rows] : rows));
 
@@ -118,7 +127,9 @@ console.log("API Result:", result);
         setTotal(Number(paginator?.total ?? rows.length));
 
         setBanners(
-          Array.isArray(result?.showInBanner) ? result.showInBanner : [],
+          (Array.isArray(result?.showInBanner) ? result.showInBanner : []).filter(
+            (offer) => Number(offer?.gold_user_offer) === (isGoldUser ? 1 : 0),
+          ),
         );
 
         setCategories(
@@ -154,7 +165,7 @@ console.log("API Result:", result);
     return () => {
       active = false;
     };
-  }, [page, selectedCategory, selectedBrand]);
+  }, [page, selectedCategory, selectedBrand, isGoldUser]);
 
   useEffect(() => {
     if (banners.length < 2) return undefined;

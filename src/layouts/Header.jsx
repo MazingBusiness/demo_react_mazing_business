@@ -570,6 +570,7 @@ const Header = () => {
       {/* Cart Slide Panel */}
       <CartSlide isCartVisible={isCartVisible} toggleCart={toggleCart} />
     </header>
+    
   );
 };
 

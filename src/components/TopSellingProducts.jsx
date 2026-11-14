@@ -38,6 +38,9 @@ const renderRating = (rating) => {
 const TopSellingProducts = () => {
   const navigate = useNavigate();
   const user = getLoggedInUser();
+  const isActiveGoldUser =
+    user?.is_active_gold_user === true ||
+    Number(user?.is_active_gold_user ?? user?.authorisation?.is_active_gold_user) === 1;
   const scrollerRef = useRef(null);
   const pausedRef = useRef(false);
   const draggingRef = useRef(false);
@@ -239,9 +242,10 @@ useEffect(() => {
                   product?.images?.[0]?.file_name ||
                   noImage;
                 const mrp = Number(product?.mrp || 0);
-                const price = Number(
-                  String(product?.discount_price || 0).replace(/[^0-9.]/g, "")
-                );
+                const displayPrice = isActiveGoldUser && product?.super_price != null
+                  ? product.super_price
+                  : product?.discount_price;
+                const price = Number(String(displayPrice || 0).replace(/[^0-9.]/g, ""));
                 const reviews = Array.isArray(product?.reviews)
                   ? product.reviews
                   : [];

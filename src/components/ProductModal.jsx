@@ -20,12 +20,18 @@ import GlobalLoader from "./GlobalLoader";
 const firstValidId = (...values) =>
   values.find((value) => value !== undefined && value !== null && String(value).trim() !== "");
 
+const isActiveGoldUser = (user) =>
+  user?.is_active_gold_user === true ||
+  Number(user?.is_active_gold_user ?? user?.authorisation?.is_active_gold_user) === 1;
+
 const idFromPrefixedValue = (value, prefix) => {
   const text = String(value ?? "");
   return text.startsWith(prefix) ? text.slice(prefix.length) : undefined;
 };
 
 export const GenericProductsModal = ({ isOpen, onClose, genericLink }) => {
+  const user = getLoggedInUser();
+  const isGoldUser = isActiveGoldUser(user);
   const [quantities, setQuantities] = useState({});
   const [addingId, setAddingId] = useState(null);
   const [activeCategoryId, setActiveCategoryId] = useState(null);
@@ -120,7 +126,9 @@ export const GenericProductsModal = ({ isOpen, onClose, genericLink }) => {
     products.length > 0 && activeCategory?.downloadable
   );
   const getProductQty = (item) => Number(quantities[item?.id] || item?.min_qty || 1);
-  const getItemPrice = (item) => Number(item?.discount_price || item?.price || item?.mrp || 0);
+  const getItemPrice = (item) => Number(
+    (isGoldUser ? item?.super_price : null) ?? item?.discount_price ?? item?.price ?? item?.mrp ?? 0
+  );
   const getItemBulkQty = (item) => Number(item?.piece_by_carton || 10);
   const getItemBulkPrice = (item) =>
     Number(item?.bulk_discount_price || item?.bulk_price || getItemPrice(item));
@@ -403,6 +411,8 @@ export const GenericProductsModal = ({ isOpen, onClose, genericLink }) => {
 
 const ProductModal = ({ product, isOpen, onClose }) => {
   const modalRef = useRef(null);
+  const user = getLoggedInUser();
+  const isGoldUser = isActiveGoldUser(user);
 
   const [productDetails, setProductDetails] = useState(null);
   const [productImages, setProductImages] = useState([]);
@@ -417,9 +427,11 @@ const ProductModal = ({ product, isOpen, onClose }) => {
   const [priceState, setPriceState] = useState({
     normal: 0,
     bulk: 0,
+    super: 0,
   });
 
   const [qtyAlert, setQtyAlert] = useState("");
+  const [goldQtyAlert, setGoldQtyAlert] = useState("");
   const [checkingPrice, setCheckingPrice] = useState(false);
   const [loadingProduct, setLoadingProduct] = useState(false);
   const [wishlistLoading, setWishlistLoading] = useState(false);
@@ -525,24 +537,31 @@ const ProductModal = ({ product, isOpen, onClose }) => {
     return stars;
   };
 
-  const bulkQty = Number(productDetails?.piece_by_carton || 0);
-
   const parsePrice = (value) => {
     const numeric = String(value ?? "").replace(/[^\d.]/g, "");
     return Number(numeric) || 0;
   };
 
-  const hasProductDetailsPrices = (details) =>
-    parsePrice(details?.discount_price) > 0 || parsePrice(details?.bulk_discount_price) > 0;
+  const bulkQty = Number(productDetails?.piece_by_carton || 0);
+
+  const getGoldMinimumQuantity = (details) => {
+    const configuredQuantity = Math.ceil(Number(details?.quantity_per_carton || 0));
+    if (configuredQuantity > 0) return configuredQuantity;
+
+    const superPrice = parsePrice(details?.super_price);
+    return superPrice > 0 ? Math.ceil(10000 / superPrice) : 0;
+  };
 
   const getProductPrices = (details) => {
     const apiNormal = parsePrice(details?.discount_price);
     const apiBulk = parsePrice(details?.bulk_discount_price);
+    const apiSuper = parsePrice(details?.super_price);
 
     if (apiNormal > 0 || apiBulk > 0) {
       return {
         normal: apiNormal > 0 ? apiNormal : apiBulk,
         bulk: apiBulk > 0 ? apiBulk : apiNormal,
+        super: apiSuper,
       };
     }
 
@@ -554,36 +573,61 @@ const ProductModal = ({ product, isOpen, onClose }) => {
     return {
       normal: Number(normal.toFixed(2)),
       bulk: Number(bulk.toFixed(2)),
+      super: apiSuper,
     };
   };
+
+  const goldMinimumQty = isGoldUser ? getGoldMinimumQuantity(productDetails) : 0;
+  const qualifiesForGoldPrice =
+    isGoldUser && goldMinimumQty > 0 && Number(quantity || 0) >= goldMinimumQty;
 
   const { type, unitPrice, totalPrice } = useMemo(() => {
     const qtyNum = Math.max(0, Number(quantity) || 0);
 
-    const useBulk = bulkQty > 0 && qtyNum >= bulkQty;
+    const useBulk = !isGoldUser && bulkQty > 0 && qtyNum >= bulkQty;
     const chosenType = useBulk ? "bulk" : "piece";
 
     const normal = Number(priceState.normal || 0);
     const bulk = Number(priceState.bulk || normal);
+    const superPrice = Number(priceState.super || 0);
 
-    const chosenUnit = useBulk ? bulk : normal;
+    const chosenUnit = qualifiesForGoldPrice && superPrice > 0
+      ? superPrice
+      : useBulk
+        ? bulk
+        : normal;
 
     return {
       type: chosenType,
       unitPrice: chosenUnit,
       totalPrice: qtyNum > 0 ? (qtyNum * chosenUnit).toFixed(2) : "",
     };
-  }, [quantity, bulkQty, priceState.normal, priceState.bulk]);
+  }, [
+    quantity,
+    bulkQty,
+    isGoldUser,
+    qualifiesForGoldPrice,
+    priceState.normal,
+    priceState.bulk,
+    priceState.super,
+  ]);
 
   const extractPricesFromUpdateQty = (data, fallbackNormal, fallbackBulk) => {
     const normalCandidates = [
-      data?.discount_price,
-      data?.unit_price,
-      data?.price,
-      data?.new_price,
       data?.product_price,
       data?.updated_price,
       data?.final_price,
+      data?.price,
+      data?.unit_price,
+      data?.new_price,
+      data?.data?.product_price,
+      data?.data?.updated_price,
+      data?.data?.final_price,
+      data?.data?.price,
+      data?.data?.unit_price,
+      data?.data?.new_price,
+      data?.discount_price,
+      data?.data?.discount_price,
     ];
 
     const bulkCandidates = [
@@ -621,35 +665,33 @@ const ProductModal = ({ product, isOpen, onClose }) => {
       if (mySeq !== qtySeqRef.current) return;
 
       const msg = String(data?.increasePriceText || data?.msg || "").trim();
+      const qualifiesForGoldRate =
+        isGoldUser && getGoldMinimumQuantity(sourceDetails) > 0 &&
+        qtyNum >= getGoldMinimumQuantity(sourceDetails);
+      const goldPriceAlert = isGoldUser && !qualifiesForGoldRate
+        ? `ALERT : Add at least ${getGoldMinimumQuantity(sourceDetails)} pcs to unlock the Super Price.`
+        : "";
       setQtyAlert(msg || "");
+      setGoldQtyAlert(goldPriceAlert);
 
       setPriceState((prev) => {
         const productPrices = getProductPrices(sourceDetails);
 
-        if (hasProductDetailsPrices(sourceDetails)) {
-          if (
-            Number(productPrices.normal) === Number(prev.normal) &&
-            Number(productPrices.bulk) === Number(prev.bulk)
-          ) {
-            return prev;
-          }
-
-          return productPrices;
+        if (qualifiesForGoldRate) {
+          return {
+            ...prev,
+            super: Number(productPrices.super || prev.super || 0),
+          };
         }
 
-        const fallbackNormal = Number(prev.normal || 0);
-        const fallbackBulk = Number(prev.bulk || prev.normal || 0);
+        const fallbackNormal = Number(productPrices.normal || prev.normal || 0);
+        const fallbackBulk = Number(productPrices.bulk || prev.bulk || fallbackNormal);
 
         const next = extractPricesFromUpdateQty(data, fallbackNormal, fallbackBulk);
-
-        if (
-          Number(next.normal) === Number(prev.normal) &&
-          Number(next.bulk) === Number(prev.bulk)
-        ) {
-          return prev;
-        }
-
-        return next;
+        return {
+          ...next,
+          super: Number(productPrices.super || prev.super || 0),
+        };
       });
     } catch (e) {
       console.error("updateProductQty error:", e);
@@ -737,8 +779,9 @@ const ProductModal = ({ product, isOpen, onClose }) => {
     setGenericFetchCompleted(false);
     setQuantity("");
     setQtyAlert("");
+    setGoldQtyAlert("");
     setCheckingPrice(false);
-    setPriceState({ normal: 0, bulk: 0 });
+    setPriceState({ normal: 0, bulk: 0, super: 0 });
 
     setGenericModalOpen(false);
     setSelectedGenericLink(null);
@@ -770,9 +813,12 @@ const ProductModal = ({ product, isOpen, onClose }) => {
           setPriceState({
             normal: initialNormal,
             bulk: initialBulk,
+            super: productPrices.super || 0,
           });
 
-          const minQty = Number(firstProduct?.min_qty || 1);
+          const minQty = isGoldUser
+            ? getGoldMinimumQuantity(firstProduct) || Number(firstProduct?.min_qty || 1)
+            : Number(firstProduct?.min_qty || 1);
           setQuantity(String(minQty));
 
           lastCheckedQtyRef.current = null;
@@ -1224,9 +1270,11 @@ const ProductModal = ({ product, isOpen, onClose }) => {
                       </div>
                     )}
 
-                    {!!qtyAlert && (
+                    {!!(qtyAlert || goldQtyAlert) && (
                       <div className="product-modal-qty-alert">
                         {qtyAlert}
+                        {qtyAlert && goldQtyAlert && <br />}
+                        {goldQtyAlert}
                       </div>
                     )}
 
@@ -1257,6 +1305,7 @@ const ProductModal = ({ product, isOpen, onClose }) => {
                       </div>
                     )}
 
+                    {!isGoldUser && (
                     <div className="bulk-discount">
                       <p>
                         <span className="red">Bulk Quantity Discount:</span> Purchase{" "}
@@ -1274,6 +1323,7 @@ const ProductModal = ({ product, isOpen, onClose }) => {
                         Get Discount
                       </button>
                     </div>
+                    )}
 
                     <div className="quantity-section">
                       <div>
@@ -1286,7 +1336,8 @@ const ProductModal = ({ product, isOpen, onClose }) => {
                           value={quantity}
                           onChange={handleQuantityChange}
                           onBlur={handleQuantityBlur}
-                          min="1"
+                          min={isGoldUser && goldMinimumQty > 0 ? goldMinimumQty : 1}
+                          step={isGoldUser && goldMinimumQty > 0 ? goldMinimumQty : 1}
                         />
                       </div>
 

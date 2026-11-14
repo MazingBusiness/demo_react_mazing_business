@@ -162,6 +162,18 @@ const ProfileSidebar = () => {
           <span className="menu-title">Dashboard</span>
         </NavLink>
 
+        {(user?.is_active_gold_user === true || Number(user?.is_active_gold_user) === 1 || user?.gold_user?.status === true || Number(user?.gold_user?.status) === 1) && (
+          <NavLink
+            to="/gold-user-dashboard"
+            className={`sidebar-menu-item gold-dashboard-menu-item ${
+              isActive("/gold-user-dashboard") ? "active" : ""
+            }`}
+          >
+            <span className="menu-icon gold-menu-icon"><FaMedal aria-hidden="true" /></span>
+            <span className="menu-title">Gold Dashboard</span>
+          </NavLink>
+        )}
+
         <NavLink
           to="/profile-order"
           className={`sidebar-menu-item ${

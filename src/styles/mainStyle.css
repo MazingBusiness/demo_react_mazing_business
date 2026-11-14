@@ -7028,6 +7028,72 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   text-transform: capitalize;
 }
 
+.gold-dashboard-menu-item .gold-menu-icon {
+  color: #f4c542;
+  font-size: 20px;
+}
+
+.gold-dashboard-page {
+  max-width: 1480px;
+  margin: 0 auto;
+  padding: 24px;
+  color: #17202f;
+}
+
+.gold-dashboard-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 22px;
+}
+
+.gold-dashboard-kicker { color: #b77c02; font-weight: 700; font-size: 13px; }
+.gold-dashboard-kicker svg { margin-right: 5px; }
+.gold-dashboard-heading h1 { margin: 5px 0; font-size: clamp(25px, 3vw, 36px); font-weight: 800; }
+.gold-dashboard-heading p { margin: 0; color: #697386; }
+.gold-dashboard-period { border-radius: 20px; padding: 12px 16px; background: #fff7d8; color: #8b6305; font-size: 14px; font-weight: 700; white-space: nowrap; }
+
+.gold-dashboard-grid { display: grid; grid-template-columns: minmax(0, 2.2fr) minmax(300px, 1fr); gap: 18px; }
+.gold-panel { position: relative; border-radius: 24px; padding: 22px; background: #fff; box-shadow: 0 8px 26px rgba(29, 42, 68, .09); overflow: hidden; }
+.gold-overview-panel { min-height: 385px; background: linear-gradient(112deg, #fff8f4, #fff 48%, #e5faf0); }
+.gold-performance-panel { min-height: 385px; }
+.gold-panel-title { display: flex; align-items: center; gap: 12px; }
+.gold-panel-title h2 { flex: 1; margin: 0; font-size: 20px; font-weight: 800; }
+.gold-panel-title button { width: 38px; height: 38px; border: 0; border-radius: 50%; background: #f7f8fa; color: #202633; cursor: pointer; }
+.gold-panel-title .gold-chart-back-button { width: auto; height: auto; border-radius: 8px; padding: 8px 11px; background: #202633; color: #fff; font-size: 12px; font-weight: 700; }
+.gold-icon-circle { display: grid; width: 40px; height: 40px; place-items: center; border-radius: 50%; background: #f7f8fa; color: #17202f; }
+.gold-overview-number { margin-top: 28px; font-size: clamp(32px, 4.2vw, 50px); font-weight: 800; letter-spacing: -2px; }
+.gold-positive { color: #0aa95b; font-weight: 700; font-size: 13px; }
+.gold-bar-chart { display: flex; height: 210px; align-items: end; justify-content: space-between; gap: 10px; padding-top: 12px; border-bottom: 1px solid #edf0f2; }
+.gold-bar-item { position: relative; display: flex; height: 100%; min-width: 45px; flex: 1; align-items: center; flex-direction: column; justify-content: end; gap: 7px; }
+.gold-bar-item::before { position: absolute; z-index: 2; top: -22px; left: 50%; display: none; transform: translateX(-50%); border-radius: 6px; padding: 4px 7px; background: #202633; color: #fff; content: attr(data-amount); font-size: 11px; font-weight: 700; white-space: nowrap; }
+.gold-bar-item:hover::before { display: block; }
+.gold-bar-item[role="button"] { cursor: pointer; }
+.gold-bar-item[role="button"]:focus-visible { outline: 2px solid #0a78bd; outline-offset: 3px; }
+.daily-sales-chart { gap: 4px; }
+.gold-bar-item.daily { min-width: 12px; gap: 5px; }
+.gold-bar-item.daily small { font-size: 9px; }
+.gold-bar-track { display: flex; width: min(70px, 100%); height: 155px; align-items: end; border-radius: 18px 18px 0 0; background: repeating-linear-gradient(-55deg, #f2f3f5 0 3px, #fff 3px 7px); overflow: hidden; }
+.gold-bar-fill { width: 100%; border-radius: 17px 17px 0 0; background: linear-gradient(180deg, #252a3e, #10121c); }
+.gold-bar-item:not(.featured) .gold-bar-fill { background: linear-gradient(180deg, #14bc70, #008f4a); }
+.gold-bar-value { border-radius: 12px; padding: 4px 7px; background: #12ad63; color: #fff; font-size: 11px; font-weight: 800; }
+.gold-bar-item.featured .gold-bar-value { background: #252a3e; }
+.gold-bar-item small { color: #687083; font-weight: 700; }
+
+.gold-gauge { position: relative; display: grid; width: 240px; height: 120px; margin: 30px auto 15px; place-items: end center; overflow: hidden; border-radius: 240px 240px 0 0; background: conic-gradient(from 270deg at 50% 100%, var(--gold-progress-color, #13aa5d) 0deg var(--gold-progress), #edf0ed var(--gold-progress) 180deg, transparent 180deg); }
+.gold-gauge::after { position: absolute; inset: 18px 18px 0; border-radius: 220px 220px 0 0; background: #fff; content: ""; }
+.gold-gauge div { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; padding-bottom: 8px; }
+.gold-gauge strong { font-size: 42px; line-height: 1; }.gold-gauge span { margin-top: 6px; color: #636b78; font-size: 12px; font-weight: 700; }
+.gold-mini-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }.gold-mini-stats div { padding: 12px; border-radius: 13px; background: #f8f9fa; }.gold-mini-stats span,.gold-benefit span { display: block; color: #737c8e; font-size: 12px; }.gold-mini-stats strong { display: block; margin-top: 4px; font-size: 16px; }
+.gold-notice { margin-top: 14px; border-radius: 18px; padding: 12px 14px; background: linear-gradient(90deg,#131520,#2b2d3c); color: #fff; font-size: 12px; }.gold-notice svg { margin-right: 8px; color: #f7c846; }
+
+.gold-transactions-panel { min-height: 405px; }.gold-transaction-table-wrap { overflow-x: auto; margin-top: 18px; }.gold-transaction-table { width: 100%; min-width: 680px; border-collapse: collapse; }.gold-transaction-table th { padding: 12px 8px; border-bottom: 1px solid #eef0f2; color: #768094; font-size: 12px; text-align: left; }.gold-transaction-table td { padding: 13px 8px; border-bottom: 1px solid #f0f2f4; font-size: 13px; font-weight: 600; }.gold-order-product { display: flex; align-items: center; gap: 7px; }.gold-order-product svg { color: #b88711; }.gold-status { display: inline-block; border-radius: 14px; padding: 5px 9px; background: #e4f9ee; color: #0aa95b; font-size: 12px; }.gold-status.pending { background: #e3f5fe; color: #188bc2; }.gold-status.cancelled { background: #feebe6; color: #e86d3d; }.gold-empty-row { color: #737c8e; text-align: center; }
+.gold-side-stack { display: grid; gap: 18px; }.gold-market-panel { min-height: 185px; }.gold-benefit { display: flex; align-items: center; justify-content: space-between; padding: 13px 0; border-bottom: 1px solid #edf0f2; }.gold-benefit strong { font-size: 15px; }.gold-benefit.highlight strong { color: #b47800; }.gold-product-panel { min-height: 200px; background: linear-gradient(130deg,#fff8ed,#e2f9eb); }.gold-status-card { display: flex; flex-direction: column; align-items: flex-start; gap: 7px; margin-top: 21px; padding: 18px; border-radius: 18px; background: linear-gradient(145deg,#23273a,#10121d); color: #fff; }.gold-status-card svg { color: #f5c13c; font-size: 25px; }.gold-status-card strong { font-size: 17px; }.gold-status-card span { color: #d2d5dc; font-size: 12px; }
+
+@media (max-width: 1100px) { .gold-dashboard-grid { grid-template-columns: 1fr; }.gold-side-stack { grid-template-columns: 1fr 1fr; }.gold-dashboard-page { padding: 18px; } }
+@media (max-width: 640px) { .gold-dashboard-heading,.gold-side-stack { grid-template-columns: 1fr; flex-direction: column; align-items: flex-start; }.gold-side-stack { display: grid; }.gold-dashboard-page { padding: 12px; }.gold-panel { padding: 16px; border-radius: 18px; }.gold-overview-panel,.gold-performance-panel { min-height: auto; }.gold-gauge { transform: scale(.9); margin: 10px auto; }.gold-bar-track { height: 115px; }.gold-bar-chart { height: 165px; }.gold-bar-item { min-width: 30px; }.gold-bar-value { padding: 3px; font-size: 9px; } }
+
 .dashboard-cards .card h5 {
   font-family: "Poppins", sans-serif;
   font-size: 18px;

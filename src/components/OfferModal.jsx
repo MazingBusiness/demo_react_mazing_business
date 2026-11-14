@@ -138,6 +138,7 @@ const OfferModal = ({ isOpen, onClose, onApplied }) => {
 
   // ✅ fallback to mock if API empty
   const finalOffers = offers?.length ? offers : mockOffers;
+  const isMockOffer = offers.length === 0;
 
   // Apply Offer
   const [applyingId, setApplyingId] = useState(null);
@@ -172,7 +173,6 @@ const OfferModal = ({ isOpen, onClose, onApplied }) => {
     >
       <div className="offer-modal-box">
         <h3 style={{ marginBottom: "20px" }}>Offer List</h3>
-
         {loading ? (
           <div>Loading offers...</div>
         ) : (
@@ -185,6 +185,7 @@ const OfferModal = ({ isOpen, onClose, onApplied }) => {
               details={offer.details}
               img={offer.img}
               onApply={() => handleApply(offer.id)}
+              showActions={!isMockOffer}
             />
           ))
         )}

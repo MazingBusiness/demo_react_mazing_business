@@ -67,6 +67,9 @@ const NewArrivals = () => {
       const apiRes = await getNewArrivalProducts();
       const responseData = await apiRes.json();
       const user = getLoggedInUser();
+      const isActiveGoldUser =
+        user?.is_active_gold_user === true ||
+        Number(user?.is_active_gold_user ?? user?.authorisation?.is_active_gold_user) === 1;
 
       if (responseData?.res && Array.isArray(responseData?.data)) {
         const transformedData = responseData.data.map((item) => {
@@ -83,8 +86,12 @@ const NewArrivals = () => {
           const totalRatings = reviews.length > 0 ? reviews.length : 20;
 
           const oldPriceValue = Number(item?.mrp || product?.mrp || 0);
-          const newPriceValue = item?.discount_price
-            ? normalizePriceString(item.discount_price)
+          const displayPrice = isActiveGoldUser && item?.super_price != null
+            ? item.super_price
+            : item?.discount_price;
+          item.discount_price = displayPrice;
+          const newPriceValue = displayPrice
+            ? normalizePriceString(displayPrice)
             : formatPrice(oldPriceValue);
           
           const offerList = Array.isArray(item.offer) ? item.offer : [];
@@ -123,7 +130,8 @@ const NewArrivals = () => {
             newPrice: newPriceValue,
             display_mrp: formatPrice(oldPriceValue),
             display_discount_price: newPriceValue,
-            discount_price: item?.discount_price || newPriceValue,
+            discount_price: displayPrice || newPriceValue,
+            super_price: item?.super_price ?? null,
             discount: Number(item?.discount || 0),
             fast_delivery_tag: item?.fast_delivery_tag || 0,
             is_warranty: hasWarranty ? 1 : 0,
@@ -342,7 +350,7 @@ const NewArrivals = () => {
             </button> */}
 
             <button
-              className="cart-btn"
+              className="cart-btn best-seller-add-cart"
               aria-label="Add to cart"
               type="button"
               onClick={(e) => {
@@ -351,7 +359,7 @@ const NewArrivals = () => {
                 onCartClick();
               }}
             >
-              <img src={CartIcon} alt="CartIcon" />
+              <img src={CartIcon} alt="CartIcon" /> Add to cart
             </button>
           </div>
         )}

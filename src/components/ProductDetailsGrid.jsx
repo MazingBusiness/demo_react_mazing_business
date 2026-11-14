@@ -35,13 +35,19 @@ const ProductDetailsGrid = ({ allVarientProducts = [], loading = false, error = 
   const navigate = useNavigate();
   const user = getLoggedInUser();
   const userId = user?.id || null;
+  const isActiveGoldUser =
+    user?.is_active_gold_user === true ||
+    Number(user?.is_active_gold_user ?? user?.authorisation?.is_active_gold_user) === 1;
 
   const [priceSort, setPriceSort] = useState("popularity");
   const [selectedProduct, setSelectedProduct] = useState(null);
 
   const products = useMemo(() => {
     const transformedProducts = allVarientProducts.map((item) => {
-      const discountPrice = getNumber(item?.discount_price);
+      const displayPrice = isActiveGoldUser && item?.super_price != null
+        ? item.super_price
+        : item?.discount_price;
+      const discountPrice = getNumber(displayPrice);
       const mrp = getNumber(item?.mrp || item?.original_mrp);
       const cInstockMCoin = Number(item?.c_instock_m_coin || 0);
       const offerList = Array.isArray(item?.offer) ? item.offer : [];
@@ -52,6 +58,7 @@ const ProductDetailsGrid = ({ allVarientProducts = [], loading = false, error = 
         slug: item?.slug,
         name: item?.name || "Product",
         img: item?.thumb_img?.file_name || item?.images?.[0]?.file_name || no_image,
+        display_price: displayPrice,
         oldPrice: mrp ? `\u20b9${mrp.toFixed(2)}` : "\u20b90.00",
         newPrice: discountPrice ? `\u20b9${discountPrice.toFixed(2)}` : "\u20b90.00",
         rating: item?.rating && Number(item.rating) !== 0 ? item.rating : 4,
@@ -78,14 +85,14 @@ const ProductDetailsGrid = ({ allVarientProducts = [], loading = false, error = 
     });
 
     return transformedProducts.sort((a, b) => {
-      const aPrice = getNumber(a.discount_price);
-      const bPrice = getNumber(b.discount_price);
+      const aPrice = getNumber(a.display_price);
+      const bPrice = getNumber(b.display_price);
 
       if (priceSort === "low_to_high") return aPrice - bPrice;
       if (priceSort === "high_to_low") return bPrice - aPrice;
       return Number(b.num_of_sale || 0) - Number(a.num_of_sale || 0);
     });
-  }, [allVarientProducts, priceSort, userId]);
+  }, [allVarientProducts, priceSort, userId, isActiveGoldUser]);
 
   const openModal = (product) => setSelectedProduct(product);
   const closeModal = () => setSelectedProduct(null);

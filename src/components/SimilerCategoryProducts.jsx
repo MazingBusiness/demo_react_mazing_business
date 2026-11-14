@@ -4,6 +4,10 @@ import { getLoggedInUser } from "../utils/authUtils";
 import RelatedProductsSlider from "./RelatedProductsSlider";
 
 const SimilerCategoryProducts = ({ categoryId }) => {
+  const user = getLoggedInUser();
+  const isActiveGoldUser =
+    user?.is_active_gold_user === true ||
+    Number(user?.is_active_gold_user ?? user?.authorisation?.is_active_gold_user) === 1;
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -64,6 +68,7 @@ const SimilerCategoryProducts = ({ categoryId }) => {
         products={products}
         title="Similar Category Products"
         enableAddToCart
+        preferSuperPrice={isActiveGoldUser}
       />
     </div>
   );

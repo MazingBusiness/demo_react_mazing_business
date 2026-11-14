@@ -78,6 +78,10 @@ const GenericProductsModal = ({ isOpen, onClose, genericLink }) => {
   const [quantities, setQuantities] = useState({});
   const [bulkDiscountApplied, setBulkDiscountApplied] = useState({});
   const [addingId, setAddingId] = useState(null);
+  const user = getLoggedInUser();
+  const isGoldUser =
+    user?.is_active_gold_user === true ||
+    Number(user?.is_active_gold_user ?? user?.authorisation?.is_active_gold_user) === 1;
 
 
   if (!isOpen || !genericLink) return null;
@@ -85,7 +89,9 @@ const GenericProductsModal = ({ isOpen, onClose, genericLink }) => {
   const products = Array.isArray(genericLink?.products) ? genericLink.products : [];
 
   const getProductQty = (item) => Number(quantities[item?.id] || item?.min_qty || 1);
-  const getItemPrice = (item) => Number(item?.discount_price || item?.price || item?.mrp || 0);
+  const getItemPrice = (item) => Number(
+    (isGoldUser ? item?.super_price : null) ?? item?.discount_price ?? item?.price ?? item?.mrp ?? 0
+  );
   const getItemMrp = (item) => Number(item?.mrp || item?.unit_price || getItemPrice(item) || 0);
   const getItemBulkQty = (item) => Number(item?.piece_by_carton || item?.min_qty || 10);
   const getItemBulkPrice = (item) =>
@@ -294,6 +300,9 @@ const ProductDetails = () => {
 
   const user = getLoggedInUser();
   const user_id = user?.id || null;
+  const isGoldUser =
+    user?.is_active_gold_user === true ||
+    Number(user?.is_active_gold_user ?? user?.authorisation?.is_active_gold_user) === 1;
 
   const [activeTab, setActiveTab] = useState("specs");
   const [loading, setLoading] = useState(true);
@@ -467,7 +476,9 @@ const { startLoading, stopLoading } = useLoading();
   const formattedMrp =
     user_id != null && product?.mrp ? `₹${Number(product.mrp).toFixed(2)}` : "";
 
-  const normalProductPrice = Number(product?.discount_price || 0);
+  const normalProductPrice = Number(
+    (isGoldUser ? product?.super_price : null) ?? product?.discount_price ?? 0
+  );
   const bulkProductPrice = Number(product?.bulk_discount_price || normalProductPrice || 0);
   const displayedProductPrice = useMainBulkDiscount ? bulkProductPrice : normalProductPrice;
 
@@ -1112,6 +1123,7 @@ const { startLoading, stopLoading } = useLoading();
                     </div>
                   )}
 
+                  {!isGoldUser && (
                   <div className="bulk-discount">
                     <p>
                       <span className="red">Bulk Quantity Discount:</span> Purchase{" "}
@@ -1130,6 +1142,7 @@ const { startLoading, stopLoading } = useLoading();
                       Get Discount
                     </button>
                   </div>
+                  )}
                 </>
               ) : (
                 <button

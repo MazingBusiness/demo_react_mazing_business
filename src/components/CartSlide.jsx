@@ -14,6 +14,7 @@ import warrantyIcon from "../assets/icons/warranty.jpeg";
 
 import OfferModal from "../components/OfferModal.jsx";
 import { useNavigate } from "react-router-dom";
+import { getLoggedInUser } from "../utils/authUtils";
 
 import Swal from "sweetalert2";
 
@@ -173,6 +174,20 @@ const getSuperPriceMinQty = (item) => {
   return superPrice > 0 ? Math.ceil(25000 / superPrice) : 0;
 };
 
+const isActiveGoldUser = (user) =>
+  user?.is_active_gold_user === true ||
+  Number(user?.is_active_gold_user ?? user?.authorisation?.is_active_gold_user) === 1;
+
+const getGoldMinimumQuantity = (item) => {
+  const configuredQuantity = Math.ceil(
+    Number(item?.quantity_per_carton ?? item?.product?.quantity_per_carton ?? 0)
+  );
+  if (configuredQuantity > 0) return configuredQuantity;
+
+  const superPrice = getSuperPrice(item);
+  return superPrice > 0 ? Math.ceil(10000 / superPrice) : 0;
+};
+
 const shouldDisableQuantityForSuperPrice = (item, canUpdateSuperPrice) => {
   if (!canUpdateSuperPrice) return false;
 
@@ -188,6 +203,7 @@ const shouldDisableQuantityForSuperPrice = (item, canUpdateSuperPrice) => {
 };
 
 const CartSlide = ({ isCartVisible, toggleCart }) => {
+  const isGoldUser = isActiveGoldUser(getLoggedInUser());
   const [cartItems, setCartItems] = useState([]);
 
   // ✅ always store selected ids as STRING to avoid mismatch
@@ -213,6 +229,7 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
   const [selectedCategory, setSelectedCategory] = useState("All");
 
   const [appliedOffers, setAppliedOffers] = useState([]);
+  const [hasValidOffers, setHasValidOffers] = useState(false);
 
   const [downloading, setDownloading] = useState(false);
   const [movingLoading, setMovingLoading] = useState(false);
@@ -583,9 +600,14 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
 
       const data = await updateProductQty(productId, qty);
       const msg = (data?.increasePriceText || "").trim();
+      const goldMinimumQty = getGoldMinimumQuantity(item);
+      const goldPriceAlert = isGoldUser && goldMinimumQty > 0 && qty < goldMinimumQty
+        ? `ALERT : Add at least ${goldMinimumQty} pcs to unlock the Super Price.`
+        : "";
+      const alertMessage = [msg, goldPriceAlert].filter(Boolean).join("\n");
 
       setQtyAlertsById((prev) => {
-        if (msg) return { ...prev, [item.id]: msg };
+        if (alertMessage) return { ...prev, [item.id]: alertMessage };
         if (!prev[item.id]) return prev;
         const next = { ...prev };
         delete next[item.id];
@@ -615,6 +637,11 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
             ? [offerDetails]
             : [];
         const validOffers = responseData.valid_offers || [];
+        setHasValidOffers(
+          Array.isArray(validOffers)
+            ? validOffers.length > 0
+            : Array.isArray(validOffers?.data) && validOffers.data.length > 0
+        );
         const appliedOfferIds = [
           ...new Set(
             cart_item
@@ -684,9 +711,11 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
         return cart_item;
       }
 
+      setHasValidOffers(false);
       return [];
     } catch (e) {
       console.error(e);
+      setHasValidOffers(false);
       return [];
     } finally {
       setCartLoading(false);
@@ -1165,14 +1194,20 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
                                 )}
                                 </div>
 
-                                {false && canUpdateSuperPrice && getSuperPrice(item) > 0 && (
+                                {false &&
+                                  canUpdateSuperPrice &&
+                                  getSuperPrice(item) > 0 &&
+                                  String(item?.product?.special_price_message || "").trim() && (
                                   <div className="cart-super-price-note">
                                     {item?.product?.special_price_message || ""}
                                   </div>
                                 )}
                                 </div>
 
-                                {false && canUpdateSuperPrice && getSuperPrice(item) > 0 && (
+                                {false &&
+                                  canUpdateSuperPrice &&
+                                  getSuperPrice(item) > 0 &&
+                                  String(item?.product?.special_price_message || "").trim() && (
                                   <div className="cart-super-price-note">
                                     {item?.product?.special_price_message || ""}
                                   </div>
@@ -1186,7 +1221,7 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
 
                             {/* ✅ updateProductQty ALERT */}
                             {item?.product?.is_reward_product == 0 && qtyAlertsById[item.id] && (
-                              <div className="cart-qty-alert">
+                              <div className="cart-qty-alert" style={{ whiteSpace: "pre-line" }}>
                                 {qtyAlertsById[item.id]}
                               </div>
                             )}
@@ -1194,11 +1229,13 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
 
                           <td
                             className={`cartprice ${
-                              canEditPrice || isHeadManager ? "cart-price-editor-cell" : ""
+                              (canEditPrice || isHeadManager) && !isGoldUser
+                                ? "cart-price-editor-cell"
+                                : ""
                             }`}
                             data-label="Price"
                           >
-                            {canEditPrice ? (
+                            {canEditPrice && !isGoldUser ? (
                               <div>
                                 <div className="cart-price-edit-row">
                                 {(!canUpdateSuperPrice || superPriceUnlockedById[item.id]) && (
@@ -1251,7 +1288,8 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
 
                                 {((canUpdateSuperPrice && superPriceUnlockedById[item.id]) ||
                                   isHeadManager) &&
-                                  getSuperPrice(item) > 0 && (
+                                  getSuperPrice(item) > 0 &&
+                                  String(item?.product?.special_price_message || "").trim() && (
                                   <div className="cart-super-price-note">
                                     {item?.product?.special_price_message || ""}
                                   </div>
@@ -1269,7 +1307,9 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
                             ) : (
                               <div>
                                 <span>₹ {twoDecimal(item.price)}</span>
-                                {isHeadManager && getSuperPrice(item) > 0 && (
+                                {isHeadManager &&
+                                  getSuperPrice(item) > 0 &&
+                                  String(item?.product?.special_price_message || "").trim() && (
                                   <div className="cart-super-price-note">
                                     {item?.product?.special_price_message || ""}
                                   </div>
@@ -1281,7 +1321,8 @@ const CartSlide = ({ isCartVisible, toggleCart }) => {
                           <td className="narrow3 cart-quantity-cell" data-label="Quantity">
                             <input
                               type="number"
-                              min="1"
+                              min={isGoldUser ? getGoldMinimumQuantity(item) || 1 : 1}
+                              step={isGoldUser ? getGoldMinimumQuantity(item) || 1 : 1}
                               value={item.quantity}
                               // disabled={shouldDisableQuantityForSuperPrice(item, canUpdateSuperPrice)}
                               // title={

@@ -56,6 +56,9 @@ const BestSellers = () => {
       const apiRes = await getBestSellerProducts();
       const responseData = await apiRes.json();
       const user = getLoggedInUser();
+      const isActiveGoldUser =
+        user?.is_active_gold_user === true ||
+        Number(user?.is_active_gold_user ?? user?.authorisation?.is_active_gold_user) === 1;
 
       if (responseData?.res) {
         const transformedData = (responseData?.data || []).map((item) => {
@@ -63,6 +66,10 @@ const BestSellers = () => {
           const fastDeliveryTag = Number(item.fast_delivery_tag) === 1;
           const hasWarranty = Number(item.is_warranty) === 1;
           const offerList = Array.isArray(item.offer) ? item.offer : [];
+          const displayPrice = isActiveGoldUser && item?.super_price != null
+            ? item.super_price
+            : item?.discount_price;
+          item.discount_price = displayPrice;
           const discount_price = item.discount_price.toString().replace(/₹/g, "")
           const now = new Date();
           const hasActiveOffer = offerList.some((offerItem) => {
@@ -96,7 +103,7 @@ const BestSellers = () => {
             oldPrice: item.mrp
               ? `₹${parseFloat(item.mrp.toString()).toFixed(2)}`
               : "₹0.00",
-            newPrice: item.discount_price
+            newPrice: displayPrice
               ? `₹${parseFloat(
                   item.discount_price.toString().replace(/₹/g, "")
                 ).toFixed(2)}`

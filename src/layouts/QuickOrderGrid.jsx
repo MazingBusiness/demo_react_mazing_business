@@ -30,6 +30,9 @@ const QuickOrderGrid = ({ filters, onPriceRangeUpdate }) => {
   const productRequestPendingRef = useRef(false);
   const activeProductQueryRef = useRef(null);
   const user = getLoggedInUser();
+  const isActiveGoldUser =
+    user?.is_active_gold_user === true ||
+    Number(user?.is_active_gold_user ?? user?.authorisation?.is_active_gold_user) === 1;
 
   const showToast = (icon, title) => {
     Swal.fire({
@@ -205,9 +208,12 @@ const [loadingMore, setLoadingMore]=useState(false);
           const noCredit = Number(item.cash_and_carry_item) === 1;
           const fastDeliveryTag = Number(item.fast_delivery_tag) === 1;
           const hasWarranty = Number(item.is_warranty) === 1;
+          const displayPrice = isActiveGoldUser && item?.super_price != null
+            ? item.super_price
+            : item?.discount_price;
 
           const discountPrice = Number(
-            String(item.discount_price || 0).replace(/[^0-9.]/g, "")
+            String(displayPrice || 0).replace(/[^0-9.]/g, "")
           );
 
           const cInstockMCoin = Number(item.c_instock_m_coin || 0);
@@ -245,9 +251,9 @@ const [loadingMore, setLoadingMore]=useState(false);
             name: item.name,
             img: item.thumb_img?.file_name || no_image,
             oldPrice: item.mrp ? `₹${parseFloat(String(item.mrp).replace(/[^0-9.]/g, "") || 0).toFixed(2)}` : "₹0.00",
-            newPrice: item.discount_price
+            newPrice: displayPrice
               ? `₹${parseFloat(
-                  String(item.discount_price).replace(/[^0-9.]/g, "")
+                  String(displayPrice).replace(/[^0-9.]/g, "")
                 ).toFixed(2)}`
               : "₹0.00",
             rating,
@@ -558,7 +564,6 @@ const [loadingMore, setLoadingMore]=useState(false);
                 <img src={CartIcon} alt="CartIcon" /> Add to Cart
               </button>
             </div>
-
             {Number(product.cash_and_carry_item) === 1 && (
               <div className="no-credit-tag">No Credit Item</div>
             )}

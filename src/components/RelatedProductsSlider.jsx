@@ -20,6 +20,7 @@ import ProductModal from "./ProductModal.jsx";
 import { FaStar, FaRegStar, FaStarHalfAlt } from "react-icons/fa";
 import { FiChevronRight } from "react-icons/fi";
 import { Link } from "react-router-dom";
+import { getLoggedInUser } from "../utils/authUtils";
 
 const renderRating = (rating) => {
   const stars = [];
@@ -56,14 +57,21 @@ const RelatedProductsSlider = ({
   products: suppliedProducts,
   title = "Related products",
   enableAddToCart = false,
+  preferSuperPrice,
 }) => {
+  const user = getLoggedInUser();
+  const isActiveGoldUser = preferSuperPrice ?? (
+    user?.is_active_gold_user === true ||
+    Number(user?.is_active_gold_user ?? user?.authorisation?.is_active_gold_user) === 1
+  );
   const products = useMemo(() => {
     const source = Array.isArray(suppliedProducts) ? suppliedProducts : demoProducts;
 
     return source.map((item) => {
       const mrp = toNumber(item?.mrp ?? item?.oldPrice ?? item?.unit_price);
       const sellingPrice = toNumber(
-        item?.discount_price ??
+        (isActiveGoldUser ? item?.super_price : null) ??
+          item?.discount_price ??
           item?.product_price ??
           item?.price ??
           item?.newPrice ??
@@ -96,7 +104,7 @@ const RelatedProductsSlider = ({
         ) === 1,
       };
     });
-  }, [suppliedProducts]);
+  }, [suppliedProducts, isActiveGoldUser]);
 
   const sliderRef = useRef(null); // Properly define the ref at the component level
   const [selectedProduct, setSelectedProduct] = useState(null);

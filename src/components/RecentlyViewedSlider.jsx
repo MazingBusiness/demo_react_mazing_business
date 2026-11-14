@@ -186,6 +186,10 @@ const renderRating = (rating) => {
 };
 
 const RecentlyViewedSlider = () => {
+  const user = getLoggedInUser();
+  const isActiveGoldUser =
+    user?.is_active_gold_user === true ||
+    Number(user?.is_active_gold_user ?? user?.authorisation?.is_active_gold_user) === 1;
   const [products, setProducts] = useState([]);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -346,6 +350,7 @@ const RecentlyViewedSlider = () => {
         products={products}
         title="Recently Viewed"
         enableAddToCart
+        preferSuperPrice={isActiveGoldUser}
       />
     </div>
   );

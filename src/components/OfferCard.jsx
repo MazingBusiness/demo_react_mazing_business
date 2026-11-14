@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 
-const OfferCard = ({ title, description, type, details, onApply, img }) => {
+const OfferCard = ({ title, description, type, details, onApply, img, showActions = true }) => {
   const [expanded, setExpanded] = useState(false);
 
   return (
@@ -30,11 +30,14 @@ const OfferCard = ({ title, description, type, details, onApply, img }) => {
                 </p>
               </span>
             </div>
-            <span className="apply-btn" onClick={onApply}>
-              APPLY
-            </span>
+            {showActions && (
+              <span className="apply-btn" onClick={onApply}>
+                APPLY
+              </span>
+            )}
           </div>
 
+          {showActions && (
           <div className="Offer-more-info">
             <div className="offer-actions">
               <p>Click more to get details</p>
@@ -84,6 +87,7 @@ const OfferCard = ({ title, description, type, details, onApply, img }) => {
               </div>
             )}
           </div>
+          )}
         </div>
       </div>
     </div>
