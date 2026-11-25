@@ -8893,6 +8893,51 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   color: #004d84;
 }
 
+.payable-info-tooltip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  margin-left: 7px;
+  color: #004d84;
+  cursor: help;
+  outline: none;
+}
+
+.payable-info-tooltip-content {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 10px);
+  z-index: 20;
+  display: none;
+  width: 260px;
+  padding: 11px 12px;
+  border-radius: 8px;
+  background: #1e293b;
+  color: #fff;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, .2);
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.payable-info-tooltip:hover .payable-info-tooltip-content,
+.payable-info-tooltip:focus .payable-info-tooltip-content {
+  display: block;
+}
+
+.payable-info-tooltip-content > span {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 3px 0;
+  color: #fff !important;
+}
+
+.payable-info-tooltip-content b,
+.payable-info-tooltip-content em {
+  font-style: normal;
+  font-weight: 500;
+}
+
 .checkout-btn {
   width: 100%;
   padding: 12px;

@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useMemo } from "react";
 import MainLayout from "../layouts/MainLayout";
-import { FiTrash2 } from "react-icons/fi";
+import { FiInfo, FiTrash2 } from "react-icons/fi";
 import { BsCloudArrowDownFill } from "react-icons/bs";
 import { useNavigate, Link } from "react-router-dom";
 
@@ -172,6 +172,7 @@ const Cart = ({ isCartVisible, toggleCart }) => {
 
   const [subTotal, setSubTotal] = useState(0);
   const [totalPayable, setTotalPayable] = useState(0);
+  const [payableBreakdown, setPayableBreakdown] = useState({});
 
   const [cartLoading, setCartLoading] = useState(false);
   const [updatingQty, setUpdatingQty] = useState({}); // { [cartId]: true/false }
@@ -216,8 +217,15 @@ const Cart = ({ isCartVisible, toggleCart }) => {
   const [savedAppliedCoins, setSavedAppliedCoins] = useState(0);
   const [mCoinLoading, setMCoinLoading] = useState(false);
   
-  const appliedCoinValue = Math.floor((Number(appliedCoins || 0)) / 250);
+  const maxMCoinAmount = Math.floor(Number(availableMCoinBalance || 0) / 250);
+  const prefilledMCoinAmount = Math.floor(Number(earnMCoinBalance || 0) / 250);
   const savedAppliedCoinValue = Math.floor(Number(savedAppliedCoins || 0) / 250);
+  const appliedCoinValue = Number(
+    appliedCoins === ""
+      ? prefilledMCoinAmount
+      : appliedCoins || 0
+  );
+  const appliedCoinCount = appliedCoinValue * 250;
   const [payWithMCoin, setPayWithMCoin] = useState(false);
   
   
@@ -307,8 +315,8 @@ const Cart = ({ isCartVisible, toggleCart }) => {
     }
     value = Number(value);
     if (isNaN(value) || value < 0) value = 0;
-    if (value > availableMCoinBalance) {
-      value = availableMCoinBalance;
+    if (value > maxMCoinAmount) {
+      value = maxMCoinAmount;
     }
     setAppliedCoins(value);
     // await getAvailableMCoinBalance();
@@ -316,25 +324,20 @@ const Cart = ({ isCartVisible, toggleCart }) => {
 
   const handleApplyCoins = async () => {
     if (mCoinLoading) return;
-    const coinCount = Number(appliedCoins || 0);
-    if (!coinCount || coinCount <= 0) {
-      showToast("error", "Please enter valid coins");
+    const amount = Number(appliedCoins === "" ? prefilledMCoinAmount : appliedCoins || 0);
+    if (!amount || amount <= 0) {
+      showToast("error", "Please enter a valid amount");
       return;
     }
-    await getAvailableMCoinBalance();
-    if (coinCount > availableMCoinBalance) {
-      showToast("error", "Cannot exceed available balance");
+    if (amount > maxMCoinAmount) {
+      showToast("error", "Cannot exceed the maximum M-Coin amount");
       return;
     }
-    const rupeeValue = Math.floor(coinCount / 250);
-    if (rupeeValue <= 0) {
-      showToast("error", "Coins too low");
-      return;
-    }
-    if (rupeeValue > Number(totalPayable || 0)) {
+    if (amount > Number(totalPayable || 0)) {
       showToast("error", "Cannot exceed total payable");
       return;
     }
+    const coinCount = amount * 250;
     try {
       setMCoinLoading(true);
       const res = await applyMCoin({ applied_m_coins: coinCount });
@@ -586,6 +589,7 @@ const Cart = ({ isCartVisible, toggleCart }) => {
         const noCreditTotal = Number(responseData.no_credit_item_total_amount || 0);
         const overDue = Number(responseData.over_due_amount || 0);
         const payable = Number(responseData.payable_amount || 0);
+        const payableDetails = responseData.payable_breakdown || {};
 
         // could be object or array based on your backend
         const offerDetails = responseData.offerDetails ?? null;
@@ -624,6 +628,7 @@ const Cart = ({ isCartVisible, toggleCart }) => {
 
         setSubTotal(otherTotal + noCreditTotal);
         setTotalPayable(payable);
+        setPayableBreakdown(payableDetails);
 
         setSaveForLaterItems(save_for_later);
         setSaveForLaterCount(save_for_later.length);
@@ -1553,15 +1558,15 @@ const Cart = ({ isCartVisible, toggleCart }) => {
     
                           <div className="mcoin-balance">
                             <div>
-                              <span className="label">Available Coins</span>
-                              <strong>{twoDecimal(availableMCoinBalance)}</strong>
+                              <span className="label">Available Coin Value</span>
+                            <strong>₹{twoDecimal(Math.floor(availableMCoinBalance / 250))}</strong>
                             </div>
                             <div className="value">
-                              ₹{twoDecimal(Math.floor(availableMCoinBalance / 250))}
+                              {twoDecimal(availableMCoinBalance)} M Coins
                             </div>
                           </div>
     
-                          {savedAppliedCoins > 0 ? (
+                              {savedAppliedCoins > 0 && (
                             <div className="mcoin-applied">
                               <div className="mcoin-applied-left">
                                 <span className="label">Applied Coins</span>
@@ -1582,20 +1587,22 @@ const Cart = ({ isCartVisible, toggleCart }) => {
                                 )}
                               </button>
                             </div>
-                          ) : (
-                            <div className="mcoin-apply">
+                              )}
+
+                              {savedAppliedCoins <= 0 && (
+                              <div className="mcoin-apply">
                               <label htmlFor="mcoinInput" className="mcoin-label">
-                                Apply Coins
-                                <span>₹{twoDecimal(appliedCoinValue)}</span>
+                                Apply M-Coin Amount
+                                <span>{twoDecimal(appliedCoinCount)} M Coins</span>
                               </label>
     
                               <div className="mcoin-input-row">
                                 <input
                                   id="mcoinInput"
-                                  type="number"
+                                  type="text"
                                   className="mcoin-input"
-                                  placeholder="Enter coins"
-                                  value={appliedCoins}
+                                  placeholder="Enter amount"
+                                  value={appliedCoins === "" ? twoDecimal(prefilledMCoinAmount) : appliedCoins}
                                   onChange={handleCoinChange}
                                   onKeyDown={(e) => {
                                     if (e.key === "Enter") {
@@ -1603,8 +1610,7 @@ const Cart = ({ isCartVisible, toggleCart }) => {
                                       handleApplyCoins();
                                     }
                                   }}
-                                  min={0}
-                                  max={availableMCoinBalance}
+                                  max={maxMCoinAmount}
                                 />
     
                                 <button
@@ -1616,9 +1622,9 @@ const Cart = ({ isCartVisible, toggleCart }) => {
                                 </button>
                               </div>
     
-                              <small>Max: {twoDecimal(availableMCoinBalance)} coins</small>
+                              <small>Max: ₹{twoDecimal(maxMCoinAmount)}</small>
                             </div>
-                          )}
+                            )}
                         </div>
                       )}
                     </>
@@ -1652,6 +1658,16 @@ const Cart = ({ isCartVisible, toggleCart }) => {
               <div className="subtotal">
                 <div className="subtotal-main">
                   Total Payable: <span>₹ {twoDecimal(finalTotalPayable)}</span>
+                  <span className="payable-info-tooltip" tabIndex="0" aria-label="View total payable breakdown">
+                    <FiInfo aria-hidden="true" />
+                    <span className="payable-info-tooltip-content" role="tooltip">
+                      <span><b>Cash & Carry items</b><em>₹ {twoDecimal(payableBreakdown.cash_and_carry_amount)}</em></span>
+                      <span><b>Other item subtotal</b><em>₹ {twoDecimal(payableBreakdown.other_item_subtotal_amount)}</em></span>
+                      <span><b>Overdue amount</b><em>₹ {twoDecimal(payableBreakdown.overdue_amount)}</em></span>
+                      <span><b>Credit-limit excess</b><em>₹ {twoDecimal(payableBreakdown.credit_limit_excess_amount)}</em></span>
+                      {savedAppliedCoinValue > 0 && <span><b>M-Coin discount</b><em>- ₹ {twoDecimal(savedAppliedCoinValue)}</em></span>}
+                    </span>
+                  </span>
                 </div>
               </div>
               {offerApplied != 0 ? (
