@@ -90,6 +90,15 @@ const Header = () => {
   const isCategorySlidePage =
     location.pathname.toLowerCase() === "/all-categories";
 
+
+
+    const currentPath = location.pathname.toLowerCase();
+    const isWarrantyPage= currentPath==="/warranty-claim"|| currentPath==="/new-warrenty-claim"|| currentPath.startsWith("/warranty-details");
+   const isWarrantyLogin = location.pathname.toLowerCase() === "/warranty-login";
+   const isWarrantyDetails = location.pathname
+  .toLowerCase()
+  .startsWith("/warranty-claim-detail");
+
   useEffect(() => {
     if (!showMegaMenu) {
       setShowViewAll(false);
@@ -401,7 +410,7 @@ const Header = () => {
           </div>
         </div>
       </div>
-
+{!isWarrantyPage && !isWarrantyLogin && !isWarrantyDetails &&  (
       <div
         className={`nav-bar ${isCategorySlidePage ? "category-slide-nav" : ""}`}
       >
@@ -543,7 +552,7 @@ const Header = () => {
           )}
         </div>
       </div>
-
+)}
       <div className="mega-menu-section" ref={megaMenuRef}>
         {showMegaMenu && (
           <div

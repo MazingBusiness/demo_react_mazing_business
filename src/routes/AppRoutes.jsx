@@ -46,6 +46,8 @@ import CategorySlide from "../components/CategorySlide";
 import { getAllPageShug } from "../api/apiRequest";
 import ContactUs from "../pages/ContactUs";
 import LandingPage from "../pages/LandingPage";
+import WarrantyClaimDetail from "../components/WarrantyClaimDetail";
+import WarrantyLogin from "../pages/WarrantyLogin";
 
 const AppRoutes = () => {
   const [pageSlugs, setPageSlugs] = useState([]);
@@ -129,6 +131,9 @@ const AppRoutes = () => {
       <Route path="/pre-arrival" element={<PrivateRoute><PreArrival /></PrivateRoute>} />
       <Route path="/brands" element={<BrandPage/>}/>
       <Route path="/all-categories" element={<CategorySlide/>}/>
+        {/* <Route path="/Warranty-Claims" element={<WarrantyClaims/>}/> */}
+     <Route path="/warranty-claim-detail/:ticketId" element={<WarrantyClaimDetail/>}/>
+    <Route path="/warranty-login" element={ <WarrantyLogin/>} />
 
     </Routes>
   </HashRouter>

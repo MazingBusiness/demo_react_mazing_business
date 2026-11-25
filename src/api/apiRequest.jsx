@@ -1,7 +1,7 @@
 import { API_BASE_URL } from "../app_url";
 import axios from "axios";
 import { getLoggedInUser, getAuthToken } from "../utils/authUtils";
-
+import { getWarrantyAuthToken } from "../utils/authUtils";
 const getHeader = () => {
   const token = getAuthToken();
   // console.log(token);
@@ -16,6 +16,449 @@ const getHeader = () => {
     return null;
   }
 };
+
+
+// Get Warranty Authorization Header
+const getWarrantyHeader = () => {
+  const token =  getWarrantyAuthToken();
+
+
+  if (!token) {
+    throw new Error("Warranty authorization token is missing. Please log in again.");
+  }
+
+  return {
+    headers: {
+      Authorization: `Bearer ${token}`,
+         Accept: "application/json",
+    },
+  };
+};
+
+
+export const getWarrantyClaims = async () => {
+  const config = getWarrantyHeader();
+
+  if (!config) {
+    throw new Error("Authorization token is missing");
+  }
+
+  const response = await fetch(
+    `${API_BASE_URL}warranty-claim-details`,
+     {
+      method: "GET",
+      ...config,
+      headers: {
+        ...config.headers,
+        Accept: "application/json",
+      },
+    }
+  );
+
+  console.log("STATUS:", response.status);
+
+  return response;
+};
+
+
+
+export const verifyWarrantyOtp = async (phone, otp) => {
+  try {
+    const formData = new FormData();
+
+    formData.append("phone", String(phone));
+    formData.append("otp", String(otp));
+
+    console.log("PHONE SENT:", phone);
+    console.log("OTP SENT:", otp);
+
+    const response = await fetch(
+      `${API_BASE_URL}warranty-claim-post`,
+      {
+        method: "POST",
+        headers:{
+        "Accept":"application/json",
+        },
+        body: formData,
+      }
+    );
+
+    const data = await response.json();
+
+    console.log("API STATUS:", response.status);
+    console.log("API RESPONSE:", data);
+
+    return {
+      success: response.ok,
+      data: data,
+    };
+
+  } catch (error) {
+    console.error("OTP Verification error:", error);
+
+    return {
+      success: false,
+      data: {
+        message: "Something went wrong. Please try again."
+      },
+    };
+  }
+};
+
+
+
+// CLAIM DETAILS API ON WARRANTY PAGE
+export const getWarrantyDetails = async(ticketId)=>{
+  const config = getWarrantyHeader();
+const response = await fetch
+(`${API_BASE_URL}warranty-details?ticket_id=${encodeURIComponent(ticketId)}`,
+{
+method:"GET",
+...config,
+headers:{
+...config.headers,
+Accept:"application/json",
+},
+}
+);
+return response;
+};
+
+// Upload Courier Details API REQUEST
+
+export const uploadCourierInfo = async(formData)=>{
+const config= getWarrantyHeader();
+
+if(!config){
+throw new Error("Authorization token is missing");
+}
+
+const response= await fetch(`${API_BASE_URL}warranty-corrier-info-upload`,
+  {
+  method:"POST",
+  ...config,
+  headers:{
+  ...config.headers,
+  Accept:"application/json",
+  },
+  body:formData,
+  }
+
+);
+
+return response;
+}
+
+
+// API FOR Warranty User Type Api
+
+export const getWarrantyUserTypePost = async (formData)=>{
+const config=getWarrantyHeader();
+
+if(!config){
+throw new Error("Authorization token is missing.");
+}
+const response= await fetch(`${API_BASE_URL}warranty-user-type-post`,
+{
+method:"POST",
+...config,
+headers:{
+  ...config.headers,
+  Accept:"application/json",
+  "Content-Type":"application/json",
+  },
+  body:JSON.stringify(formData),
+}
+
+);
+return response;
+}
+
+
+// API TO CHECK GSTIN FOR USER VERIFICATION
+
+export const checkGstIN = async(gstin)=>{
+const config=getWarrantyHeader();
+if(!config){
+throw new Error("Authorization token is missing.");
+}
+const response= await fetch(`${API_BASE_URL}check-gstin-exists-for-warranty`,
+{
+method:"POST",
+...config,
+headers:{
+...config.headers,
+Accept:"application/json",
+"Content-type":"application/json",
+},
+body:JSON.stringify({
+gstin:gstin,
+}),
+}
+);
+return response;
+}
+
+// API TO CHECK WHEATHER GSTIN IS VALID OR NOT AND ITS ALSO USED FOR VERIFY
+
+export const VerifyGstin = async(gst_number)=>{
+// const config=getWarrantyHeader();
+// if(!config){
+// throw new Error("Authorization token is missing.");
+// }
+const response= await fetch(`${API_BASE_URL}user/verify-gst-for-registration`,{
+method:"POST",
+headers:{
+"Content-type":"application/json",
+},
+body:JSON.stringify({
+gst_number
+}),
+}
+);
+return response;
+}
+
+
+// API TO GET WARRANTY DROPDOWN STATE LIST
+export const getWarrantyStateList=async()=>{
+const config=getWarrantyHeader();
+if(!config){
+throw new Error("Authorization token is missing");
+}
+  const response = await fetch(`${API_BASE_URL}user/state`, {
+    method: "GET",
+    ...config,
+    headers: {
+      ...config.headers,
+      Accept: "application/json",
+    },
+  });
+
+  const json = await response.json();
+  console.log("WARRANTY STATE API RESPONSE:", json);
+  if (!response.ok || json?.res === false) {
+    throw new Error(
+      json?.msg || json?.message || `HTTP ${response.status}`
+    );
+  }
+
+  return json;
+};
+
+
+
+
+// API TO GET WARRANTY USER DETAILS 
+
+export const getWarrantyUserDetails=async()=>{
+const config=getWarrantyHeader();
+if(!config){
+throw new Error("Authorization token is missing.")
+}
+
+const response= await fetch(`${API_BASE_URL}warranty-user-details`,
+  {
+  method:"GET",
+  ...config,
+  headers:{
+    ...config.headers,
+    Accept:"application/json"
+  }
+  }
+);
+return response;
+}
+
+
+
+//api for  barcode check
+
+export const getBarcodeCheck=async(barcode)=>{
+const config=getWarrantyHeader();
+
+if(!config){
+throw new Error("Authorization token is missing.");
+}
+
+const response= await fetch(`${API_BASE_URL}warranty-barcode-check`,
+{
+  method:"POST",
+  ...config,
+  headers:{
+  ...config.headers,
+  Accept:"application/json",
+  "Content-type":"application/json",
+  },
+  body:JSON.stringify({
+  barcode:barcode,
+  })
+}
+
+)
+return response;
+}
+
+// api for invoice check
+
+export const getInvoiceCheck=async(invoice,barcode)=>{
+const config=getWarrantyHeader();
+
+if(!config){
+throw new Error("Authorization token is missing.")
+}
+const response=await fetch(`${API_BASE_URL}warranty-invoice-check`,
+  {
+method:"POST",
+...config,
+headers:{
+...config.headers,
+Accept:"application/json",
+"Content-type":"application/json"
+},
+body:JSON.stringify({
+invoice_no:invoice,
+barcode:barcode,
+})
+})
+return response;
+}
+
+// API FOR WARRANTY DATE CHECK//
+
+export const validateWarrantyCheck= async(barcode,invoice,date)=>{
+const config=getWarrantyHeader();
+
+if(!config){
+throw new Error("Warranty Authorization token is missing.");
+}
+
+const response = await fetch(`${API_BASE_URL}warranty-date-check`,
+{
+method:"POST",
+...config,
+headers:{
+...config.headers,
+Accept:"application/json",
+"Content-type":"application/json",
+},
+body:JSON.stringify({
+barcode:barcode,
+invoice:invoice,
+date:date,
+})
+}
+)
+return response;
+}
+
+
+
+
+// Warranty Submit API
+
+export const WarrantySubmitApi= async (formData)=>{
+const config=getWarrantyHeader();
+
+if(!config){
+  throw new Error("Warranty Authorization token is missing.")
+}
+const response = await fetch(`${API_BASE_URL}warranty-submit`,{
+method:"POST",
+...config,
+headers:{
+...config.headers,
+Accept:"application/json",
+},
+body:formData,
+
+});
+return response;
+}
+
+
+
+// Warranty Warehouse details api
+
+export const getWarehouseDetails=async ()=>{
+const config=getWarrantyHeader();
+if(!config){
+  throw new Error("Warranty Authorization token is missing.")
+}
+
+const response= await fetch(`${API_BASE_URL}warranty-warehouse-details`,
+{
+"method":"GET",
+...config,
+headers:{
+  ...config.headers,
+  Accept:"application/json",
+}
+}
+);
+return response;
+}
+
+
+// Warranty Logout API
+
+export const WarrantyLogout= async()=>{
+const config=getWarrantyHeader();
+if(!config){
+  throw new Error("Warranty Authorization token is missing.");
+}
+
+const response=await fetch(`${API_BASE_URL}warranty/logout`,
+  {
+method:"POST",
+...config,
+headers:{
+  ...config.headers,
+Accept:"application/json",
+"Content-type":"application/json",
+}
+  }
+)
+
+  const data = await response.json();
+
+  console.log("Warranty Logout Status:", response.status);
+  console.log("Warranty Logout Response:", data);
+
+  if (!response.ok) {
+    throw new Error(data?.message || "Warranty logout failed");
+  }
+
+  return data;
+};
+
+// API FOR PRINTING THE SHIPPING LABEL
+
+export const downloadShippingLabel=async(ticketId)=>{
+const config=getWarrantyHeader();
+if(!config){
+throw new Error("Authorization token is missing");
+}
+
+const response=await fetch(`${API_BASE_URL}warranty-ship-pdf-download`,{
+method:"POST",
+...config,
+
+headers:{
+  ...config.headers,
+Accept:"application/json",
+"Content-type":"application/json",
+},
+body:JSON.stringify({
+ticket_id:ticketId,
+})
+})
+return response;
+}
+
+
+
+
 //Get Banners
 export const getMegaMenu = async () => {
   const response = await fetch(`${API_BASE_URL}home/get-top-category-groups`, {
