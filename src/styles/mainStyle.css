@@ -8893,6 +8893,51 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   color: #004d84;
 }
 
+.payable-info-tooltip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  margin-left: 7px;
+  color: #004d84;
+  cursor: help;
+  outline: none;
+}
+
+.payable-info-tooltip-content {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 10px);
+  z-index: 20;
+  display: none;
+  width: 260px;
+  padding: 11px 12px;
+  border-radius: 8px;
+  background: #1e293b;
+  color: #fff;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, .2);
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.payable-info-tooltip:hover .payable-info-tooltip-content,
+.payable-info-tooltip:focus .payable-info-tooltip-content {
+  display: block;
+}
+
+.payable-info-tooltip-content > span {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 3px 0;
+  color: #fff !important;
+}
+
+.payable-info-tooltip-content b,
+.payable-info-tooltip-content em {
+  font-style: normal;
+  font-weight: 500;
+}
+
 .checkout-btn {
   width: 100%;
   padding: 12px;
@@ -14642,6 +14687,7 @@ display: block;
   }
 } 
 
+
 /* Warranty Claim Page*/
 .warranty-claim-page {
   min-height: 100vh;
@@ -14706,7 +14752,7 @@ display: block;
   color: #8491a6;
 }
 
-.card-icon {
+.warranty-claim-page .card-icon {
   position: absolute;
   top: 16px;
   right: 16px;
@@ -14789,7 +14835,7 @@ display: block;
   gap: 8px;
 }
 
-.filter-btn {
+.warranty-claim-page .filter-btn {
    padding: 9px 15px;
   border: 1px solid #e1e7ef;
   border-radius: 7px;
@@ -14801,14 +14847,14 @@ display: block;
   transition: all 0.2s ease;
 }
 
-.filter-btn:hover {
+.warranty-claim-page .filter-btn:hover {
   background: #f1f6fc;
   border-color: #0b67d1;
   color: #0b67d1;
 }
 
 
- .filter-btn.active {
+ .warranty-claim-page .filter-btn.active {
   background-color: #004d84;
   color: #fff;
   border-color: #004d84;
@@ -15044,7 +15090,7 @@ display: block;
   gap: 8px;
 }
 
-.page-btn {
+.warranty-claim-page .page-btn {
   padding: 5px 10px;
   border: 1px solid #dce3ec;
   border-radius: 4px;
@@ -15054,7 +15100,7 @@ display: block;
   cursor: pointer;
 }
 
-.page-btn:hover:not(:disabled) {
+.warranty-claim-page .page-btn:hover:not(:disabled) {
   background: #eff6ff;
   border-color: #b9d8ff;
 }
@@ -17657,7 +17703,7 @@ gap: 12px;
 }
 
 
-.country-code{
+.warranty-login-page .country-code{
 display: flex;
 flex-direction: row;
 align-items: center;
@@ -18153,19 +18199,6 @@ cursor: pointer;
   font-weight: 600 !important;
   margin-top: 8px !important;
 }
-
-/* Pending for courier upload */
-/* 
-.status-pending-courier {
-  background-color: #fff3cd !important;
-  color: #856404 !important;
-}
-
-/* Normal pending */
-/* .status-review {
-  background-color: #f8d7da !important;
-  color: #842029 !important;
-} */ */
 .status-review {
   background-color: #FEF3C7 !important;
   color: #92400E !important;

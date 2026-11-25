@@ -68,11 +68,13 @@ const WarehouseModal = ({ onClose,onConfirm, rows ,warehouses}) => {
                   if (!part) return null;
 
                   return (
-                    <div key={partNumber}>
+                    <div key={partNumber}  className="warehouse-part">
+                       <div className="warehouse-part-name">
                       <FaCheckCircle /> 
                       <span>
                          {part.part_number}-{part.product_name}
                       </span>
+                    </div>
                     </div>
                   );
                 })}

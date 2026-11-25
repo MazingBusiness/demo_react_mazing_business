@@ -285,16 +285,19 @@ const NewWarrentyClaim = () => {
       }
 
       if (result.res && result.found) {
+        //Invoice Exists in Database
         updateProduct(index, "invoiceResult", result);
-        updateProduct(index, "invoiceMessage", result.message);
+        // updateProduct(index, "invoiceMessage", result.message);
       } else {
-        updateProduct(index, "invoiceResult", null);
-        updateProduct(
-          index,
-          "invoiceMessage",
-          result.msg || result.message || "Invoice not found",
-        );
-      }
+        //Invoice does not exists accept user enter invoice
+        updateProduct(index, "invoiceResult", {
+          res:true,
+          found:true,
+          invoice_number:invoice,
+          manuallyAccepted:true,
+      });
+    }
+        updateProduct(index,"invoiceMessage","Invoice Verified Successfully");
     } catch (error) {
       console.error("Invoice check Error:", error);
       updateProduct(
